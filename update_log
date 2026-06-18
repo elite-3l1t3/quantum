@@ -1,1 +1,0 @@
-{"latest_version": "17.0", "download_url": "https://github.com/yourusername", "changelog": "Шинэ загвар нэмэгдсэн"}
