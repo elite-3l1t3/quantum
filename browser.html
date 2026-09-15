@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Private Browser</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg, #f2f2f2);
+    color: var(--text, #202124);
+  }
+  #toolbar {
+    display: flex;
+    gap: 6px;
+    padding: 8px;
+    background: var(--toolbar, #e8e8e8);
+    align-items: center;
+    border-bottom: 1px solid #ccc;
+  }
+  #urlbar {
+    flex: 1;
+    padding: 9px 12px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    font-size: 15px;
+    background: var(--input-bg, #fff);
+    color: #111;
+  }
+  button {
+    padding: 9px 12px;
+    border: none;
+    border-radius: 20px;
+    background: var(--accent, #1a73e8);
+    color: white;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+  .iconbtn {
+    background: transparent;
+    color: var(--text, #202124);
+    font-size: 18px;
+    padding: 6px 8px;
+  }
+  #frame {
+    flex: 1;
+    border: none;
+    width: 100%;
+    height: 100%;
+    background: white;
+  }
+  #notice {
+    font-size: 11px;
+    text-align: center;
+    color: #888;
+    padding: 3px;
+    background: var(--toolbar, #e8e8e8);
+    border-top: 1px solid #ccc;
+  }
+  #settingsPanel {
+    display: none;
+    position: fixed;
+    top: 0; right: 0;
+    width: 85%;
+    max-width: 320px;
+    height: 100%;
+    background: var(--toolbar, #e8e8e8);
+    color: var(--text, #202124);
+    padding: 16px;
+    overflow-y: auto;
+    z-index: 100;
+    box-shadow: -4px 0 12px rgba(0,0,0,0.3);
+  }
+  #settingsPanel.open { display: block; }
+  #settingsPanel h3 { margin: 14px 0 6px; font-size: 13px; opacity: 0.7; text-transform: uppercase; }
+  #settingsPanel label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 14px;
+  }
+  #settingsPanel select, #settingsPanel input[type=text] {
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    background: #fff;
+    color: #111;
+    max-width: 60%;
+  }
+  .swatch {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px #999;
+    display: inline-block;
+    cursor: pointer;
+    margin-right: 6px;
+  }
+  #closeSettings {
+    float: right;
+    background: transparent;
+    color: var(--text, #202124);
+    font-size: 20px;
+  }
+  .customEngineBox {
+    background: rgba(0,0,0,0.05);
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 6px;
+  }
+  .customEngineBox input { width: 100%; margin-bottom: 6px; }
+  .hint { font-size: 11px; opacity: 0.6; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<div id="toolbar">
+  <button class="iconbtn" onclick="goBack()">←</button>
+  <button class="iconbtn" onclick="goForward()">→</button>
+  <button class="iconbtn" onclick="reloadFrame()">⟳</button>
+  <input id="urlbar" type="text" placeholder="Хаяг эсвэл хайлт бичих..." />
+  <button class="iconbtn" onclick="toggleSettings()">⚙️</button>
+</div>
+
+<iframe id="frame" src="https://duckduckgo.com" sandbox="allow-scripts allow-forms allow-same-origin allow-popups"></iframe>
+
+<div id="notice">🔒 No tracking · <span id="engineLabel">DuckDuckGo</span></div>
+
+<div id="settingsPanel">
+  <button id="closeSettings" onclick="toggleSettings()">✕</button>
+  <h3>Хайлтын engine</h3>
+  <label>Сонгох
+    <select id="engineSelect" onchange="setEngine()">
+      <option value="duckduckgo">DuckDuckGo (privacy)</option>
+      <option value="startpage">Startpage (privacy)</option>
+      <option value="brave">Brave Search</option>
+      <option value="google">Google</option>
+      <option value="bing">Bing</option>
+      <option value="custom">Custom...</option>
+    </select>
+  </label>
+
+  <div id="customEngineBox" class="customEngineBox" style="display:none;">
+    <input type="text" id="customName" placeholder="Нэр (жиш: MySearch)" />
+    <input type="text" id="customUrl" placeholder="https://example.com/search?q=%s" />
+    <button style="width:100%;" onclick="saveCustomEngine()">Хадгалах</button>
+    <div class="hint">%s хэсэгт таны бичсэн үг орно</div>
+  </div>
+
+  <h3>Home page</h3>
+  <label>URL
+    <input type="text" id="homeInput" placeholder="https://..." />
+  </label>
+  <button style="width:100%; margin-top:6px;" onclick="saveHome()">Хадгалах</button>
+
+  <h3>Theme өнгө</h3>
+  <div>
+    <span class="swatch" style="background:#1a73e8" onclick="setTheme('#f2f2f2','#e8e8e8','#1a73e8','#202124')"></span>
+    <span class="swatch" style="background:#1a1a2e" onclick="setTheme('#1a1a2e','#16213e','#0f3460','#fff')"></span>
+    <span class="swatch" style="background:#8e44ad" onclick="setTheme('#1e1e1e','#2c2c2c','#8e44ad','#fff')"></span>
+    <span class="swatch" style="background:#27ae60" onclick="setTheme('#1e1e1e','#222','#27ae60','#fff')"></span>
+    <span class="swatch" style="background:#c0392b" onclick="setTheme('#1e1e1e','#222','#c0392b','#fff')"></span>
+  </div>
+
+  <h3>Тохиргоо</h3>
+  <label>Scripts зөвшөөрөх
+    <input type="checkbox" id="scriptsToggle" checked onchange="applySandbox()" />
+  </label>
+  <label>Forms зөвшөөрөх
+    <input type="checkbox" id="formsToggle" checked onchange="applySandbox()" />
+  </label>
+  <label>Popups зөвшөөрөх
+    <input type="checkbox" id="popupsToggle" checked onchange="applySandbox()" />
+  </label>
+
+  <h3>Bookmarks</h3>
+  <button style="width:100%; margin-bottom:6px;" onclick="addBookmark()">+ Одоогийн хуудсыг нэмэх</button>
+  <div id="bookmarkList"></div>
+</div>
+
+<script>
+  const urlbar = document.getElementById('urlbar');
+  const frame = document.getElementById('frame');
+  const engineSelect = document.getElementById('engineSelect');
+  const engineLabel = document.getElementById('engineLabel');
+  const customEngineBox = document.getElementById('customEngineBox');
+  let history = [frame.src];
+  let historyIndex = 0;
+
+  const builtinEngines = {
+    duckduckgo: { url: 'https://duckduckgo.com/?q=', home: 'https://duckduckgo.com', label: 'DuckDuckGo' },
+    startpage:  { url: 'https://www.startpage.com/sp/search?query=', home: 'https://www.startpage.com', label: 'Startpage' },
+    brave:      { url: 'https://search.brave.com/search?q=', home: 'https://search.brave.com', label: 'Brave Search' },
+    google:     { url: 'https://www.google.com/search?q=', home: 'https://www.google.com', label: 'Google' },
+    bing:       { url: 'https://www.bing.com/search?q=', home: 'https://www.bing.com', label: 'Bing' }
+  };
+
+  let memStore = {};
+  function localStorageGet(key) {
+    try { return localStorage.getItem(key) || memStore[key]; } catch(e) { return memStore[key]; }
+  }
+  function localStorageSet(key, val) {
+    memStore[key] = val;
+    try { localStorage.setItem(key, val); } catch(e) {}
+  }
+
+  function getActiveEngine() {
+    const val = engineSelect.value;
+    if (val === 'custom') {
+      const custom = JSON.parse(localStorageGet('customEngine') || 'null');
+      if (custom) return { url: custom.url, label: custom.name };
+    }
+    return builtinEngines[val] || builtinEngines.duckduckgo;
+  }
+
+  function loadSettings() {
+    const savedEngine = localStorageGet('engine') || 'duckduckgo';
+    engineSelect.value = savedEngine;
+    customEngineBox.style.display = savedEngine === 'custom' ? 'block' : 'none';
+    const custom = JSON.parse(localStorageGet('customEngine') || 'null');
+    if (custom) {
+      document.getElementById('customName').value = custom.name;
+      document.getElementById('customUrl').value = custom.url;
+    }
+    engineLabel.textContent = getActiveEngine().label;
+
+    const savedTheme = localStorageGet('theme');
+    if (savedTheme) {
+      const [bg, tb, accent, text] = savedTheme.split('|');
+      applyTheme(bg, tb, accent, text);
+    }
+    const savedHome = localStorageGet('home');
+    if (savedHome) document.getElementById('homeInput').value = savedHome;
+    renderBookmarks();
+  }
+
+  function normalizeUrl(input) {
+    input = input.trim();
+    if (!input) return null;
+    if (input.startsWith('http://') || input.startsWith('https://')) return input;
+    if (input.includes('.') && !input.includes(' ')) return 'https://' + input;
+    const eng = getActiveEngine();
+    if (eng.url.includes('%s')) return eng.url.replace('%s', encodeURIComponent(input));
+    return eng.url + encodeURIComponent(input);
+  }
+
+  function navigate() {
+    const url = normalizeUrl(urlbar.value);
+    if (!url) return;
+    frame.src = url;
+    history = history.slice(0, historyIndex + 1);
+    history.push(url);
+    historyIndex++;
+    urlbar.value = url;
+  }
+
+  function reloadFrame() { frame.src = frame.src; }
+
+  function goBack() {
+    if (historyIndex > 0) {
+      historyIndex--;
+      frame.src = history[historyIndex];
+      urlbar.value = history[historyIndex];
+    }
+  }
+
+  function goForward() {
+    if (historyIndex < history.length - 1) {
+      historyIndex++;
+      frame.src = history[historyIndex];
+      urlbar.value = history[historyIndex];
+    }
+  }
+
+  urlbar.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') navigate();
+  });
+
+  function toggleSettings() {
+    document.getElementById('settingsPanel').classList.toggle('open');
+  }
+
+  function setEngine() {
+    const val = engineSelect.value;
+    localStorageSet('engine', val);
+    customEngineBox.style.display = val === 'custom' ? 'block' : 'none';
+    engineLabel.textContent = getActiveEngine().label;
+  }
+
+  function saveCustomEngine() {
+    const name = document.getElementById('customName').value.trim() || 'Custom';
+    const url = document.getElementById('customUrl').value.trim();
+    if (!url.includes('%s')) {
+      alert('URL дотор %s байх ёстой, жишээ нь: https://example.com/search?q=%s');
+      return;
+    }
+    localStorageSet('customEngine', JSON.stringify({ name, url }));
+    engineLabel.textContent = name;
+  }
+
+  function setTheme(bg, tb, accent, text) {
+    applyTheme(bg, tb, accent, text);
+    localStorageSet('theme', bg + '|' + tb + '|' + accent + '|' + text);
+  }
+
+  function applyTheme(bg, tb, accent, text) {
+    document.documentElement.style.setProperty('--bg', bg);
+    document.documentElement.style.setProperty('--toolbar', tb);
+    document.documentElement.style.setProperty('--accent', accent);
+    document.documentElement.style.setProperty('--text', text);
+  }
+
+  function saveHome() {
+    const val = document.getElementById('homeInput').value.trim();
+    if (val) {
+      localStorageSet('home', val);
+      frame.src = val;
+      urlbar.value = val;
+    }
+  }
+
+  function applySandbox() {
+    let perms = ['allow-same-origin'];
+    if (document.getElementById('scriptsToggle').checked) perms.push('allow-scripts');
+    if (document.getElementById('formsToggle').checked) perms.push('allow-forms');
+    if (document.getElementById('popupsToggle').checked) perms.push('allow-popups');
+    frame.setAttribute('sandbox', perms.join(' '));
+  }
+
+  function addBookmark() {
+    const list = JSON.parse(localStorageGet('bookmarks') || '[]');
+    list.push({ url: frame.src, title: frame.src });
+    localStorageSet('bookmarks', JSON.stringify(list));
+    renderBookmarks();
+  }
+
+  function renderBookmarks() {
+    const list = JSON.parse(localStorageGet('bookmarks') || '[]');
+    const container = document.getElementById('bookmarkList');
+    container.innerHTML = '';
+    list.forEach((b) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:6px 0; font-size:13px;';
+      row.innerHTML = '<span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:70%;">' +
+        b.title.replace(/</g,'&lt;') + '</span>';
+      const openBtn = document.createElement('button');
+      openBtn.textContent = 'Нээх';
+      openBtn.style.cssText = 'font-size:11px; padding:4px 8px;';
+      openBtn.onclick = () => { frame.src = b.url; urlbar.value = b.url; toggleSettings(); };
+      row.appendChild(openBtn);
+      container.appendChild(row);
+    });
+  }
+
+  loadSettings();
+  urlbar.value = frame.src;
+</script>
+
+</body>
+</html>
