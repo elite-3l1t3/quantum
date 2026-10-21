@@ -2,33 +2,50 @@
 <html lang="mn"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>biof</title>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;700&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#14100a">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--a:#8b6cff;--m:#9a94b3}
+:root{--a:#e8a317;--m:#b09a74;--bg:#14100a;--c:rgba(33,26,16,.94);--l:#3a2d18;--i:#2b2113}
 *{box-sizing:border-box;margin:0}
-body{background:#0e0c15 center/cover fixed;color:#f1eefc;font:15px/1.5 'Bricolage Grotesque',system-ui,sans-serif;min-height:100vh}
+html{-webkit-tap-highlight-color:transparent}
+body{background:var(--bg) center/cover fixed;color:#f6ead2;font:15px/1.5 'Bricolage Grotesque',system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
+body:before{content:"";position:fixed;inset:-20%;z-index:-1;pointer-events:none;background:radial-gradient(40% 35% at 25% 20%,rgba(232,163,23,.22),transparent 70%),radial-gradient(35% 30% at 80% 75%,rgba(150,85,30,.28),transparent 70%);animation:drift 20s ease-in-out infinite alternate;will-change:transform}
+@keyframes drift{to{transform:translate3d(6%,4%,0) scale(1.1)}}
+@keyframes rise{from{opacity:0;transform:translate3d(0,14px,0)}}
+@keyframes pop{40%{transform:scale(1.25)}}
 a{color:inherit;text-decoration:none}
-nav{display:flex;gap:14px;align-items:center;padding:14px 18px;max-width:900px;margin:auto;flex-wrap:wrap}
-nav b{font-size:24px;margin-right:auto}
+nav{display:flex;gap:16px;align-items:center;padding:14px 18px;max-width:900px;margin:auto;flex-wrap:wrap}
+nav b{font-size:26px;font-weight:800;margin-right:auto;letter-spacing:-.5px}
+nav a{color:var(--m);transition:color .2s}nav a:hover{color:var(--a)}nav b a{color:#f6ead2}
 .w{max-width:900px;margin:auto;padding:8px 14px 40px}
-.card{background:rgba(24,21,38,.93);border:1px solid #2a2640;border-radius:18px;padding:22px;max-width:460px;margin:16px auto;text-align:center}
-.av{width:96px;height:96px;border-radius:50%;object-fit:cover;border:3px solid var(--a);background:#2a2640;display:inline-block}
-button,input,textarea{font:inherit;color:inherit;background:#221e36;border:1px solid #332e4f;border-radius:10px;padding:9px 12px}
-button{cursor:pointer;background:var(--a);border:0;color:#fff;font-weight:700}
-button.g{background:#221e36;border:1px solid #332e4f}
+.card{background:var(--c);border:1px solid var(--l);border-radius:20px;padding:24px;max-width:460px;margin:16px auto;text-align:center;animation:rise .5s cubic-bezier(.2,.8,.2,1) both;box-shadow:0 20px 50px -20px rgba(0,0,0,.8)}
+h1,h2{font-weight:800;letter-spacing:-.5px}
+.av{width:96px;height:96px;border-radius:50%;object-fit:cover;border:3px solid var(--a);background:var(--i);display:inline-block;box-shadow:0 0 0 5px rgba(232,163,23,.14),0 10px 26px -8px var(--a)}
+button,input,textarea{font:inherit;font-size:16px;color:inherit;background:var(--i);border:1px solid var(--l);border-radius:12px;padding:10px 14px;transition:border-color .2s,transform .15s,filter .2s}
+button{cursor:pointer;background:var(--a);border:0;color:#1a1205;font-weight:700}
+button:hover{filter:brightness(1.1);transform:translateY(-1px)}button:active{transform:scale(.97)}
+button.g{background:var(--i);border:1px solid var(--l);color:#f6ead2}
+button.pop{animation:pop .35s}
 input,textarea{width:100%;margin:4px 0 10px}
-input[type=color]{height:42px;padding:3px}
+input:focus,textarea:focus{outline:0;border-color:var(--a)}
+input[type=color]{height:44px;padding:3px}
 label{color:var(--m);font-size:13px}
-.lk{display:block;padding:12px;margin:8px 0;border-radius:12px;background:#221e36;border:1px solid #332e4f;font-weight:700}
-.lk:hover{border-color:var(--a)}
-.bd{display:inline-block;font-size:12px;padding:2px 9px;border-radius:99px;background:#2a2640;margin:2px}
-.row{display:flex;gap:10px;align-items:center;padding:9px 4px;border-bottom:1px solid #2a2640;text-align:left}
-.row .av{width:36px;height:36px;border-width:1px}
-.bad{color:#ff6b7a;text-align:center;padding:6px}
+.lk{display:block;padding:13px;margin:9px 0;border-radius:14px;background:var(--i);border:1px solid var(--l);font-weight:700;transition:transform .2s,border-color .2s,background .2s;animation:rise .5s both}
+.lk:hover{transform:translate3d(0,-2px,0);border-color:var(--a);background:#34281a}
+.lk:nth-of-type(2){animation-delay:.07s}.lk:nth-of-type(3){animation-delay:.14s}.lk:nth-of-type(4){animation-delay:.21s}.lk:nth-of-type(n+5){animation-delay:.28s}
+.bd{display:inline-block;font-size:12px;padding:2px 10px;border-radius:99px;background:rgba(232,163,23,.16);color:#f3c15a;margin:2px}
+.row{display:flex;gap:10px;align-items:center;padding:9px 4px;border-bottom:1px solid var(--l);text-align:left}
+.row .av{width:36px;height:36px;border-width:1px;box-shadow:none}
+a.row{transition:background .2s;animation:rise .4s both}a.row:hover{background:rgba(232,163,23,.08)}
+a.row:nth-child(n+3){animation-delay:.05s}a.row:nth-child(n+5){animation-delay:.1s}a.row:nth-child(n+8){animation-delay:.15s}
+a.row:nth-child(2) b:first-child{color:#f3c15a}a.row:nth-child(3) b:first-child{color:#cfcfcf}a.row:nth-child(4) b:first-child{color:#c98a52}
+.bad{color:#ff7a5c;text-align:center;padding:6px}
+@media(max-width:520px){.card{padding:18px;border-radius:16px;margin:10px 2px}nav{gap:12px}}
+@media(prefers-reduced-motion:reduce){*,:before{animation:none!important;transition:none!important}}
 </style></head><body><div id="app"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
-const SB_URL='https://YOUR-PROJECT.supabase.co', SB_KEY='YOUR-ANON-KEY';
+const SB_URL='https://zyrpzoqdoorekspavocs.supabase.co', SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5cnB6b3Fkb29yZWtzcGF2b2NzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI1ODk4OTIsImV4cCI6MjEwODE2NTg5Mn0.ilCd_6g1W7G4S9N3iYXBRwjOEqgYInysBLcH6h233as';
 const sb=supabase.createClient(SB_URL,SB_KEY);
 const $=s=>document.querySelector(s), app=$('#app');
 const e=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -51,7 +68,7 @@ async function loadMe(){
 const bar=()=>`<nav><b><a href="/" data-n>biof</a></b><a href="/leaderboard" data-n>Leaderboard</a>${me?`${me.role=='admin'?'<a href="/admin" data-n>Admin</a>':''}<a href="/settings" data-n>#${me.bid} ${e(me.username||'профайл')}</a>`:'<button onclick="login()">Discord-оор нэвтрэх</button>'}</nav>${me?.banned?'<div class="bad">Таны хаяг ban хийгдсэн байна.</div>':''}`;
 
 async function route(){
- document.body.style.backgroundImage='';document.documentElement.style.setProperty('--a','#8b6cff');document.title='biof';
+ document.body.style.backgroundImage='';document.documentElement.style.setProperty('--a','#e8a317');document.title='biof';
  const p=decodeURIComponent(location.pathname.slice(1)).toLowerCase().replace(/\/$/,'');
  app.innerHTML=bar()+'<div class="w" id="v"></div>';const v=$('#v');
  try{ if(!p)home(v);else if(p=='leaderboard')board(v,'views');else if(p=='settings')settings(v);else if(p=='admin')admin(v);else await profile(v,p)}
@@ -85,7 +102,7 @@ async function profile(v,name){
  $('#lk').onclick=async()=>{
   if(!user)return login();
   const{data}=await sb.rpc('toggle_like',{pid:p.id});if(data==null)return;
-  lc+=data?1:-1;$('#lc').textContent=lc;$('#lk').className=data?'':'g'};
+  lc+=data?1:-1;$('#lc').textContent=lc;$('#lk').className=(data?'':'g')+' pop'};
  if(!me||me.id!=p.id){const vid=localStorage.vid||(localStorage.vid=crypto.randomUUID());sb.rpc('add_view',{pid:p.id,v:vid})}
 }
 
@@ -104,7 +121,7 @@ function settings(v){
  <label>Bio</label><textarea id="bi" rows="3" maxlength="200">${e(me.bio)}</textarea>
  <label>Avatar URL</label><input id="au" value="${e(me.avatar_url)}">
  <label>Background URL</label><input id="bg" value="${e(me.bg_url)}">
- <label>Accent өнгө</label><input id="ac" type="color" value="${e(me.accent||'#8b6cff')}">
+ <label>Accent өнгө</label><input id="ac" type="color" value="${e(me.accent||'#e8a317')}">
  <label>Линкүүд (мөр бүр: Нэр | https://url)</label><textarea id="ls" rows="5">${e(L)}</textarea>
  <p id="ms" style="min-height:22px"></p><button id="sv">Хадгалах</button> <button class="g" id="lo">Гарах</button></div>`;
  $('#lo').onclick=async()=>{await sb.auth.signOut();go('/')};
