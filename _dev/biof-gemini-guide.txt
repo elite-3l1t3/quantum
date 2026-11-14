@@ -298,3 +298,6 @@ Cache-bust: ?v=9 (main.js дотор const V='9').
 - Select: товч, цэс, дүрс, холбоос сонгогдохгүй; текст (bio, тайлбар, нөхцөл г.м.) сонгогдоно (.sel класс).
 - crypto.randomUUID байхгүй хуучин хөтөч дээр профайл эвдэрдэг алдаа засагдсан.
 - Туршилт: Playwright (Chromium) + хуурамч Supabase дээр бүх хуудас (MN/EN, утас/компьютер) — консолын алдаагүй. SQL-ийг жинхэнэ Postgres дээр ажиллуулж туршаагүй.
+
+ИМЭЙЛИЙН ЗАГВАР: _dev/email-magic-link.html (Magic Link) ба _dev/email-confirm-signup.html (Confirm signup) — Supabase → Authentication → Email Templates дээр Body-д бүтнээр нь хуулна. {{ .Token }} заавал байх ёстой.
+Subject: "biof нэвтрэх код: {{ .Token }}" / "biof бүртгэл баталгаажуулах код: {{ .Token }}". SMTP: Resend (smtp.resend.com, 465, username "resend", password = API key).
