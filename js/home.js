@@ -1,9 +1,8 @@
 async function home(v){
  const cache=(k,ttl,f)=>{let c=null;try{c=JSON.parse(sessionStorage[k]||'null')}catch{}return c&&c.r!==undefined&&Date.now()-c.t<ttl?Promise.resolve(c.r):f().then(r=>{try{sessionStorage[k]=JSON.stringify({t:Date.now(),r})}catch{}return r})};
- const lbRows=by=>cache('lb2_'+by,12e4,async()=>(await sb.from('profiles').select('bid,username,display_name,avatar_url,views,likes').not('username','is',null).order(by,{ascending:false}).limit(10)).data||[]);
  const[st,top,ss]=await Promise.all([
   cache('st2',6e4,async()=>(await sb.rpc('site_stats')).data||{}),
-  lbRows('views'),
+  lbFetch('week',10).then(r=>r.length?['week',r]:lbFetch('views',10).then(x=>['views',x])),
   getStatus().catch(()=>({d:null,ms:0}))]);
  const closed=!!st&&st.reg===false&&!me,hint='Зөвхөн англи жижиг үсэг, тоо, _ ашиглана (3-20 тэмдэгт).';
  const F=[['link','Бүх холбоос нэг дор','Instagram, YouTube, TikTok зэрэг холбоосоо нэг хуудсанд тавина.'],['image','Өөрийн дүр төрх','Өнгө, дэвсгэр зураг, видеогоо өөрөө сонгоно.'],['music','Дуу тавина','Хуудсыг нээхэд таны сонгосон дуу эгшиглэнэ.'],['badge','Тэмдэг авна','Идэвхтэй байх тусам тэмдэг (badge) авна.'],['eye','Хэн үзснийг мэднэ','Хуудсыг хэдэн хүн үзэж, хэдэн хүн таалагдсаныг харна.'],['sliders','Утсан дээр ч сайхан','Утас, компьютер аль алинд нь ойлгомжтой ажиллана.']];
@@ -13,7 +12,7 @@ async function home(v){
  const label=me?.username?'Миний хуудас':'Нэрээ авах';
  v.innerHTML=`<section class="h2"><div class="h2l">${closed?'<span class="pill">Бүртгэл түр хаалттай</span>':''}<h1>Өөрийн хуудсаа<br>үүсгээрэй</h1><p>Instagram, YouTube, Discord зэрэг бүх холбоосоо нэг хаяг дээр цуглуулна. Жишээ нь <b>biof.site/bold</b></p>
  ${closed?`<div class="closed">${ic('x',18)}<span>Одоогоор шинэ бүртгэл авахгүй байна. Бүртгэлтэй бол нэвтэрч болно.</span></div>`:''}<div class="claim"><span>biof.site/</span><input id="n" maxlength="20" placeholder="таны нэр" autocomplete="off" autocapitalize="none" spellcheck="false"${closed?' disabled':''}><button id="b"${closed?' disabled':''}>${label}</button></div><p class="st mu" id="s">${hint}</p>
- ${user?'':`<div class="or">эсвэл</div><button class="dc lg" type="button">${ic('user',22)}${closed?'Бүртгэлтэй бол нэвтрэх':'Нэвтрэх / Бүртгүүлэх'}</button>`}
+ ${user?'':`<div class="or">эсвэл</div><button class="dc lg" data-mode="signup" type="button">${ic('user',22)}${closed?'Бүртгэлтэй бол нэвтрэх':'Нэвтрэх / Бүртгүүлэх'}</button>`}
  <div class="meta"><span class="chip"><b class="cnt" data-n="${(st&&st.live)||0}">0</b> хуудас идэвхтэй</span><span class="chip"><b class="cnt" data-n="${(ss.d&&ss.d.today)||0}">0</b> өнөөдөр шинэ</span><a class="tpl" href="/tutorial">Заавар унших ${ic('arrow',14)}</a></div></div>
  <a class="h2r" href="/a" aria-label="Жишээ хуудас"><div class="pv back"></div><div class="pv front"><span class="av" id="hav">B</span><div style="font-weight:800;font-size:20px;margin-top:8px" id="hnm">Bold</div><small class="mu" id="hn">@bold · #12</small><div style="margin:10px 0"><span class="bd">${ic('badge',14)}Баталгаажсан</span></div>${['facebook','instagram','youtube','discord'].map(k=>`<span class="pl">${plat(k,30)}${PL[k][0]}</span>`).join('')}<small class="mu" style="display:block;margin-top:12px">Жишээ хуудас харах ${ic('arrow',14)}</small></div></a></section>
  <div class="stbar rv" id="stb"><a class="live" href="/status"><i></i>Шууд</a><div class="sg"><div><b data-s="total">–</b><span>Нийт бүртгэл</span></div><div><b data-s="blocked">–</b><span>Хаасан сэжигтэй хүсэлт</span></div><div><b data-s="live">–</b><span>Идэвхтэй хуудас</span></div><div><b data-s="ms">–</b><span>Хариу өгөх хугацаа (мс)</span></div></div></div>
@@ -36,13 +35,13 @@ async function home(v){
   if(me?.username)return go(me.approved?'/'+me.username:'/settings');
   if(!n.value){n.focus();return}
   if(!cool('claim',2000))return;
-  if(!user){localStorage.pending=n.value;return login()}
+  if(!user){localStorage.pending=n.value;return login('signup',n.value)}
   const{data}=await sb.rpc('claim_username',{u:n.value});
   if(data!='ok'){S.className='st bad2';S.textContent=ERR[data]||String(data);return}
   await loadMe();go(me?.approved?'/'+n.value:'/settings')};
  v.querySelector('#cta').onclick=()=>{scrollTo({top:0,behavior:'smooth'});n.focus({preventScroll:true})};
- const drawLb=(by,rows)=>{const x=v.querySelector('#lbx');if(!x)return;x.innerHTML=`<div class="tabs2" style="justify-content:center"><button type="button" class="${by=='views'?'on':''}" data-by="views">${ic('eye',18)}<span>Үзэлт</span></button><button type="button" class="${by=='likes'?'on':''}" data-by="likes">${ic('heart',18)}<span>Like</span></button></div>${(rows||[]).map((p,i)=>`<a class="row lbr" href="/${e(p.username)}"><b class="rk r${i+1}">${i+1}</b>${av(p)}<span class="nm2">${e(p.display_name||p.username)} <small class="mu">#${p.bid}</small></span><b class="val">${ic(by=='views'?'eye':'heart',16)}${p[by]}</b></a>`).join('')||'<p class="mu" style="text-align:center;padding:14px">Одоогоор хуудас алга.</p>'}<div class="act"><a href="/leaderboard"><button class="g" type="button">Бүгдийг харах ${ic('arrow',14)}</button></a></div>`;x.querySelectorAll('[data-by]').forEach(b=>b.onclick=async()=>{const r=await lbRows(b.dataset.by);drawLb(b.dataset.by,r)})};
- drawLb('views',Array.isArray(top)?top:[]);
+ const drawLb=(by,rows)=>{const x=v.querySelector('#lbx');if(!x)return;x.innerHTML=`${lbTabsHTML(by)}${lbRowsHTML(rows,by)}<div class="act"><a href="/leaderboard"><button class="g" type="button">Бүгдийг харах ${ic('arrow',14)}</button></a></div>`;x.querySelectorAll('[data-by]').forEach(b=>b.onclick=async()=>drawLb(b.dataset.by,await lbFetch(b.dataset.by,10)))};
+ drawLb(top[0],top[1]);
  v.querySelectorAll('.fqh').forEach(b=>b.onclick=()=>{const f=b.parentNode,o=f.classList.toggle('open');b.setAttribute('aria-expanded',o)});
  const num=(el,to)=>{const t0=performance.now();const f=tt=>{const p=Math.min(1,(tt-t0)/900);el.textContent=Math.round(to*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(f)};requestAnimationFrame(f)};
  v.querySelectorAll('.cnt').forEach(el=>num(el,+el.dataset.n||0));

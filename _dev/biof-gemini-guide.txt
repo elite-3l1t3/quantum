@@ -301,3 +301,23 @@ Cache-bust: ?v=9 (main.js дотор const V='9').
 
 ИМЭЙЛИЙН ЗАГВАР: _dev/email-magic-link.html (Magic Link) ба _dev/email-confirm-signup.html (Confirm signup) — Supabase → Authentication → Email Templates дээр Body-д бүтнээр нь хуулна. {{ .Token }} заавал байх ёстой.
 Subject: "biof нэвтрэх код: {{ .Token }}" / "biof бүртгэл баталгаажуулах код: {{ .Token }}". SMTP: Resend (smtp.resend.com, 465, username "resend", password = API key).
+
+
+18. V10 ӨӨРЧЛӨЛТ (хамгийн сүүлийн, зөрвөл энэ хэсэг үнэн)
+------------------------------------------------------
+SQL: _dev/v9.sql (дараалал: ... v7 → v8 → v9). Cache-bust ?v=11 (main.js const V).
+НЭВТРЭЛТ: login(mode,name) — "Бүртгүүлэх" таб (1.нэр сонгох → 2.Discord/имэйл баталгаажуулах → 3.бэлэн; нэр нь localStorage.pending-д хадгалагдаж нэвтэрмэгц авна), "Нэвтрэх" таб (shouldCreateUser:false; бүртгэлгүй имэйл бол бүртгүүлэх таб руу шилжүүлнэ). OTP код 6–10 оронтой (Supabase "Email OTP Length" ямар ч байж болно).
+МОДЕРАТОР: profiles.role = 'moderator'. Админ → Хэрэглэгчид → "Модератор болгох". Модератор /admin (Модератор самбар): Мэдэгдлүүд, Давж заалдах, Баталгаажуулалт, Миний үйлдлүүд. mod_act RPC.
+  Anti-abuse: админ/модераторт үйлдэл хийхгүй; өөртөө хийхгүй; өөрийн хорьсон хүний давж заалдахыг шийдэхгүй; админы хорьсныг суллахгүй; өдөрт 15 хориг, 25 баталгаажуулалт, цагт 60 үйлдэл;
+  модераторын хориг = "түр хорих" (өгөгдөл устахгүй, banned_by бүртгэгдэнэ); админ "Өгөгдлийг устгах"-аар бүрмөсөн хорино. Бүх үйлдэл mod_log хүснэгтэд, админ "Үйлдлийн түүх"-ээс харна.
+  Автомат тэмдэг: role='moderator' → "Модератор" тэмдэг (icons.js BADGES).
+БАТАЛГААЖУУЛАЛТ: Тэмдгүүд таб → "Баталгаажсан тэмдэг" (нэр+зураг+1 холбоос шаардлагатай, нотлох https холбоос). request_verify RPC, verify_req хүснэгт. Модератор/админ зөвшөөрвөл 'verified' тэмдэг автоматаар нэмэгдэнэ. Татгалзсанаас 14 хоногийн дараа дахин.
+ЗАГВАРУУД: Чимэх таб → "Загварууд": Бэлэн (PAGE_TPL: Minimal, Neon, Glass, Retro, Luxury, Soft) / Алдартай / Шинэ / Дуртай / Миний. Нийтлэх нь зөвхөн verified/админ (tpl_publish, ≤5, өдөрт 10). tpls, tpl_favs, tpl_uses хүснэгт; tpl_fav (зүрх), tpl_use (ашигласан тоо, хүн бүр 1 удаа). Зураг/дуу/видео загварт орохгүй.
+ФОНТ: theme.font (FONTS, icons.js: Inter, Montserrat, Playfair Display, Comfortaa, Rubik, JetBrains Mono, Press Start 2P, Lobster — бүгд кирилл). Сонгосон фонт л Google Fonts-оос ачаалагдана.
+ВИДЕО/ДУУ: Холбоосууд → "Видео / дуу оруулах" (≤3): YouTube (youtube-nocookie), Spotify, SoundCloud. links[] {emb:1}. Профайл дээр эхлээд зураг/товч, дарахад iframe. CSP frame-src + img-src i.ytimg.com нэмэгдсэн.
+7 ХОНОГИЙН ШИЛДЭГ: top_week(p_limit) RPC (views_daily). Тэргүүлэгчид: "7 хоногийн шилдэг / Үзэлт / Like". js/board.js нүүр хуудсанд ч ачаалагдана.
+SEO: .github/workflows/seo.yml 6 цаг тутам _dev/seo/build.mjs ажиллуулна: топ 500 + бүх verified хэрэглэгчид /<нэр>/index.html (200 статус, title, description, canonical, OG, JSON-LD ProfilePage, JS-гүй ч харагдах агуулга), sitemap.xml, index/leaderboard дээр <!--SEO--> холбоосууд. theme.noidx (Миний мэдээлэл → "Google хайлтад харагдах" унтраах) бол үүсгэхгүй. Хуучин/хориглогдсон хуудсыг _dev/seo/pages.json-оор устгана.
+  GitHub → Actions → "SEO pages" → Run workflow гараар ч ажиллуулж болно. Settings → Actions → General → Workflow permissions = "Read and write".
+FAVICON: /favicon.ico (16/32/48), /favicon.svg, /apple-touch-icon.png, /icon-192.png, /icon-512.png, /icon-maskable.png, /site.webmanifest, /og.png (1200x630). Бүх html-д static <link>. Google Search Console-д domain баталгаажуулж sitemap илгээх.
+ИМЭЙЛ: Resend SMTP (smtp.resend.com:465, username "resend"). Загвар: _dev/email-*.html (лого = https://biof.site/icon-192.png).
+БУСАД ЗАСВАР: i18n хэрэглэгчийн текстийг (bio, нэр, холбоос) орчуулахгүй болсон; профайлын таб гарчиг "Нэр (@username)".

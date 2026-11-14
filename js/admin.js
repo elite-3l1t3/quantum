@@ -16,13 +16,14 @@ function bpWire(root){
 }
 const bpGet=root=>[...root.querySelectorAll('.bpi.on')].map(b=>b.dataset.bk);
 async function admin(v){
- if(!me||me.role!='admin')return v.innerHTML='<div class="card">Таньд эрх алга</div>';
+ if(!me||!['admin','moderator'].includes(me.role))return v.innerHTML='<div class="card">Таньд эрх алга</div>';
+ const isA=me.role=='admin';
  const N=25;let q='',pg=0,t,rows={};const sel=new Set();
  const[sr0,ss]=await Promise.all([sb.from('site').select('*').maybeSingle(),getStatus().catch(()=>({d:null}))]);
  const sr=sr0.data||{},d=ss.d||{};
- const TB=[['o','Тойм','chart'],['u','Хэрэглэгчид','user'],['g','Тэмдэг олгох','badge'],['r','Мэдэгдлүүд','flag'],['p','Давж заалдах','shield'],['s','Аюулгүй байдал','lock']];
+ const TB=[['o','Тойм','chart',1],['u','Хэрэглэгчид','user',1],['g','Тэмдэг олгох','badge',1],['r','Мэдэгдлүүд','flag',0],['p','Давж заалдах','shield',0],['v','Баталгаажуулалт','badge',0],['l',isA?'Үйлдлийн түүх':'Миний үйлдлүүд','pulse',0],['s','Аюулгүй байдал','lock',1]].filter(x=>isA||!x[3]);
  const stat=(n,l)=>`<div><b>${n??'–'}</b><span>${l}</span></div>`;
- v.innerHTML=`<div class="dash"><h1 class="sec2" style="margin:12px 0">Админ самбар</h1><div class="tabs2">${TB.map((x,i)=>`<button type="button" class="${i?'':'on'}" data-t="${x[0]}">${ic(x[2],18)}<span>${x[1]}</span><em class="cn" data-cn="${x[0]}"></em></button>`).join('')}</div>
+ v.innerHTML=`<div class="dash"><h1 class="sec2" style="margin:12px 0">${isA?'Админ самбар':'Модератор самбар'}</h1>${isA?'':`<div class="tip">${ic('shield',18)}<span>Модератор: мэдэгдэл, давж заалдах, баталгаажуулалтыг шийднэ. Таны хориг өгөгдлийг устгахгүй (түр хорих) бөгөөд бүх үйлдэл админд харагдана. Өдөрт 15 хориг хүртэл.</span></div>`}<div class="tabs2">${TB.map((x,i)=>`<button type="button" class="${i?'':'on'}" data-t="${x[0]}">${ic(x[2],18)}<span>${x[1]}</span><em class="cn" data-cn="${x[0]}"></em></button>`).join('')}</div>
  <section data-s="o"><div class="cd"><div class="stg">${stat(d.total,'Нийт бүртгэл')}${stat(d.today,'Өнөөдөр шинэ бүртгэл')}${stat(d.live,'Идэвхтэй хуудас')}${stat(d.banned,'Хаасан хэрэглэгч')}</div><div class="stg" style="margin-top:10px">${stat(d.blocked,'Хаасан сэжигтэй хүсэлт')}${stat(sr.reg_open===false?'Түр хаалттай':'Хэвийн','Бүртгэл')}${stat(sr.uploads_open===false?'Түр хаалттай':'Хэвийн','Файл оруулалт')}${stat(sr.daily_cap??300,'Өдрийн дээд бүртгэл')}</div></div></section>
  <section data-s="u" hidden><div class="cd"><input id="q" placeholder="Нэр эсвэл bid-ээр хайх"><div id="list"></div><div class="act"><button class="g" id="pv">Өмнөх</button><span class="mu" id="pgn"></span><button class="g" id="nx">Дараах</button></div></div>
  <div class="cd bulk" id="bk" style="margin-top:14px" hidden><div class="act" style="justify-content:space-between"><b id="bkn"></b><button class="g" type="button" id="bkc">Сонголт цуцлах</button></div><p class="mu" style="margin:6px 0 8px">Олгох эсвэл авах тэмдгүүдээ сонгоно уу (олныг зэрэг сонгож болно):</p><div id="bkp">${bpHTML([])}</div><div class="act" style="justify-content:flex-start;margin-top:10px"><button id="bka">${ic('plus',16)}Олгох</button><button class="g" id="bkr">${ic('x',16)}Авах</button></div></div></section>
@@ -30,6 +31,8 @@ async function admin(v){
  <div class="cd" style="margin-top:14px"><h3>${ic('user',20)}Хэрэглэгчдийг сонгож олгох</h3><p class="mu" style="margin-top:6px">"Хэрэглэгчид" таб дээр хүмүүсийн өмнөх нүдийг чагтлахад доор нь олон тэмдэг зэрэг олгох хэсэг гарч ирнэ.</p></div></section>
  <section data-s="r" hidden><div class="cd"><p class="mu" style="margin-bottom:8px">${ic('alert',14)} Нэвтэрсэн <b>${sr.flag_hide??5}</b> өөр хүн 3 хоногт мэдэгдвэл хуудас автоматаар <b>түр нуугдана</b> (устгахгүй, хорихгүй). Та шалгаад "Ил гаргах" эсвэл "Хориглох"-г сонгоно.</p><div id="rps"></div></div></section>
  <section data-s="p" hidden><div class="cd"><div id="aps"></div></div></section>
+ <section data-s="v" hidden><div class="cd"><div id="vrs"></div></div></section>
+ <section data-s="l" hidden><div class="cd"><div id="lgs"></div></div></section>
  <section data-s="s" hidden><div class="cd">
  <div class="fl"><label>Өдөрт шинээр бүртгүүлэх дээд хязгаар (ботоос хамгаална)</label><div class="act" style="justify-content:flex-start"><input id="dc" type="number" min="1" max="5000" style="width:110px;margin:0" value="${sr.daily_cap??300}"><button class="g" id="dcb">Хадгалах</button></div></div>
  <div class="fl"><label>Автоматаар нуух босго (өөр өөр мэдэгдэгчийн тоо)</label><div class="act" style="justify-content:flex-start"><input id="fh" type="number" min="2" max="1000" style="width:110px;margin:0" value="${sr.flag_hide??5}"><button class="g" id="fhb">Хадгалах</button></div></div>
@@ -38,6 +41,7 @@ async function admin(v){
  const Q=s=>v.querySelector(s);
  const tbs=[...v.querySelectorAll('.tabs2 button')];
  tbs.forEach(b=>b.onclick=()=>{tbs.forEach(x=>x.classList.toggle('on',x==b));v.querySelectorAll('section[data-s]').forEach(x=>x.hidden=x.dataset.s!=b.dataset.t)});
+ tbs[0].click();
  const cnt=(k,n)=>{const x=Q('[data-cn="'+k+'"]');if(x)x.textContent=n?n:''};
  bpWire(Q('#bkp'));bpWire(Q('#rgp'));
  const bulkUi=()=>{Q('#bk').hidden=!sel.size;Q('#bkn').textContent=sel.size+' хэрэглэгч сонгосон'};
@@ -46,7 +50,7 @@ async function admin(v){
   const c=q.replace(/[^a-zA-Z0-9_ёөүа-яЁӨҮА-Я .-]/g,'');
   if(c){const n=c.replace('#','');r=/^\d+$/.test(n)?r.eq('bid',+n):r.or('username.ilike.%'+c+'%,display_name.ilike.%'+c+'%')}
   const{data,error}=await r;if(error)toast(error.message);const L=data||[];rows={};L.forEach(p=>rows[p.bid]=p);
-  Q('#list').innerHTML=L.map(p=>`<div class="row" style="flex-wrap:wrap"><label class="chk"><input type="checkbox" data-sel="${p.bid}" ${sel.has(p.bid)?'checked':''}><i></i></label><b>#${p.bid}</b><span style="flex:1;min-width:140px">${p.username?`<a href="/${e(p.username)}" target="_blank">${e(p.username)}</a>`:'—'} ${p.banned?'<span class="tag bad">Хориглосон</span>':''}${p.hidden?'<span class="tag warn">Нуугдсан</span>':''} <small class="mu">${ic('eye',13)} ${p.views} ${ic('heart',13)} ${p.likes}</small><span class="bds sm">${(p.badges||[]).map(x=>`<span class="bd">${ic(BINFO(String(x).toLowerCase())[1],12)}${e(BINFO(String(x).toLowerCase())[0])}</span>`).join('')}</span></span><button class="g" data-a="${p.banned?'unban':'ban'}" data-b="${p.bid}">${p.banned?'Хориг цуцлах':'Хориглох'}</button><button class="g" data-a="badges" data-b="${p.bid}">${ic('badge',14)}Тэмдэг</button><button class="g" data-a="rename" data-b="${p.bid}">Нэр солих</button><button class="g" data-a="free" data-b="${p.bid}">Нэр чөлөөлөх</button></div>`).join('')||'<p class="mu" style="margin:12px 0">Хэрэглэгч олдсонгүй.</p>';
+  Q('#list').innerHTML=L.map(p=>`<div class="row" style="flex-wrap:wrap"><label class="chk"><input type="checkbox" data-sel="${p.bid}" ${sel.has(p.bid)?'checked':''}><i></i></label><b>#${p.bid}</b><span style="flex:1;min-width:140px">${p.username?`<a href="/${e(p.username)}" target="_blank">${e(p.username)}</a>`:'—'} ${p.role=='admin'?'<span class="tag">Админ</span>':p.role=='moderator'?'<span class="tag ok">Модератор</span>':''}${p.banned?'<span class="tag bad">Хориглосон</span>':''}${p.hidden?'<span class="tag warn">Нуугдсан</span>':''} <small class="mu">${ic('eye',13)} ${p.views} ${ic('heart',13)} ${p.likes}</small><span class="bds sm">${(p.badges||[]).map(x=>`<span class="bd">${ic(BINFO(String(x).toLowerCase())[1],12)}${e(BINFO(String(x).toLowerCase())[0])}</span>`).join('')}</span></span><button class="g" data-a="${p.banned?'unban':'ban'}" data-b="${p.bid}">${p.banned?'Хориг цуцлах':'Хориглох'}</button><button class="g" data-a="badges" data-b="${p.bid}">${ic('badge',14)}Тэмдэг</button><button class="g" data-a="rename" data-b="${p.bid}">Нэр солих</button>${p.role=='admin'||p.banned?'':`<button class="g" data-a="${p.role=='moderator'?'unmod':'mkmod'}" data-b="${p.bid}">${ic('shield',14)}${p.role=='moderator'?'Модератор хасах':'Модератор болгох'}</button>`}${p.banned?`<button class="g dng2" data-a="purge" data-b="${p.bid}">Өгөгдлийг устгах</button>`:''}<button class="g" data-a="free" data-b="${p.bid}">Нэр чөлөөлөх</button></div>`).join('')||'<p class="mu" style="margin:12px 0">Хэрэглэгч олдсонгүй.</p>';
   Q('#pgn').textContent='Хуудас '+(pg+1);Q('#pv').disabled=pg==0;Q('#nx').disabled=L.length<N;
  };
  const RL=Object.fromEntries(RCAT.map(x=>[x[0],x[1]]));
@@ -56,7 +60,7 @@ async function admin(v){
   const G=new Map();(data||[]).forEach(r=>{const g=G.get(r.profile_id)||{p:r.profiles,id:r.profile_id,L:[],who:new Set()};g.L.push(r);if(r.reporter)g.who.add(r.reporter);G.set(r.profile_id,g)});
   const A=[...G.values()].sort((a,b)=>b.who.size-a.who.size||b.L.length-a.L.length);cnt('r',A.length);
   Q('#rps').innerHTML=A.map(g=>{const p=g.p||{},cats={};g.L.forEach(r=>cats[r.cat]=(cats[r.cat]||0)+1);
-   return`<div class="rep"><div class="act" style="justify-content:flex-start"><b>${p.username?e(p.username):'#'+(p.bid||'?')}</b>${p.hidden?'<span class="tag warn">Нуугдсан</span>':''}${p.banned?'<span class="tag bad">Хориглосон</span>':''}<span class="mu" style="margin-left:auto">${g.L.length} мэдэгдэл · ${g.who.size} нэвтэрсэн хүн</span></div><div class="bds sm">${Object.entries(cats).map(([c,n])=>`<span class="bd">${e(RL[c]||c)} ×${n}</span>`).join('')}</div>${g.L.filter(r=>r.note).slice(0,4).map(r=>`<p class="mu sel" style="font-size:13px">“${e(r.note)}”</p>`).join('')}<div class="act" style="justify-content:flex-start;margin-top:8px">${p.username?`<a href="/${e(p.username)}" target="_blank"><button class="g">${ic('eye',14)}Үзэх</button></a>`:''}${p.hidden?`<button data-fx="unhide" data-p="${g.id}">Ил гаргах</button>`:`<button class="g" data-fx="hide" data-p="${g.id}">Нуух</button>`}${p.banned?'':`<button class="g dng2" data-fban="${p.bid}" data-p="${g.id}">Хориглох</button>`}<button class="g" data-fx="flags_done" data-p="${g.id}">${ic('check',14)}Шийдсэн</button></div></div>`}).join('')||'<p class="mu">Шинэ мэдэгдэл алга.</p>';
+   return`<div class="rep"><div class="act" style="justify-content:flex-start"><b>${p.username?e(p.username):'#'+(p.bid||'?')}</b>${p.hidden?'<span class="tag warn">Нуугдсан</span>':''}${p.banned?'<span class="tag bad">Хориглосон</span>':''}<span class="mu" style="margin-left:auto">${g.L.length} мэдэгдэл · ${g.who.size} нэвтэрсэн хүн</span></div><div class="bds sm">${Object.entries(cats).map(([c,n])=>`<span class="bd">${e(RL[c]||c)} ×${n}</span>`).join('')}</div>${g.L.filter(r=>r.note).slice(0,4).map(r=>`<p class="mu sel" style="font-size:13px">“${e(r.note)}”</p>`).join('')}<div class="act" style="justify-content:flex-start;margin-top:8px">${p.username?`<a href="/${e(p.username)}" target="_blank"><button class="g">${ic('eye',14)}Үзэх</button></a>`:''}${p.hidden?`<button data-fx="unhide" data-p="${g.id}">Ил гаргах</button>`:`<button class="g" data-fx="hide" data-p="${g.id}">Нуух</button>`}${p.banned?'':`<button class="g dng2" data-fban="${p.bid}" data-p="${g.id}">${isA?'Хориглох':'Түр хориглох'}</button>`}<button class="g" data-fx="flags_done" data-p="${g.id}">${ic('check',14)}Шийдсэн</button></div></div>`}).join('')||'<p class="mu">Шинэ мэдэгдэл алга.</p>';
  };
  const loadAp=async()=>{
   const{data,error}=await sb.from('appeals').select('id,user_id,body,created_at,profiles(username,bid)').eq('status','open').order('id').limit(50);
@@ -71,11 +75,13 @@ async function admin(v){
   if(!error&&r=='ok'){loadList();loadRep()}
   return!error&&r=='ok';
  };
- const mod=async(a,pid,id)=>{
-  const{data:r,error}=await sb.rpc('admin_mod',{p_act:a,p_pid:pid||null,p_id:id??null});
-  toast(error?error.message:(r=='ok'?'Амжилттай':(ERR[r]||r)));
-  if(!error&&r=='ok'){loadRep();loadAp();loadList()}
+ const MERR={denied:'Энэ үйлдлийг хийх эрхгүй',self:'Өөртөө хийх боломжгүй',own:'Өөрийн хорьсон хүний хүсэлтийг өөр хүн шийднэ',limit:'Өнөөдрийн хязгаар дууслаа',note:'Шалтгаан бичнэ үү',rate:ERR.rate,none:'Олдсонгүй (аль хэдийн шийдэгдсэн байж магадгүй)'};
+ const mod=async(a,pid,id,note)=>{
+  const{data:r,error}=await sb.rpc('mod_act',{p_act:a,p_pid:pid||null,p_note:note||'',p_id:id??null});
+  toast(error?error.message:(r=='ok'?'Амжилттай':(MERR[r]||ERR[r]||r)));
+  if(!error&&r=='ok'){loadRep();loadAp();loadVr();loadLog();if(isA)loadList()}
  };
+ const mod2=async(a,pid)=>{const{data:r,error}=await sb.rpc('admin_mod',{p_act:a,p_pid:pid,p_id:null});toast(error?error.message:r=='ok'?'Амжилттай':(ERR[r]||r));if(!error&&r=='ok')loadList()};
  const banFlow=async(bid,uid)=>{
   const x=await dlg({icon:'shield',danger:true,title:'Хэрэглэгчийг хориглох',body:'Нэрнээс бусад бүх мэдээлэл (зураг, дуу, видео, холбоос, үзэлт, like) бүр мөсөн устна. Хэрэглэгч давж заалдах хүсэлт илгээж болно.',input:{placeholder:'Шалтгаан (хэрэглэгчид харагдана)'},ok:'Хориглох'});
   if(x===null)return;
@@ -101,9 +107,13 @@ async function admin(v){
    const x=await dlg({icon:'badge',title:'Тэмдэг олгох',wide:true,html:`<p class="mu" style="margin-bottom:10px">${e(p&&p.username||'#'+t0)} — дарж сонгоно уу. Олныг зэрэг сонгож болно.</p>${bpHTML(p&&p.badges||[])}`,wire:bpWire,collect:bpGet,ok:'Хадгалах'});
    if(x)act(a,t0,x.join(','))}
   else if(a=='ban')banFlow(t0,p&&p.id);
+  else if(a=='mkmod'||a=='unmod'){if(a=='mkmod'&&!(await dlg({icon:'shield',title:'Модератор болгох уу?',body:(p.username||'#'+t0)+' мэдэгдэл, давж заалдах, баталгаажуулалтыг шийдэх эрхтэй болно. Тэр хүний бүх үйлдэл "Үйлдлийн түүх" дээр харагдана.',ok:'Тийм'})))return;mod2(a=='mkmod'?'set_mod':'unset_mod',p.id)}
+  else if(a=='purge'){if(await dlg({icon:'trash',danger:true,title:'Өгөгдлийг бүрмөсөн устгах уу?',body:'Түр хориглогдсон хэрэглэгчийн зураг, холбоос, үзэлт зэрэг бүх мэдээлэл устна. Буцаах боломжгүй.',ok:'Устгах'})&&await act('ban',t0,'Дүрэм зөрчсөн')&&p)await purgeFiles(p.id)}
   else if(a)act(a,t0)};
- Q('#rps').onclick=ev=>{const b=ev.target.closest('[data-fx]');if(b){mod(b.dataset.fx,b.dataset.p);return}const f=ev.target.closest('[data-fban]');if(f)banFlow(+f.dataset.fban,f.dataset.p)};
+ const suspend=async pid=>{const x=await dlg({icon:'shield',danger:true,title:'Түр хориглох',body:'Хуудас нийтэд харагдахгүй болж, хэрэглэгч тохиргоо хийж чадахгүй. Өгөгдөл устахгүй — админ шалгаад шийднэ. Хэрэглэгч давж заалдаж болно.',input:{placeholder:'Шалтгаан (заавал, хэрэглэгчид харагдана)'},ok:'Хориглох'});if(x===null)return;if(x.length<3)return toast(MERR.note);mod('suspend',pid,null,x)};
+ Q('#rps').onclick=ev=>{const b=ev.target.closest('[data-fx]');if(b){mod(b.dataset.fx,b.dataset.p);return}const f=ev.target.closest('[data-fban]');if(f){isA?banFlow(+f.dataset.fban,f.dataset.p):suspend(f.dataset.p)}};
  Q('#aps').onclick=async ev=>{const b=ev.target.closest('[data-ap]');if(!b)return;if(b.dataset.ap=='appeal_ok'&&!(await dlg({icon:'check',title:'Хоригийг цуцлах уу?',body:'Хэрэглэгч дахин нэвтэрч, хуудсаа шинээр тохируулах боломжтой болно. (Устгагдсан зураг, холбоос сэргэхгүй.)',ok:'Цуцлах'})))return;mod(b.dataset.ap,null,+b.dataset.i)};
+ Q('#vrs').onclick=async ev=>{const b=ev.target.closest('[data-vr]');if(b){if(b.dataset.vr=='verify_ok'){if(!(await dlg({icon:'badge',title:'Баталгаажуулах уу?',body:'Хэрэглэгчид "Баталгаажсан" тэмдэг автоматаар олгогдоно.',ok:'Баталгаажуулах'})))return;mod('verify_ok',null,+b.dataset.i)}else{const x=await dlg({icon:'x',title:'Татгалзах',input:{placeholder:'Шалтгаан (хэрэглэгчид харагдана)'},ok:'Татгалзах'});if(x!==null)mod('verify_no',null,+b.dataset.i,x)}return}const l=ev.target.closest('[data-pf]');if(l){ev.preventDefault();linkGo(l.dataset.pf)}};
  Q('#q').oninput=ev=>{clearTimeout(t);t=setTimeout(()=>{q=ev.target.value.trim();pg=0;loadList()},300)};
  Q('#pv').onclick=()=>{if(pg>0){pg--;loadList()}};Q('#nx').onclick=()=>{pg++;loadList()};
  Q('#bka').onclick=()=>bulk(false);Q('#bkr').onclick=()=>bulk(true);Q('#rga').onclick=()=>range(false);Q('#rgr').onclick=()=>range(true);
@@ -113,5 +123,21 @@ async function admin(v){
  Q('#dcb').onclick=()=>act('daily_cap',0,Q('#dc').value);
  Q('#fhb').onclick=()=>mod('flag_hide',null,+Q('#fh').value||5);
  Q('#rs').onclick=()=>Q('#ru').value&&act('reserve',0,Q('#ru').value);Q('#rr').onclick=()=>Q('#ru').value&&act('release',0,Q('#ru').value);
- loadList();loadRep();loadAp();
+ const VST={open:'Шинэ',accepted:'Зөвшөөрсөн',rejected:'Татгалзсан'};
+ async function loadVr(){
+  const{data,error}=await sb.from('verify_req').select('id,user_id,proof,note,created_at,profiles(username,bid,avatar_url,views)').eq('status','open').order('id').limit(50);
+  if(error){Q('#vrs').innerHTML='<p class="mu">Ачаалагдсангүй: '+e(error.message)+'. v9.sql ажиллуулсан эсэхээ шалгана уу.</p>';return}
+  const L=data||[];cnt('v',L.length);
+  Q('#vrs').innerHTML=L.map(r=>{const p=r.profiles||{},pf=safe(r.proof);return`<div class="rep"><div class="act" style="justify-content:flex-start">${av(p)}<b>${e(p.username||'#'+p.bid)}</b><small class="mu">${ic('eye',12)} ${p.views||0}</small><span class="mu" style="margin-left:auto">${new Date(r.created_at).toLocaleDateString()}</span></div><p style="margin:8px 0 4px">${ic('link',14)} <a href="#" data-pf="${e(pf)}" class="sel" style="color:var(--a);word-break:break-all">${e(r.proof)}</a></p>${r.note?`<p class="mu sel" style="white-space:pre-line">${e(r.note)}</p>`:''}<div class="act" style="justify-content:flex-start;margin-top:8px">${p.username?`<a href="/${e(p.username)}" target="_blank"><button class="g">${ic('eye',14)}Хуудас</button></a>`:''}<button data-vr="verify_ok" data-i="${r.id}">${ic('check',14)}Баталгаажуулах</button><button class="g dng2" data-vr="verify_no" data-i="${r.id}">${ic('x',14)}Татгалзах</button></div></div>`}).join('')||'<p class="mu">Шинэ хүсэлт алга.</p>';
+ }
+ const ACTN={hide:'Нуусан',unhide:'Ил гаргасан',flags_done:'Мэдэгдэл шийдсэн',suspend:'Түр хорьсон',appeal_ok:'Давж заалдах зөвшөөрсөн',appeal_no:'Давж заалдах татгалзсан',verify_ok:'Баталгаажуулсан',verify_no:'Баталгаажуулалт татгалзсан',tpl_hide:'Загвар нуусан',tpl_show:'Загвар сэргээсэн',set_mod:'Модератор болгосон',unset_mod:'Модератор хассан',flag_hide:'Нуух босго өөрчилсөн'};
+ async function loadLog(){
+  let q=sb.from('mod_log').select('id,actor,act,target,ref,note,at').order('id',{ascending:false}).limit(60);if(!isA)q=q.eq('actor',me.id);
+  const{data,error}=await q;if(error){Q('#lgs').innerHTML='<p class="mu">Ачаалагдсангүй: '+e(error.message)+'</p>';return}
+  const L=data||[],ids=[...new Set(L.flatMap(x=>[x.actor,x.target]).filter(Boolean))];const U={};
+  if(ids.length){const r=await sb.from('profiles').select('id,username,bid,role').in('id',ids);(r.data||[]).forEach(p=>U[p.id]=p)}
+  const nm=id=>{const p=U[id];return p?e(p.username||'#'+p.bid):'—'};
+  Q('#lgs').innerHTML=L.map(x=>`<div class="row" style="flex-wrap:wrap"><small class="mu" style="min-width:120px">${new Date(x.at).toLocaleString()}</small><b>${nm(x.actor)}${U[x.actor]&&U[x.actor].role=='moderator'?' <span class="tag ok">мод</span>':''}</b><span>${e(ACTN[x.act]||x.act)}</span>${x.target?`<span class="mu">→ ${nm(x.target)}</span>`:''}${x.note?`<small class="mu sel" style="flex-basis:100%">“${e(x.note)}”</small>`:''}</div>`).join('')||'<p class="mu">Үйлдэл алга.</p>';
+ }
+ if(isA)loadList();loadRep();loadAp();loadVr();loadLog();
 }

@@ -83,7 +83,7 @@ if(LANG!='mn'){
  const AT=['placeholder','aria-label','title','data-d'];
  const walk=n=>{
   if(n.nodeType==3){const t=T(n.nodeValue);if(t!==n.nodeValue)n.nodeValue=t;return}
-  if(n.nodeType!=1||n.tagName=='SCRIPT'||n.tagName=='STYLE')return;
+  if(n.nodeType!=1||n.tagName=='SCRIPT'||n.tagName=='STYLE'||n.tagName=='TEXTAREA'||(n.classList&&['sel','nm','lk','loc','emb','emc','tpm','seo','nm2'].some(c=>n.classList.contains(c))))return;
   AT.forEach(a=>{if(n.hasAttribute(a)){const o=n.getAttribute(a),v=T(o);if(v!==o)n.setAttribute(a,v)}});
   n.childNodes.forEach(walk);
  };

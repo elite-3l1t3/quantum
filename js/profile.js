@@ -1,4 +1,4 @@
-const banHTML=(name,adm)=>`<div class="nf"><span class="bnic">${ic('shield',44)}</span><h2>Энэ хэрэглэгчийг хориглосон</h2><p class="mu" style="margin-top:8px"><b>@${e(name)}</b></p><p class="mu" style="margin-top:6px">Дүрэм зөрчсөн тул хуудас, зураг, дуу болон бүх мэдээллийг нь устгасан.</p>${adm?'<p class="mu" style="margin-top:6px">(Та админ тул харж байна. Хоригийг админ самбараас цуцална.)</p>':''}<div class="act" style="margin-top:18px"><a href="/"><button class="g">Нүүр хуудас</button></a>${adm?'<a href="/admin"><button>Админ самбар</button></a>':''}</div></div>`;
+const banHTML=(name,adm)=>`<div class="nf"><span class="bnic">${ic('shield',44)}</span><h2>Энэ хэрэглэгчийг хориглосон</h2><p class="mu" style="margin-top:8px"><b>@${e(name)}</b></p><p class="mu" style="margin-top:6px">Дүрэм зөрчсөн тул энэ хуудсыг хаасан байна.</p>${adm?'<p class="mu" style="margin-top:6px">(Та админ тул харж байна. Хоригийг админ самбараас цуцална.)</p>':''}<div class="act" style="margin-top:18px"><a href="/"><button class="g">Нүүр хуудас</button></a>${adm?'<a href="/admin"><button>Админ самбар</button></a>':''}</div></div>`;
 const hidHTML=name=>`<div class="nf"><span class="bnic">${ic('eye',44)}</span><h2>Энэ хуудас түр нуугдсан</h2><p class="mu" style="margin-top:8px"><b>@${e(name)}</b></p><p class="mu" style="margin-top:6px">Олон хүн мэдэгдсэн тул админ шалгаж байна. Шалгалт дуусмагц дахин нээгдэж магадгүй.</p><div class="act" style="margin-top:18px"><a href="/"><button class="g">Нүүр хуудас</button></a></div></div>`;
 async function nf(v,name){
  document.body.classList.remove('prof');chrome();document.title='404 · biof';
@@ -11,7 +11,7 @@ async function nf(v,name){
  }
  v.innerHTML=`<div class="nf"><div class="big">404</div><h2>Хуудас олдсонгүй</h2><p class="mu" style="margin-top:8px">${ok?`<b>biof.site/${e(name)}</b> нэр сул байж болзошгүй.`:'Хаяг буруу байна.'}</p><div class="act" style="margin-top:18px">${ok?'<button id="cl">Энэ нэрийг авах</button>':''}<a href="/"><button class="g">Нүүр хуудас</button></a></div></div>`;
  if(ok)$('#cl').onclick=async()=>{
-  if(!user){localStorage.pending=name;return login()}
+  if(!user){localStorage.pending=name;return login('signup',name)}
   if(me&&me.banned)return toast(ERR.banned);
   if(!cool('claim',2000))return;
   const{data}=await sb.rpc('claim_username',{u:name});
@@ -72,8 +72,8 @@ async function profile(v,name){
  if(demo)chrome();
  const k=skin(p),t=k.t,R=document.body.style;
  k.vars.split(';').forEach(s=>{const j=s.indexOf(':');R.setProperty(s.slice(0,j),s.slice(j+1))});
- document.title=p.display_name||p.username;
- const fav=document.querySelector('link[rel=icon]');if(fav)fav.href=cu(p.avatar_url)||'data:,';
+ document.title=(p.display_name&&p.display_name!=p.username?p.display_name+' (@'+p.username+')':'@'+p.username)+(demo?' · biof':'');
+ if(cu(p.avatar_url))document.querySelectorAll('link[rel=icon]').forEach(l=>{l.href=p.avatar_url;l.removeAttribute('type');l.removeAttribute('sizes')});
  R.backgroundColor=k.bgc;
  if(cu(p.bg_url)&&!cu(t.video)){const d=document.createElement('div');d.className='bgv bgi';d.style.backgroundImage=`url("${p.bg_url}")`;d.style.backgroundPosition=bgPos(t);document.body.prepend(d)}
  if(cu(t.cursor)){R.cursor=`url(${t.cursor}) 0 0,auto`;document.body.classList.add('ucur')}
@@ -84,6 +84,7 @@ async function profile(v,name){
  v.innerHTML=cardHTML(p,{liked,demo,own});
  if(p.hidden)v.insertAdjacentHTML('afterbegin',`<div class="tip warn hbx">${ic('alert',18)}<span>${own?'Таны хуудас олон мэдэгдэл авсан тул нийтэд түр нуугдсан байна. Админ шалгаад шийднэ.':'Энэ хуудас нийтэд нуугдсан (олон мэдэгдэл). Админ самбараас шийднэ үү.'}</span></div>`);
  v.querySelectorAll('a.lk').forEach(a=>a.onclick=ev=>{ev.preventDefault();linkGo(a.getAttribute('href'))});
+ v.querySelectorAll('[data-emb]').forEach(d=>{const go=()=>{const f=document.createElement('iframe');f.src=d.dataset.emb;f.title=d.getAttribute('aria-label')||'';f.allow='autoplay; encrypted-media; picture-in-picture; fullscreen';f.allowFullscreen=true;f.loading='lazy';f.referrerPolicy='strict-origin-when-cross-origin';if(+d.dataset.h)f.style.height=d.dataset.h+'px';d.replaceChildren(f);d.classList.add('on');d.removeAttribute('role');d.onclick=d.onkeydown=null;if(aud&&!aud.paused)aud.pause()};d.onclick=go;d.onkeydown=ev=>{if(ev.key=='Enter'||ev.key==' '){ev.preventDefault();go()}}});
  if(demo){
   v.insertAdjacentHTML('beforeend',`<div class="demo-tools"><h3>${ic('sliders',20)}Загвар сонгоод үз</h3><p class="mu">Доорх өнгөнүүдээс сонгоход энэ хуудас шууд өөрчлөгдөнө. Өөрийн хуудсанд ч ингэж сонгоно.</p><div class="pre">${PRE.map(x=>`<button type="button" class="ps" data-dp="${x[0]}" aria-label="${x[1]}"><i style="--s1:${x[2].bgc};--s2:${x[2].ac};--s3:${x[2].cc}"></i><span>${x[1]}</span></button>`).join('')}</div></div>`);
   v.querySelectorAll('[data-dp]').forEach(b=>b.onclick=()=>{const x=PRE.find(y=>y[0]==b.dataset.dp);DEMO.accent=x[2].ac;Object.assign(DEMO.theme,{tc:x[2].tc,bgc:x[2].bgc,cc:x[2].cc,ic:x[2].ic});route()});

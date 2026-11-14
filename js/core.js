@@ -67,42 +67,60 @@ const authErr=(m,st)=>{m=String(m||'');
  if(/invalid.*email|unable to validate email/i.test(m))return'Имэйл хаяг буруу байна.';
  if(/fetch|network/i.test(m))return'Сүлжээний алдаа. Интернэтээ шалгана уу.';
  return m||'Алдаа гарлаа';};
-function login(){
+/* Нэвтрэх / бүртгүүлэх цонх. mode: 'login' | 'signup'. name: урьдчилан бөглөх хэрэглэгчийн нэр */
+function login(mode,name){
  if(document.querySelector('.lgd'))return;
  const d=document.createElement('div');d.className='dlgb lgd';
- let email='',left=0,tm=0;
- const close=()=>{clearInterval(tm);d.classList.add('out');setTimeout(()=>d.remove(),180);document.removeEventListener('keydown',kd)};
+ let M=mode=='signup'?'signup':'login',email='',un=String(name||localStorage.pending||'').toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,20),unOk=null,left=0,tm=0,ut=0;
+ const close=()=>{clearInterval(tm);clearTimeout(ut);d.classList.add('out');setTimeout(()=>d.remove(),180);document.removeEventListener('keydown',kd)};
  const kd=ev=>{if(ev.key=='Escape')close()};
- const step1=()=>{d.innerHTML=`<div class="dlg lgbox" role="dialog" aria-modal="true"><button class="g mnx lgx" type="button" aria-label="Хаах">${ic('x',18)}</button><div class="dlgi">${ic('user',26)}</div><h3>Нэвтрэх эсвэл бүртгүүлэх</h3><p class="mu">Нууц үг хэрэггүй. Discord эсвэл имэйлээрээ нэвтэрнэ.</p><button type="button" class="dc lgdc">${plat('discord',24)}Discord-оор нэвтрэх</button><div class="or">эсвэл имэйлээр</div><input class="dli" id="lem" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="name@mail.com" value="${e(email)}"><button type="button" id="lsend">Код авах</button><small class="mu lgm2">Имэйл рүү чинь 6 оронтой код очно.</small></div>`;
-  d.querySelector('.lgdc').onclick=()=>{d.querySelector('.lgdc').disabled=true;discordLogin()};
-  const i=d.querySelector('#lem');setTimeout(()=>i.focus(),60);
-  i.onkeydown=ev=>{if(ev.key=='Enter')send()};d.querySelector('#lsend').onclick=send};
+ const tabs=()=>`<div class="lgt" role="tablist"><button type="button" class="${M=='signup'?'on':''}" data-m="signup">Бүртгүүлэх</button><button type="button" class="${M=='login'?'on':''}" data-m="login">Нэвтрэх</button></div>`;
+ const steps=n=>`<ol class="lgs2">${['Нэр сонгох','Баталгаажуулах','Бэлэн'].map((x,i)=>`<li class="${i<n?'dn':i==n?'on':''}"><i>${i<n?ic('check',12,3):i+1}</i>${x}</li>`).join('')}</ol>`;
+ const ways=lbl=>`<button type="button" class="dc lgdc">${plat('discord',24)}Discord-оор ${lbl}</button><div class="or">эсвэл имэйлээр</div><input class="dli" id="lem" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="name@mail.com" value="${e(email)}"><button type="button" id="lsend">${ic('arrow',16)}Имэйл рүү код авах</button>`;
+ const step1=()=>{
+  const sign=M=='signup';
+  d.innerHTML=`<div class="dlg lgbox" role="dialog" aria-modal="true"><button class="g mnx lgx" type="button" aria-label="Хаах">${ic('x',18)}</button>${tabs()}${sign?`${steps(0)}<h3>biof хуудсаа үүсгэе</h3><p class="mu">Эхлээд хаягаа сонго. Дараа нь Discord эсвэл имэйлээ баталгаажуулна. Нууц үг хэрэггүй.</p><div class="lgu"><span>biof.site/</span><input id="lun" maxlength="20" placeholder="таны нэр" autocomplete="off" autocapitalize="none" spellcheck="false" value="${e(un)}"></div><small class="lgst mu" id="lst">Зөвхөн a-z, 0-9, _ (3-20 тэмдэгт)</small><div id="lw" class="lgw">${ways('үргэлжлүүлэх')}</div>`:`<div class="dlgi">${ic('user',26)}</div><h3>Тавтай морил!</h3><p class="mu">Бүртгэлтэй Discord эсвэл имэйлээрээ нэвтэрнэ үү.</p>${ways('нэвтрэх')}<p class="mu lgm2">Бүртгэлгүй юу? <a href="#" data-m="signup">Бүртгүүлэх</a></p>`}</div>`;
+  d.querySelector('.lgdc').onclick=()=>{if(sign&&!pend())return;d.querySelector('.lgdc').disabled=true;discordLogin()};
+  const i=d.querySelector('#lem');i.onkeydown=ev=>{if(ev.key=='Enter')send()};d.querySelector('#lsend').onclick=send;
+  const u=d.querySelector('#lun');
+  if(u){u.oninput=()=>{u.value=u.value.toLowerCase().replace(/[^a-z0-9_]/g,'');un=u.value;unOk=null;chkUn()};chkUn();setTimeout(()=>(un?i:u).focus(),60)}else setTimeout(()=>i.focus(),60);
+ };
+ const setSt=(c,t)=>{const s=d.querySelector('#lst');if(s){s.className='lgst '+c;s.innerHTML=t}const w=d.querySelector('#lw');if(w)w.classList.toggle('off',unOk!==true)};
+ const chkUn=()=>{clearTimeout(ut);
+  if(!/^[a-z0-9_]{3,20}$/.test(un)){unOk=false;setSt('mu',un?'3-20 тэмдэгт, зөвхөн a-z, 0-9, _':'Зөвхөн a-z, 0-9, _ (3-20 тэмдэгт)');return}
+  setSt('mu','Шалгаж байна…');
+  ut=setTimeout(async()=>{const q=un,{data}=await sb.rpc('username_status',{u:q});if(q!=un)return;unOk=data=='available';setSt(unOk?'okk':'bad2',unOk?ic('check',14)+' biof.site/'+e(q)+' сул байна':e(ERR[data]||'Энэ нэрийг авах боломжгүй'))},350)};
+ const pend=()=>{if(unOk!==true){toast(un?'Өөр нэр сонгоно уу':'Эхлээд хаягаа сонгоно уу');const u=d.querySelector('#lun');u&&u.focus();return false}localStorage.pending=un;return true};
  const send=async()=>{
+  if(M=='signup'&&!d.querySelector('#lcode')&&!pend())return;
   const i=d.querySelector('#lem');email=(i?i.value:email).trim().toLowerCase();
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){toast('Имэйл хаягаа зөв бичнэ үү');i&&i.focus();return}
   if(!cool('otp',3000))return;
-  const b=d.querySelector('#lsend,#lres');if(b){b.disabled=true;b.innerHTML='<span class="spin sm"></span>Илгээж байна…'}
-  const{error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:true,emailRedirectTo:location.origin+'/'}});
-  if(error){console.warn('OTP алдаа:',error.status,error.code,error.message);toast(authErr(error.message,error.status));if(b){b.disabled=false;b.textContent=b.id=='lres'?'Код дахин илгээх':'Код авах'}return}
+  const b=d.querySelector('#lsend,#lres');const bt=b&&b.innerHTML;if(b){b.disabled=true;b.innerHTML='<span class="spin sm"></span>Илгээж байна…'}
+  const{error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:M=='signup',emailRedirectTo:location.origin+'/'}});
+  if(error){console.warn('OTP алдаа:',error.status,error.code,error.message);
+   if(M=='login'&&/signups not allowed|not found|user_not_found|otp_disabled/i.test(error.message+' '+(error.code||''))){toast('Энэ имэйлээр бүртгэл алга. "Бүртгүүлэх" таб руу орно уу.');M='signup';step1();return}
+   toast(authErr(error.message,error.status));if(b){b.disabled=false;b.innerHTML=bt}return}
   step2()};
  const step2=()=>{
-  d.innerHTML=`<div class="dlg lgbox" role="dialog" aria-modal="true"><button class="g mnx lgx" type="button" aria-label="Хаах">${ic('x',18)}</button><div class="dlgi">${ic('lock',26)}</div><h3>Кодоо оруулна уу</h3><p class="mu"><b>${e(email)}</b> хаяг руу код илгээлээ. Spam хавтсаа ч шалгаарай.</p><input class="dli otp" id="lcode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="000000"><button type="button" id="lver">Баталгаажуулах</button><div class="act" style="margin-top:6px"><button type="button" class="g" id="lback">Буцах</button><button type="button" class="g" id="lres" disabled>Код дахин илгээх</button></div></div>`;
+  d.innerHTML=`<div class="dlg lgbox" role="dialog" aria-modal="true"><button class="g mnx lgx" type="button" aria-label="Хаах">${ic('x',18)}</button>${M=='signup'?steps(1):`<div class="dlgi">${ic('lock',26)}</div>`}<h3>Имэйлээ шалгана уу</h3><p class="mu"><b>${e(email)}</b> хаяг руу код илгээлээ. Ирэхгүй бол Spam хавтсаа шалгаарай.</p><input class="dli otp" id="lcode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="Код"><button type="button" id="lver">${ic('check',16)}Баталгаажуулах</button><div class="act" style="margin-top:6px"><button type="button" class="g" id="lback">Буцах</button><button type="button" class="g" id="lres" disabled>Код дахин илгээх</button></div></div>`;
   const c=d.querySelector('#lcode');setTimeout(()=>c.focus(),60);
-  let at=0;c.oninput=()=>{c.value=c.value.replace(/\D/g,'');clearTimeout(at);if(c.value.length==6)at=setTimeout(verify,700)};
+  let at=0;c.oninput=ev=>{c.value=c.value.replace(/\D/g,'').slice(0,10);clearTimeout(at);if(c.value.length>=6)at=setTimeout(verify,ev.inputType=='insertFromPaste'||c.value.length>=8?150:1200)};
   c.onkeydown=ev=>{if(ev.key=='Enter')verify()};
   d.querySelector('#lver').onclick=verify;d.querySelector('#lback').onclick=step1;d.querySelector('#lres').onclick=send;
   left=60;clearInterval(tm);tm=setInterval(()=>{left--;const r=d.querySelector('#lres');if(!r){clearInterval(tm);return}if(left<=0){clearInterval(tm);r.disabled=false;r.textContent='Код дахин илгээх'}else r.textContent='Дахин илгээх ('+left+')'},1000)};
  const verify=async()=>{
   const c=d.querySelector('#lcode'),token=(c&&c.value||'').trim();
-  if(!/^\d{6,10}$/.test(token)){toast('Кодоо бүтэн оруулна уу');return}
-  const b=d.querySelector('#lver');if(b.disabled)return;b.disabled=true;b.innerHTML='<span class="spin sm"></span>Шалгаж байна…';
+  if(!/^\d{6,10}$/.test(token)){toast('Имэйлд ирсэн кодоо бүтэн оруулна уу');return}
+  const b=d.querySelector('#lver');if(!b||b.disabled)return;b.disabled=true;b.innerHTML='<span class="spin sm"></span>Шалгаж байна…';
   const{error}=await sb.auth.verifyOtp({email,token,type:'email'});
-  if(error){console.warn('Код шалгах алдаа:',error.status,error.code,error.message);toast(authErr(error.message,error.status));b.disabled=false;b.textContent='Баталгаажуулах';return}
-  close();toast('Амжилттай нэвтэрлээ')};
- d.onclick=ev=>{if(ev.target==d||ev.target.closest('.lgx'))close()};
+  if(error){console.warn('Код шалгах алдаа:',error.status,error.code,error.message);toast(authErr(error.message,error.status));b.disabled=false;b.innerHTML=ic('check',16)+'Баталгаажуулах';c.select();return}
+  close();toast(M=='signup'?'Бүртгэл амжилттай! Хуудсаа тохируулцгаая.':'Амжилттай нэвтэрлээ');
+  if(M=='signup')setTimeout(()=>{if(location.pathname!='/settings')go('/settings')},900)};
+ d.onclick=ev=>{if(ev.target==d||ev.target.closest('.lgx'))return close();const m=ev.target.closest('[data-m]');if(m){ev.preventDefault();if(m.dataset.m!=M){M=m.dataset.m;step1()}}};
  document.addEventListener('keydown',kd);document.body.append(d);step1();
 }
-document.addEventListener('click',ev=>{if(ev.target.closest&&ev.target.closest('.lg'))login()});
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('.lg');if(b)login(b.dataset.mode,b.dataset.name)});
 
 const chrome=()=>{if(!document.querySelector('nav')){app.insertAdjacentHTML('afterbegin',bar());app.insertAdjacentHTML('beforeend',foot())}};
 

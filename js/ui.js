@@ -63,7 +63,7 @@ document.addEventListener('dragstart',ev=>{if(ev.target.closest&&ev.target.close
 /* Гурван зураасан цэс */
 function menuItems(){
  const L=[['/','home','Нүүр'],['/leaderboard','trophy','Тэргүүлэгчид'],['/tutorial','spark','Заавар'],['/a','eye','Жишээ хуудас'],['/status','pulse','Статус'],['/#support','coffee','Дэмжих']];
- if(typeof me!='undefined'&&me){L.unshift(['/settings','user','Миний самбар']);if(me.role=='admin')L.splice(1,0,['/admin','shield','Админ самбар'])}
+ if(typeof me!='undefined'&&me){L.unshift(['/settings','user','Миний самбар']);if(me.role=='admin')L.splice(1,0,['/admin','shield','Админ самбар']);else if(me.role=='moderator')L.splice(1,0,['/admin','shield','Модератор самбар'])}
  L.push(['/tos','link','Үйлчилгээний нөхцөл'],['/privacy','lock','Нууцлалын бодлого']);
  return L;
 }

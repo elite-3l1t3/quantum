@@ -51,6 +51,7 @@ const platFor=u=>{if(/^mailto:/i.test(u||''))return'email';try{return HOST[new U
 const has=(p,k)=>(p.badges||[]).some(x=>String(x).toLowerCase()==k);
 const BADGES=[
 ['admin','Админ','Сайтын удирдагч',p=>p.role=='admin','shield'],
+['mod','Модератор','biof-ийн модератор',p=>p.role=='moderator','shield'],
 ['og','OG','Анхны 100 хэрэглэгчийн нэг',p=>p.bid<=100||has(p,'og'),'star'],
 ['verified','Баталгаажсан','Админ баталгаажуулсан бүртгэл. Платформын дүрсээ өөрчилж болно.',p=>has(p,'verified'),'badge'],
 ['staff','Баг','biof багийн гишүүн',p=>has(p,'staff'),'user'],
@@ -112,3 +113,25 @@ function idFrom(k,raw){
 }
 /* Мэдэгдлийн бэлэн сонголтууд */
 const RCAT=[['fake','Хуурамч / бусдын дүр эсгэсэн','user','Өөр хүн, байгууллагын нэрийг ашигласан'],['harass','Дарамт, доромжлол','alert','Хэн нэгнийг дарамталж, заналхийлсэн'],['adult','Насанд хүрэгчдийн агуулга','eye','18+ зураг, бичлэг'],['spam','Спам / луйвар','link','Хууран мэхлэх, хортой холбоос'],['hate','Үзэн ядалт','flag','Үндэс, шашин, хүйсээр ялгаварласан'],['illegal','Хууль бус үйлдэл','shield','Хууль зөрчсөн бараа, үйлчилгээ'],['other','Бусад','spark','Доор тайлбарлана уу']];
+
+/* Фонтууд (бүгд кирилл үсэгтэй). Хуудсанд зөвхөн сонгосон фонт ачаалагдана. */
+const FONTS={def:['Үндсэн',''],inter:['Inter','Inter:wght@400;700;800'],mont:['Montserrat','Montserrat:wght@400;700;800'],play:['Playfair Display','Playfair+Display:wght@500;700'],comf:['Comfortaa','Comfortaa:wght@400;700'],rubik:['Rubik','Rubik:wght@400;700;800'],mono:['JetBrains Mono','JetBrains+Mono:wght@400;700'],pixel:['Press Start 2P','Press+Start+2P'],lob:['Lobster','Lobster']};
+const fontCss=k=>FONTS[k]&&FONTS[k][1]?`'${FONTS[k][0]}',system-ui,sans-serif`:'';
+function loadFont(k){const f=FONTS[k];if(!f||!f[1]||document.querySelector('link[data-font="'+k+'"]'))return;const l=document.createElement('link');l.rel='stylesheet';l.dataset.font=k;l.href='https://fonts.googleapis.com/css2?family='+f[1]+'&display=swap';document.head.append(l)}
+/* Бэлэн бүтэн загварууд: өнгө, фонт, булан, холбоосын хэлбэр, эффект бүгд */
+const TBASE={tc:'#f5f5f5',bgc:'#0a0a0a',cc:'#141414',op:.93,bl:0,r:20,sh:'circle',fx:'none',ls:'fill',bfx:'none',grad:false,gn:false,gs:false,gb:false,swap:false,pic:'text',font:'def'};
+const PAGE_TPL=[
+['minimal','Minimal','#111111',{tc:'#111111',bgc:'#f4f4f5',cc:'#ffffff',op:1,r:14,ls:'outline',font:'inter'}],
+['neon','Neon','#a855f7',{tc:'#f0e9ff',bgc:'#05010d',cc:'#0d0620',op:.86,r:18,fx:'glow',gn:true,gs:true,gb:true,grad:true,font:'mont',pic:'brand'}],
+['glass','Glass','#7dd3fc',{tc:'#ffffff',bgc:'#0b1220',cc:'#1e293b',op:.35,bl:14,r:26,ls:'pill',font:'rubik'}],
+['retro','Retro','#ff6ec7',{tc:'#ffe66d',bgc:'#1a1033',cc:'#2b1d52',op:1,r:0,ls:'outline',sh:'square',font:'pixel'}],
+['luxury','Luxury','#d4af37',{tc:'#f3e7c9',bgc:'#0a0806',cc:'#15110b',op:.95,r:22,ls:'outline',fx:'sparkle',grad:true,bfx:'ember',font:'play'}],
+['soft','Soft','#f472b6',{tc:'#4a3040',bgc:'#fdf2f8',cc:'#ffffff',op:.94,r:30,ls:'pill',grad:true,font:'comf',pic:'brand'}]];
+/* Видео/дуу хуудсан дээр тоглуулах: YouTube, Spotify, SoundCloud */
+function embInfo(u){
+ u=String(u||'').trim();let m;
+ if((m=u.match(/^https?:\/\/(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?(?:[^#]*&)?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/i)))return{k:'youtube',id:m[1],src:'https://www.youtube-nocookie.com/embed/'+m[1]+'?autoplay=1&rel=0',thumb:'https://i.ytimg.com/vi/'+m[1]+'/hqdefault.jpg',h:0};
+ if((m=u.match(/^https:\/\/open\.spotify\.com\/(?:intl-[a-z]{2}\/)?(track|album|playlist|episode|show|artist)\/([A-Za-z0-9]{10,40})/i)))return{k:'spotify',id:m[2],src:'https://open.spotify.com/embed/'+m[1].toLowerCase()+'/'+m[2],h:/track|episode/i.test(m[1])?152:352};
+ if(/^https:\/\/(?:www\.|m\.)?soundcloud\.com\/[\w-]+\/(?:sets\/)?[\w-]+/i.test(u))return{k:'soundcloud',src:'https://w.soundcloud.com/player/?url='+encodeURIComponent(u.split('?')[0])+'&auto_play=true&visual=false&show_comments=false',h:166};
+ return null;
+}
