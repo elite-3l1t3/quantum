@@ -2,7 +2,7 @@ async function home(v){
  const cache=(k,ttl,f)=>{let c=null;try{c=JSON.parse(sessionStorage[k]||'null')}catch{}return c&&c.r!==undefined&&Date.now()-c.t<ttl?Promise.resolve(c.r):f().then(r=>{try{sessionStorage[k]=JSON.stringify({t:Date.now(),r})}catch{}return r})};
  const[st,top,ss]=await Promise.all([
   cache('st2',6e4,async()=>(await sb.rpc('site_stats')).data||{}),
-  lbFetch('week',10).then(r=>r.length?['week',r]:lbFetch('views',10).then(x=>['views',x])),
+  lbFetch('week',10).then(r=>r&&r.length?['week',r]:lbFetch('views',10).then(x=>['views',x||[]])).catch(()=>['views',[]]),
   getStatus().catch(()=>({d:null,ms:0}))]);
  const closed=!!st&&st.reg===false&&!me,hint='Зөвхөн англи жижиг үсэг, тоо, _ ашиглана (3-20 тэмдэгт).';
  const F=[['link','Бүх холбоос нэг дор','Instagram, YouTube, TikTok зэрэг холбоосоо нэг хуудсанд тавина.'],['image','Өөрийн дүр төрх','Өнгө, дэвсгэр зураг, видеогоо өөрөө сонгоно.'],['music','Дуу тавина','Хуудсыг нээхэд таны сонгосон дуу эгшиглэнэ.'],['badge','Тэмдэг авна','Идэвхтэй байх тусам тэмдэг (badge) авна.'],['eye','Хэн үзснийг мэднэ','Хуудсыг хэдэн хүн үзэж, хэдэн хүн таалагдсаныг харна.'],['sliders','Утсан дээр ч сайхан','Утас, компьютер аль алинд нь ойлгомжтой ажиллана.']];
@@ -40,7 +40,7 @@ async function home(v){
   if(data!='ok'){S.className='st bad2';S.textContent=ERR[data]||String(data);return}
   await loadMe();go(me?.approved?'/'+n.value:'/settings')};
  v.querySelector('#cta').onclick=()=>{scrollTo({top:0,behavior:'smooth'});n.focus({preventScroll:true})};
- const drawLb=(by,rows)=>{const x=v.querySelector('#lbx');if(!x)return;x.innerHTML=`${lbTabsHTML(by)}${lbRowsHTML(rows,by)}<div class="act"><a href="/leaderboard"><button class="g" type="button">Бүгдийг харах ${ic('arrow',14)}</button></a></div>`;x.querySelectorAll('[data-by]').forEach(b=>b.onclick=async()=>drawLb(b.dataset.by,await lbFetch(b.dataset.by,10)))};
+ const drawLb=(by,rows)=>{const x=v.querySelector('#lbx');if(!x)return;x.innerHTML=`${lbTabsHTML(by)}${lbRowsHTML(rows,by)}<div class="act"><a href="/leaderboard"><button class="g" type="button">Бүгдийг харах ${ic('arrow',14)}</button></a></div>`;x.querySelectorAll('[data-by]').forEach(b=>b.onclick=async()=>drawLb(b.dataset.by,(await lbFetch(b.dataset.by,10))||[]))};
  drawLb(top[0],top[1]);
  v.querySelectorAll('.fqh').forEach(b=>b.onclick=()=>{const f=b.parentNode,o=f.classList.toggle('open');b.setAttribute('aria-expanded',o)});
  const num=(el,to)=>{const t0=performance.now();const f=tt=>{const p=Math.min(1,(tt-t0)/900);el.textContent=Math.round(to*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(f)};requestAnimationFrame(f)};

@@ -579,3 +579,9 @@ nav{gap:10px}nav b{margin-right:auto}
 .vok{display:flex;gap:12px;align-items:center;color:#5fd38a}.vok b{display:block;color:#f4efe6}.vok.wait{color:#f5b301}
 .tag.ok{color:#5fd38a;border-color:rgba(95,211,138,.4)}
 .lr.emr .lic .pt{color:#f4efe6}
+#app>main.seo{display:none}
+.lbt{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:4px;margin:4px 0 12px;background:var(--i);border:1px solid var(--l);border-radius:99px}
+.lbt button{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-width:0;padding:10px 8px;border-radius:99px;background:none!important;color:var(--m)!important;border:0;box-shadow:none;font-size:14px;font-weight:700;white-space:nowrap}
+.lbt button.on{background:var(--a)!important;color:#1a1205!important}
+.lbt button span{overflow:hidden;text-overflow:ellipsis}
+@media(max-width:380px){.lbt button{font-size:13px;padding:9px 4px;gap:4px}.lbt button .ic{width:15px;height:15px}}

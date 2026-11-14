@@ -321,3 +321,15 @@ SEO: .github/workflows/seo.yml 6 цаг тутам _dev/seo/build.mjs ажилл
 FAVICON: /favicon.ico (16/32/48), /favicon.svg, /apple-touch-icon.png, /icon-192.png, /icon-512.png, /icon-maskable.png, /site.webmanifest, /og.png (1200x630). Бүх html-д static <link>. Google Search Console-д domain баталгаажуулж sitemap илгээх.
 ИМЭЙЛ: Resend SMTP (smtp.resend.com:465, username "resend"). Загвар: _dev/email-*.html (лого = https://biof.site/icon-192.png).
 БУСАД ЗАСВАР: i18n хэрэглэгчийн текстийг (bio, нэр, холбоос) орчуулахгүй болсон; профайлын таб гарчиг "Нэр (@username)".
+
+
+19. V11 ЗАСВАР (хамгийн сүүлийн)
+--------------------------------
+- SQL: _dev/v10.sql = v9-ийг бүрэн агуулсан + засвар. v9 ажилласан/ажиллаагүйгээс үл хамааран v10-ийг ажиллуул (дараалал: ... v8 → v10). Төгсгөлд "notify pgrst, 'reload schema'" ба шалгах select бий.
+  * flag_profile: "column reference ip is ambiguous" засагдсан (хувьсагч v_ip).
+  * request_verify: Postgres regex {4,300} (255-аас их) алдаа засагдсан.
+  * Туршилт: локал Postgres 16 дээр Supabase-тэй төстэй суурь (auth.uid, storage) үүсгэж v8 → v10 (2 удаа) ажиллуулж, бүх RPC-г хэрэглэгч/модератор/админ/anon эрхээр дуудаж шалгасан (эрхгүй үйлдлүүд хаагдаж байгааг ч).
+- SEO: хүмүүст "Шилдэг хуудсууд" жагсаалт харагддаг байсныг арилгасан. Профайлын статик агуулга <noscript> дотор (зөвхөн JS-гүй crawler харна). index/leaderboard-д жагсаалт байхгүй. Агуулга өөрчлөгдөөгүй бол commit хийхгүй (pages.json = {нэр: lastmod}).
+- Ачааллын үеэр хоосон/хуучин агуулгын оронд skeleton харагдана (main.js).
+- Тэргүүлэгчдийн таб: "7 хоног / Үзэлт / Like" — утсанд багтана (.lbt). 7 хоногийн мэдээлэл алга/алдаатай бол эхлэхдээ "Үзэлт" руу автоматаар шилжинэ.
+- Загвар ачаалагдахгүй бол жинхэнэ алдааны мессеж харагдана.

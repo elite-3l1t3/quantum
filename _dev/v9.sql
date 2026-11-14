@@ -73,7 +73,7 @@ begin
   if not found or p.banned then return 'denied'; end if;
   if exists (select 1 from unnest(coalesce(p.badges, '{}'::text[])) b where lower(b) = 'verified') then return 'already'; end if;
   if p.username is null or p.avatar_url is null or jsonb_array_length(coalesce(p.links, '[]'::jsonb)) = 0 then return 'need'; end if;
-  if coalesce(p_proof, '') !~ '^https://[^\s]{4,300}$' then return 'proof'; end if;
+  if coalesce(p_proof, '') !~ '^https://\S{4,}$' or length(p_proof) > 300 then return 'proof'; end if;
   if exists (select 1 from verify_req where user_id = auth.uid() and status = 'open') then return 'open'; end if;
   if exists (select 1 from verify_req where user_id = auth.uid() and created_at > now() - interval '14 days') then return 'wait'; end if;
   insert into verify_req(user_id, proof, note) values (auth.uid(), left(p_proof, 300), left(coalesce(p_note, ''), 500));

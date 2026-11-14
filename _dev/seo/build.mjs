@@ -34,7 +34,9 @@ for (const p of [...top, ...ver]) {
   seen.add(p.username); users.push(p);
 }
 
-const old = fs.existsSync(MAN) ? JSON.parse(fs.readFileSync(MAN, 'utf8')) : [];
+const prev = fs.existsSync(MAN) ? JSON.parse(fs.readFileSync(MAN, 'utf8')) : {};
+const PM = Array.isArray(prev) ? Object.fromEntries(prev.map(n => [n, ''])) : prev; // {нэр: lastmod}
+const old = Object.keys(PM);
 // Сайтын жинхэнэ файл/хавтастай давхцах нэрийг алгасна
 const own = new Set(fs.readdirSync(ROOT).filter(n => !old.includes(n)).map(n => n.replace(/\.html$/, '').toLowerCase()));
 const list = users.filter(p => !own.has(p.username));
@@ -50,39 +52,39 @@ function page(p) {
   const links = (Array.isArray(p.links) ? p.links : []).filter(l => okUrl(l && l.url) && !/^mailto:/i.test(l.url)).slice(0, 12);
   const title = `${name} (@${p.username}) · biof`;
   const ld = {
-    '@context': 'https://schema.org', '@type': 'ProfilePage', url, name: title, dateModified: today,
+    '@context': 'https://schema.org', '@type': 'ProfilePage', url, name: title,
     mainEntity: { '@type': 'Person', name, alternateName: '@' + p.username, description: bio || undefined, image: img, url, sameAs: links.filter(l => /^https:/i.test(l.url)).map(l => l.url) }
   };
   const head = `<title>${esc(title)}</title><meta name="description" content="${esc(desc.slice(0, 300))}"><link rel="canonical" href="${url}">` +
     `<meta property="og:type" content="profile"><meta property="og:site_name" content="biof"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc.slice(0, 300))}"><meta property="og:url" content="${url}"><meta property="og:image" content="${esc(img)}"><meta property="profile:username" content="${esc(p.username)}">` +
     `<meta name="twitter:card" content="summary"><script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>`;
-  const body = `<div id="app"><main class="seo"><img class="av" src="${esc(img)}" alt="${esc(name)}" width="96" height="96"><h1>${esc(name)}</h1><p>@${esc(p.username)} · #${p.bid} · ${p.views} үзэлт</p>${bio ? `<p>${esc(bio)}</p>` : ''}<ul>${links.map(l => `<li><a href="${esc(l.url)}" rel="nofollow noopener">${esc(l.label || l.url)}</a></li>`).join('')}</ul><p><a href="/">biof — бүх холбоосоо нэг хаяг дээр</a></p></main></div>`;
+  const body = `<div id="app"><noscript><main class="seo"><img class="av" src="${esc(img)}" alt="${esc(name)}" width="96" height="96"><h1>${esc(name)}</h1><p>@${esc(p.username)} · biof.site/${esc(p.username)}</p>${bio ? `<p>${esc(bio)}</p>` : ''}<ul>${links.map(l => `<li><a href="${esc(l.url)}" rel="nofollow noopener">${esc(l.label || l.url)}</a></li>`).join('')}</ul><p><a href="/">biof — бүх холбоосоо нэг хаяг дээр</a></p></main></noscript></div>`;
   return base
     .replace(/<title>[^<]*<\/title>/, head)
     .replace(/<meta name="description"[^>]*>/, '')
     .replace('<div id="app"></div>', body);
 }
 
+const LM = {};
 for (const p of list) {
-  const dir = path.join(ROOT, p.username);
-  fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, 'index.html'), page(p));
+  const dir = path.join(ROOT, p.username), f = path.join(dir, 'index.html'), html = page(p);
+  const same = fs.existsSync(f) && fs.readFileSync(f, 'utf8') === html;
+  LM[p.username] = same && PM[p.username] ? PM[p.username] : today;
+  if (!same) { fs.mkdirSync(dir, { recursive: true }); fs.writeFileSync(f, html); }
 }
 const now = new Set(list.map(p => p.username));
 for (const n of old) if (!now.has(n) && /^[a-z0-9_]{2,20}$/.test(n)) fs.rmSync(path.join(ROOT, n), { recursive: true, force: true });
-fs.writeFileSync(MAN, JSON.stringify([...now].sort(), null, 0));
+fs.writeFileSync(MAN, JSON.stringify(Object.fromEntries(Object.keys(LM).sort().map(k => [k, LM[k]]))));
 
-// Нүүр болон тэргүүлэгчдийн хуудсанд Google-д харагдах холбоосууд (JS ачаалахаас өмнөх агуулга)
-const topHtml = n => `<!--SEO--><div id="app"><main class="seo"><h1>biof — бүх холбоосоо нэг хаяг дээр</h1><p>Шилдэг хуудсууд:</p><ul>${list.slice(0, n).map(p => `<li><a href="/${p.username}/">${esc(p.display_name || p.username)} (@${esc(p.username)})</a></li>`).join('')}</ul></main></div><!--/SEO-->`;
-for (const [f, n] of [['index.html', 30], ['leaderboard.html', 100]]) {
-  const fp = path.join(ROOT, f); let s = fs.readFileSync(fp, 'utf8');
-  s = s.includes('<!--SEO-->') ? s.replace(/<!--SEO-->[\s\S]*?<!--\/SEO-->/, topHtml(n)) : s.replace('<div id="app"></div>', topHtml(n));
-  fs.writeFileSync(fp, s);
+// Хуучин хувилбарын нүүр/тэргүүлэгчдийн жагсаалтыг арилгана (хүмүүст харагдаж байсан)
+for (const f of ['index.html', 'leaderboard.html']) {
+  const fp = path.join(ROOT, f), s0 = fs.readFileSync(fp, 'utf8');
+  if (s0.includes('<!--SEO-->')) fs.writeFileSync(fp, s0.replace(/<!--SEO-->[\s\S]*?<!--\/SEO-->/, '<div id="app"></div>'));
 }
 
 const stat = [['/', '1.0', 'daily'], ['/leaderboard', '0.8', 'daily'], ['/a', '0.6', 'monthly'], ['/tutorial', '0.5', 'monthly'], ['/status', '0.3', 'hourly'], ['/tos', '0.2', 'yearly'], ['/privacy', '0.2', 'yearly']];
 const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
-  stat.map(([u, pr, cf]) => `  <url><loc>${SITE}${u}</loc><lastmod>${today}</lastmod><changefreq>${cf}</changefreq><priority>${pr}</priority></url>`).join('\n') + '\n' +
-  list.map(p => `  <url><loc>${SITE}/${p.username}/</loc><lastmod>${today}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>`).join('\n') + '\n</urlset>\n';
+  stat.map(([u, pr, cf]) => `  <url><loc>${SITE}${u}</loc><lastmod>2026-11-14</lastmod><changefreq>${cf}</changefreq><priority>${pr}</priority></url>`).join('\n') + '\n' +
+  list.map(p => `  <url><loc>${SITE}/${p.username}/</loc><lastmod>${LM[p.username]}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>`).join('\n') + '\n</urlset>\n';
 fs.writeFileSync(path.join(ROOT, 'sitemap.xml'), xml);
 console.log(`SEO: ${list.length} хуудас үүслээ, ${old.filter(n => !now.has(n)).length} устлаа`);

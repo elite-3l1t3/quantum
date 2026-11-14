@@ -1,4 +1,4 @@
-const V='11';const T0=document.title;
+const V='12';const T0=document.title;
 const NEED={home:['board','home'],settings:['card','upload','tour','settings'],admin:['admin'],board:['board'],tutorial:['tutorial'],status:['status'],profile:['card','profile']};
 const PROBE={card:'cardHTML',upload:'up',tour:'startTour',settings:'settings',home:'home',profile:'profile',admin:'admin',board:'board',tutorial:'tutorial',status:'statusPage'};
 const loadJs=s=>new Promise((ok,no)=>{const x=document.createElement('script');x.src='/js/'+s+'.js?v='+V;x.onload=ok;x.onerror=()=>no(Error('Файл олдсонгүй: /js/'+s+'.js. GitHub дээр js хавтас руу оруулсан эсэхээ шалгана уу.'));document.head.append(x)});
@@ -35,6 +35,7 @@ if(/error_description/.test(location.hash+location.search)){
  const m=decodeURIComponent((location.hash+location.search).match(/error_description=([^&]*)/)?.[1]||'').replace(/\+/g,' ');
  toast(/registration_closed|daily_limit|Database error/i.test(m)?'Одоогоор шинэ бүртгэл авах боломжгүй байна. Маргааш дахин оролдоно уу.':'Нэвтэрч чадсангүй: '+(m||'алдаа'));history.replaceState(0,'',location.pathname)}
 /* Эхлэл: сервер амьд эсэх ба хэрэглэгчийг зэрэг шалгана. Сервер унтарсан бол засварын хуудас. */
+if(document.body.dataset.p!='doc')app.innerHTML='<div class="w"><div class="card sk"></div></div>';
 (async()=>{
  const tmo=(p,ms)=>Promise.race([p,new Promise((_,no)=>setTimeout(()=>no(Error('timeout')),ms))]);
  const[h,lm]=await Promise.all([document.body.dataset.p=='doc'?true:health(),tmo(loadMe(),15000).then(()=>null,x=>x)]);

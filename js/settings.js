@@ -340,7 +340,7 @@ async function tplLoad(kind){
  if(kind=='fav'){r=await sb.from('tpl_favs').select('tpls('+cols+')').eq('user_id',me.id).limit(30);r={data:(r.data||[]).map(x=>x.tpls).filter(Boolean),error:r.error}}
  else{let q=sb.from('tpls').select(cols).limit(30);q=kind=='mine'?q.eq('owner',me.id).order('id',{ascending:false}):q.eq('hidden',false).order(kind=='pop'?'uses':'id',{ascending:false});r=await q}
  if(!g.isConnected)return;
- if(r.error){g.innerHTML='<p class="mu">Загварууд ачаалагдсангүй. (v9.sql ажиллуулсан эсэхийг шалгана уу)</p>';return}
+ if(r.error){console.warn('tpls',r.error);g.innerHTML='<p class="mu">Загварууд ачаалагдсангүй: '+e(r.error.message||'')+'<br>(Админ: _dev/v10.sql-ийг Supabase дээр ажиллуулна уу)</p>';return}
  const fv=await sb.from('tpl_favs').select('tpl_id').eq('user_id',me.id);const F=new Set((fv.data||[]).map(x=>x.tpl_id));
  TPLD={};(r.data||[]).forEach(x=>{x.owner=x.profiles&&x.profiles.username;x.fav=F.has(x.id);TPLD[x.id]=x});
  const mod=me.role=='admin'||me.role=='moderator';
