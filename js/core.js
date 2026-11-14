@@ -57,11 +57,13 @@ const foot=()=>`<footer><div class="fnav"><a href="/tos">Үйлчилгээни�
 
 /* Нэвтрэх: Discord эсвэл имэйл рүү очих код */
 const discordLogin=()=>sb.auth.signInWithOAuth({provider:'discord',options:{redirectTo:location.origin+'/'}});
-const authErr=m=>{m=String(m||'');
- if(/after \d+ seconds|rate limit|too many/i.test(m))return'Хэт олон удаа оролдлоо. Түр хүлээгээд дахин оролдоно уу.';
- if(/Database error|registration_closed|daily_limit/i.test(m))return'Одоогоор шинэ бүртгэл авах боломжгүй байна (өдрийн хязгаар эсвэл түр хаалттай).';
- if(/signups not allowed|Email signups are disabled|provider is not enabled/i.test(m))return'Имэйлээр бүртгүүлэх түр боломжгүй байна. Discord-оор нэвтэрнэ үү.';
- if(/expired|invalid/i.test(m))return'Код буруу эсвэл хугацаа нь дууссан байна.';
+const authErr=(m,st)=>{m=String(m||'');
+ if(/Error sending (magic link|confirmation|recovery|email)/i.test(m)||/smtp/i.test(m))return'Имэйл илгээж чадсангүй. Сайтын имэйл (SMTP) тохиргоо буруу байна — админд хэлнэ үү.';
+ if(/after \d+ seconds|rate limit|too many/i.test(m)||st==429)return'Хэт олон удаа оролдлоо. Түр хүлээгээд дахин оролдоно уу.';
+ if(/registration_closed|daily_limit/i.test(m))return'Одоогоор шинэ бүртгэл авах боломжгүй байна (өдрийн хязгаар эсвэл түр хаалттай).';
+ if(/Database error/i.test(m))return'Бүртгэл үүсгэхэд өгөгдлийн сангийн алдаа гарлаа. Админд хэлнэ үү (v8.sql ажиллуулсан эсэх).';
+ if(/signups not allowed|Email signups are disabled|provider is not enabled|email_provider_disabled/i.test(m))return'Имэйлээр бүртгүүлэх түр боломжгүй байна. Discord-оор нэвтэрнэ үү.';
+ if(/expired|invalid.*(otp|token)|token.*invalid/i.test(m))return'Код буруу эсвэл хугацаа нь дууссан байна.';
  if(/invalid.*email|unable to validate email/i.test(m))return'Имэйл хаяг буруу байна.';
  if(/fetch|network/i.test(m))return'Сүлжээний алдаа. Интернэтээ шалгана уу.';
  return m||'Алдаа гарлаа';};
@@ -81,7 +83,7 @@ function login(){
   if(!cool('otp',3000))return;
   const b=d.querySelector('#lsend,#lres');if(b){b.disabled=true;b.innerHTML='<span class="spin sm"></span>Илгээж байна…'}
   const{error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:true,emailRedirectTo:location.origin+'/'}});
-  if(error){toast(authErr(error.message));if(b){b.disabled=false;b.textContent=b.id=='lres'?'Код дахин илгээх':'Код авах'}return}
+  if(error){console.warn('OTP алдаа:',error.status,error.code,error.message);toast(authErr(error.message,error.status));if(b){b.disabled=false;b.textContent=b.id=='lres'?'Код дахин илгээх':'Код авах'}return}
   step2()};
  const step2=()=>{
   d.innerHTML=`<div class="dlg lgbox" role="dialog" aria-modal="true"><button class="g mnx lgx" type="button" aria-label="Хаах">${ic('x',18)}</button><div class="dlgi">${ic('lock',26)}</div><h3>Кодоо оруулна уу</h3><p class="mu"><b>${e(email)}</b> хаяг руу код илгээлээ. Spam хавтсаа ч шалгаарай.</p><input class="dli otp" id="lcode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="000000"><button type="button" id="lver">Баталгаажуулах</button><div class="act" style="margin-top:6px"><button type="button" class="g" id="lback">Буцах</button><button type="button" class="g" id="lres" disabled>Код дахин илгээх</button></div></div>`;
@@ -95,7 +97,7 @@ function login(){
   if(!/^\d{6,10}$/.test(token)){toast('Кодоо бүтэн оруулна уу');return}
   const b=d.querySelector('#lver');if(b.disabled)return;b.disabled=true;b.innerHTML='<span class="spin sm"></span>Шалгаж байна…';
   const{error}=await sb.auth.verifyOtp({email,token,type:'email'});
-  if(error){toast(authErr(error.message));b.disabled=false;b.textContent='Баталгаажуулах';return}
+  if(error){console.warn('Код шалгах алдаа:',error.status,error.code,error.message);toast(authErr(error.message,error.status));b.disabled=false;b.textContent='Баталгаажуулах';return}
   close();toast('Амжилттай нэвтэрлээ')};
  d.onclick=ev=>{if(ev.target==d||ev.target.closest('.lgx'))close()};
  document.addEventListener('keydown',kd);document.body.append(d);step1();
