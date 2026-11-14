@@ -336,7 +336,7 @@ async function tplLoad(kind){
  const g=document.getElementById('tplg');if(!g)return;
  if(kind=='pre'){g.innerHTML=PAGE_TPL.map(t=>tplTile({id:t[0],name:t[1],accent:t[2],theme:t[3]},'pre')).join('');return}
  g.innerHTML='<p class="mu">Ачаалж байна…</p>';
- const cols='id,name,theme,accent,uses,favs,owner,profiles(username)';let r;
+ const cols='id,name,theme,accent,uses,favs,owner,profiles!tpls_owner_fkey(username)';let r;
  if(kind=='fav'){r=await sb.from('tpl_favs').select('tpls('+cols+')').eq('user_id',me.id).limit(30);r={data:(r.data||[]).map(x=>x.tpls).filter(Boolean),error:r.error}}
  else{let q=sb.from('tpls').select(cols).limit(30);q=kind=='mine'?q.eq('owner',me.id).order('id',{ascending:false}):q.eq('hidden',false).order(kind=='pop'?'uses':'id',{ascending:false});r=await q}
  if(!g.isConnected)return;
