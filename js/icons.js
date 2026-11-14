@@ -1,4 +1,4 @@
-window.__v=window.__v||{};window.__v.icons=8;
+window.__v=window.__v||{};window.__v.icons=9;
 const P={
 eye:'<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
 heart:'<path d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z"/>',
@@ -28,28 +28,41 @@ const ic=(n,s=20,w=1.8)=>`<svg class="ic" width="${s}" height="${s}" viewBox="0 
 const icf=(n,s=20)=>ic(n,s).replace('fill="none"','fill="currentColor"');
 const PL={discord:['Discord','#5865F2','Dc'],youtube:['YouTube','#FF0033'],instagram:['Instagram','#E1306C'],x:['X','#16181c'],tiktok:['TikTok','#141414','Tt'],telegram:['Telegram','#229ED9'],spotify:['Spotify','#1DB954'],soundcloud:['SoundCloud','#FF5500','Sc'],github:['GitHub','#24292f','Gh'],twitch:['Twitch','#9146FF','Tw'],snapchat:['Snapchat','#FFFC00','Sn'],facebook:['Facebook','#1877F2','f'],reddit:['Reddit','#FF4500','Rd'],linkedin:['LinkedIn','#0A66C2','in'],steam:['Steam','#1b2838','St'],paypal:['PayPal','#003087','Pp'],pinterest:['Pinterest','#E60023','Pi'],threads:['Threads','#141414','@'],bluesky:['Bluesky','#1185FE','Bs'],vk:['VK','#0077FF','VK'],patreon:['Patreon','#FF424D','Pa'],kofi:['Ko-fi','#FF5E5B','Kf'],roblox:['Roblox','#2b2f36','Rb'],xbox:['Xbox','#107C10','Xb'],playstation:['PlayStation','#003791','PS'],applemusic:['Apple Music','#FA243C','Am'],gitlab:['GitLab','#E24329','Gl'],email:['Имэйл','#4b5563'],web:['Вэб хуудас','#4b5563']};
 const GL={
-discord:'<path d="M6.5 7.2C8 6.4 9.7 6 12 6s4 .4 5.5 1.2c1.3 2 2 4.2 2.2 6.8-1.2 1-2.6 1.6-4 1.9l-.8-1.3c.4-.2.8-.4 1.2-.7-3 1.3-6.4 1.3-9.4 0 .4.3.8.5 1.2.7l-.8 1.3c-1.4-.3-2.8-.9-4-1.9.2-2.6.9-4.8 2.2-6.8z" fill="#fff"/><circle cx="9.2" cy="11.8" r="1.2" fill="#5865F2"/><circle cx="14.8" cy="11.8" r="1.2" fill="#5865F2"/>',
-youtube:'<rect x="3" y="6" width="18" height="12" rx="4" fill="#fff"/><path d="M10.5 9.5v5l4.3-2.5z" fill="#FF0033"/>',
-instagram:'<rect x="5" y="5" width="14" height="14" rx="4.5" fill="none" stroke="#fff" stroke-width="1.8"/><circle cx="12" cy="12" r="3.3" fill="none" stroke="#fff" stroke-width="1.8"/><circle cx="16.3" cy="7.7" r="1" fill="#fff"/>',
-x:'<path d="M6 6l12 12M18 6 6 18" stroke="#fff" stroke-width="2.2" stroke-linecap="round" fill="none"/>',
-telegram:'<path d="M20 5 4 11.5l5 2 2 5.5 2.6-3.4 4.4 3.4z" fill="#fff"/>',
-spotify:'<circle cx="12" cy="12" r="8.5" fill="#fff"/><path d="M7.5 10c3.2-1 6.8-.7 9.5 1M8 12.8c2.8-.8 5.6-.5 8 .9M8.6 15.4c2.3-.6 4.5-.4 6.4.7" stroke="#1DB954" stroke-width="1.6" stroke-linecap="round" fill="none"/>',
-email:'<rect x="4" y="6" width="16" height="12" rx="3" fill="none" stroke="#fff" stroke-width="1.8"/><path d="m5 8 7 5 7-5" fill="none" stroke="#fff" stroke-width="1.8"/>',
-web:'<circle cx="12" cy="12" r="8" fill="none" stroke="#fff" stroke-width="1.8"/><path d="M4 12h16M12 4c3 3 3 13 0 16M12 4c-3 3-3 13 0 16" fill="none" stroke="#fff" stroke-width="1.6"/>'};
+discord:'<path d="M6.5 7.2C8 6.4 9.7 6 12 6s4 .4 5.5 1.2c1.3 2 2 4.2 2.2 6.8-1.2 1-2.6 1.6-4 1.9l-.8-1.3c.4-.2.8-.4 1.2-.7-3 1.3-6.4 1.3-9.4 0 .4.3.8.5 1.2.7l-.8 1.3c-1.4-.3-2.8-.9-4-1.9.2-2.6.9-4.8 2.2-6.8z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="9.3" cy="11.8" r="1.1" fill="currentColor"/><circle cx="14.7" cy="11.8" r="1.1" fill="currentColor"/>',
+youtube:'<rect x="3" y="6" width="18" height="12" rx="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M10.5 9.5v5l4.3-2.5z" fill="currentColor"/>',
+instagram:'<rect x="5" y="5" width="14" height="14" rx="4.5" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3.3" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="16.3" cy="7.7" r="1" fill="currentColor"/>',
+x:'<path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/>',
+telegram:'<path d="M20 5 4 11.5l5 2 2 5.5 2.6-3.4 4.4 3.4z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>',
+spotify:'<circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M7.5 10c3.2-1 6.8-.7 9.5 1M8 12.8c2.8-.8 5.6-.5 8 .9M8.6 15.4c2.3-.6 4.5-.4 6.4.7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/>',
+email:'<rect x="4" y="6" width="16" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m5 8 7 5 7-5" fill="none" stroke="currentColor" stroke-width="1.8"/>',
+web:'<circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4 12h16M12 4c3 3 3 13 0 16M12 4c-3 3-3 13 0 16" fill="none" stroke="currentColor" stroke-width="1.6"/>'};
 const SI=['discord','youtube','instagram','x','tiktok','telegram','spotify','soundcloud','github','twitch','snapchat','facebook','reddit','linkedin','steam','paypal','pinterest','threads','bluesky','vk','patreon','kofi','roblox','xbox','playstation','applemusic','gitlab'];
 const PLORD=['facebook','instagram','tiktok','youtube','discord','telegram','x','spotify','snapchat','twitch','github','linkedin','reddit','threads','pinterest','steam','soundcloud','paypal','patreon','kofi','bluesky','vk','roblox','xbox','playstation','applemusic','gitlab','email'];
-const plat=(k,s=36)=>{const d=PL[k]||PL.web,m=d[2],fg=k=='snapchat'?'#111':'#fff',g=GL[k]||`<text x="12" y="16.2" text-anchor="middle" font-size="${m&&m.length>1?10:13}" font-weight="800" fill="${fg}" font-family="system-ui,sans-serif">${m||''}</text>`,w=Math.round(s*.6),q=Math.round(s*.56);
- return `<span class="pt${k=='snapchat'?' dk':''}" style="--pc:${d[1]};width:${s}px;height:${s}px"><svg viewBox="0 0 24 24" width="${w}" height="${w}">${g}</svg>${SI.includes(k)?`<img class="si" src="https://cdn.jsdelivr.net/npm/simple-icons@11.14.0/icons/${k}.svg" width="${q}" height="${q}" alt="" draggable="false">`:''}</span>`};
+/* Платформын дүрс: дэвсгэргүй, зөвхөн дүрс (өнгө нь --pic эсвэл текстийн өнгө). img = өөрийн оруулсан дүрс */
+const SIU=k=>'https://cdn.jsdelivr.net/npm/simple-icons@11.14.0/icons/'+k+'.svg';
+const plat=(k,s=36,img,col)=>{
+ const d=PL[k]||PL.web,w=Math.round(s*.74),st=`width:${s}px;height:${s}px${col?';color:'+col:''}`;
+ if(img)return`<span class="pt pti" style="${st}"><img src="${e(img)}" alt="" draggable="false" loading="lazy"></span>`;
+ const m=d[2],g=GL[k]||`<text x="12" y="16.2" text-anchor="middle" font-size="${m&&m.length>1?10:13}" font-weight="800" fill="currentColor" font-family="system-ui,sans-serif">${m||''}</text>`;
+ const si=SI.includes(k)?`<i class="sim" style="width:${w}px;height:${w}px;-webkit-mask-image:url(${SIU(k)});mask-image:url(${SIU(k)})"></i><img class="si" src="${SIU(k)}" crossorigin="anonymous" alt="" width="1" height="1" draggable="false">`:'';
+ return`<span class="pt" style="${st}"><svg viewBox="0 0 24 24" width="${w}" height="${w}">${g}</svg>${si}</span>`};
 const HOST={'discord.gg':'discord','discord.com':'discord','youtube.com':'youtube','youtu.be':'youtube','instagram.com':'instagram','x.com':'x','twitter.com':'x','tiktok.com':'tiktok','t.me':'telegram','telegram.me':'telegram','open.spotify.com':'spotify','spotify.com':'spotify','soundcloud.com':'soundcloud','github.com':'github','twitch.tv':'twitch','snapchat.com':'snapchat','facebook.com':'facebook','fb.com':'facebook','reddit.com':'reddit','linkedin.com':'linkedin','steamcommunity.com':'steam','paypal.me':'paypal','paypal.com':'paypal','pinterest.com':'pinterest','threads.net':'threads','bsky.app':'bluesky','vk.com':'vk','patreon.com':'patreon','ko-fi.com':'kofi','roblox.com':'roblox','gitlab.com':'gitlab','music.apple.com':'applemusic'};
 const platFor=u=>{if(/^mailto:/i.test(u||''))return'email';try{return HOST[new URL(u).hostname.replace(/^www\./,'')]||'web'}catch{return'web'}};
 const has=(p,k)=>(p.badges||[]).some(x=>String(x).toLowerCase()==k);
 const BADGES=[
 ['admin','Админ','Сайтын удирдагч',p=>p.role=='admin','shield'],
-['og','OG','Анхны 100 хэрэглэгчийн нэг байх',p=>p.bid<=100,'star'],
-['verified','Баталгаажсан','Админ баталгаажуулсан бүртгэл',p=>has(p,'verified'),'badge'],
+['og','OG','Анхны 100 хэрэглэгчийн нэг',p=>p.bid<=100||has(p,'og'),'star'],
+['verified','Баталгаажсан','Админ баталгаажуулсан бүртгэл. Платформын дүрсээ өөрчилж болно.',p=>has(p,'verified'),'badge'],
 ['staff','Баг','biof багийн гишүүн',p=>has(p,'staff'),'user'],
+['partner','Хамтрагч','biof-ийн хамтрагч',p=>has(p,'partner'),'link'],
+['creator','Бүтээгч','Контент бүтээгч',p=>has(p,'creator'),'spark'],
+['supporter','Дэмжигч','biof-ийг дэмжсэн',p=>has(p,'supporter'),'coffee'],
+['vip','VIP','Онцгой хэрэглэгч',p=>has(p,'vip'),'trophy'],
+['bughunter','Алдаа олсон','Сайтын алдаа олж мэдэгдсэн',p=>has(p,'bughunter'),'bolt'],
 ['views','1K үзэлт','Хуудас 1000 удаа үзэгдэх',p=>p.views>=1000,'eye'],
 ['likes','50 like','Хуудас 50 like авах',p=>p.likes>=50,'heart']];
+/* Админ гараар олгож болох тэмдгүүд */
+const MANUAL=['verified','staff','partner','creator','supporter','vip','bughunter','og'];
 const bdg=p=>[...BADGES.filter(b=>b[3](p)).map(b=>[b[1],b[4],b[2]]),...(p.badges||[]).filter(x=>!BADGES.some(b=>b[0]==String(x).toLowerCase())).map(x=>[String(x),'star','Админ олгосон тэмдэг'])];
 
 /* Холбоосын загвар: хэрэглэгч зөвхөн ID/нэрээ бичнэ, бусдыг нь систем бөглөнө */
@@ -77,4 +90,25 @@ patreon:['https://www.patreon.com/{id}','Хуудасны нэр','bold',/^[A-Za
 kofi:['https://ko-fi.com/{id}','Хэрэглэгчийн нэр','bold',/^[A-Za-z0-9_]{1,40}$/],
 bluesky:['https://bsky.app/profile/{id}','Хаяг','bold.bsky.social',/^[A-Za-z0-9_.\-]{3,60}$/],
 vk:['https://vk.com/{id}','Хэрэглэгчийн нэр','bold',/^[A-Za-z0-9_.]{3,32}$/],
-gitlab:['https://gitlab.com/{id}','Хэрэглэгчийн нэр','bold',/^[A-Za-z0-9_.\-]{2,40}$/]};
+gitlab:['https://gitlab.com/{id}','Хэрэглэгчийн нэр','bold',/^[A-Za-z0-9_.\-]{2,40}$/],
+xbox:['https://account.xbox.com/profile?gamertag={id}','Gamertag','Bold Player',/^[A-Za-z0-9 #]{1,20}$/],
+playstation:['https://psnprofiles.com/{id}','PSN ID','bold_mn',/^[A-Za-z0-9_\-]{3,16}$/]};
+/* Хэрэглэгч бүтэн URL эсвэл @нэр хуулбал ID-г нь салгаж авна */
+function idFrom(k,raw){
+ const s=String(raw||'').trim(),t=TPL[k];if(!t||!s)return s.replace(/^@/,'');
+ if(/^(https?:\/\/|www\.|m\.)/i.test(s)||/^[a-z0-9-]+\.[a-z]{2,}(\/|$)/i.test(s)){
+  try{
+   const u=new URL(/^https?:/i.test(s)?s:'https://'+s),q=u.searchParams;
+   if(q.get('gamertag'))return q.get('gamertag');
+   if(k=='facebook'&&q.get('id'))return q.get('id');
+   const seg=u.pathname.split('/').filter(Boolean).map(x=>{try{return decodeURIComponent(x)}catch{return x}});
+   if(k=='discord'&&seg[0]=='invite')return seg[1]||'';
+   const tp=new URL(t[0].replace('{id}','__ID__')).pathname.split('/').filter(Boolean),i=tp.findIndex(x=>x.includes('__ID__'));
+   if(i>=0&&seg[i]!=null){const pre=tp[i].split('__ID__')[0];let v=seg[i];if(pre&&v.startsWith(pre))v=v.slice(pre.length);return v}
+   if(seg.length)return seg[seg.length-1].replace(/^@/,'');
+  }catch{}
+ }
+ return s.replace(/^@/,'');
+}
+/* Мэдэгдлийн бэлэн сонголтууд */
+const RCAT=[['fake','Хуурамч / бусдын дүр эсгэсэн','user','Өөр хүн, байгууллагын нэрийг ашигласан'],['harass','Дарамт, доромжлол','alert','Хэн нэгнийг дарамталж, заналхийлсэн'],['adult','Насанд хүрэгчдийн агуулга','eye','18+ зураг, бичлэг'],['spam','Спам / луйвар','link','Хууран мэхлэх, хортой холбоос'],['hate','Үзэн ядалт','flag','Үндэс, шашин, хүйсээр ялгаварласан'],['illegal','Хууль бус үйлдэл','shield','Хууль зөрчсөн бараа, үйлчилгээ'],['other','Бусад','spark','Доор тайлбарлана уу']];

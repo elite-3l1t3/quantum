@@ -1,57 +1,98 @@
-let S=null,busy={};
+let S=null,busy={},curT='h';
 const TABS=[['h','Нүүр','home'],['c','Чимэх','sliders'],['l','Холбоосууд','link'],['a','Миний мэдээлэл','user'],['b','Тэмдгүүд','badge']];
-const DZ={bg:['Дэвсгэр','image','image/*,video/mp4,video/webm','Зураг эсвэл видео (4MB хүртэл)'],music:['Дуу','music','audio/*','mp3, ogg (3MB хүртэл)'],avatar:['Профайл зураг','user','image/*','jpg, png, gif, webp (5MB хүртэл)'],cursor:['Курсор','cursor','image/png,image/webp,image/gif','Жижиг зураг, 64px болгон багасгана']};
+const DZ={bg:['Дэвсгэр','image','image/*,video/*','Зураг эсвэл видео. Том бол автоматаар шахна.'],music:['Дуу','music','audio/*','mp3, m4a, ogg. Том бол автоматаар шахна.'],avatar:['Профайл зураг','user','image/*','jpg, png, gif, webp. Сонгоод тайрч тааруулна.'],cursor:['Курсор','cursor','image/png,image/webp,image/gif','Жижиг зураг, 32px болгон багасгана']};
 const ip=(l,k,i,ph,m)=>`<div class="fl"><label>${l}</label><div class="ipw">${ic(i,18)}<input data-k="${k}" maxlength="${m||60}" placeholder="${ph||''}" autocomplete="off"></div></div>`;
 const sl=(l,k,o)=>`<div class="fl"><label>${l}</label><select data-k="${k}">${o.map(x=>`<option value="${x[0]}">${x[1]}</option>`).join('')}</select></div>`;
-const tg=(l,k,h)=>`<div class="tgr"><div><b>${l}</b>${h?`<small>${h}</small>`:''}</div><label class="sw2"><input type="checkbox" data-k="${k}"><i></i></label></div>`;
-const cp=(l,k)=>`<div class="fl"><label>${l}</label><div class="cpk"><input type="color" data-k="${k}"><span data-o="${k}"></span></div></div>`;
+const tg=(l,k,h,dis)=>`<div class="tgr${dis?' dis':''}"><div><b>${l}</b>${h?`<small>${h}</small>`:''}</div><label class="sw2"><input type="checkbox" data-k="${k}"${dis?' disabled':''}><i></i></label></div>`;
+const cp=(l,k)=>`<div class="fl" data-w="${k}"><label>${l}</label><div class="cpk"><input type="color" data-k="${k}"><span data-o="${k}"></span></div></div>`;
 const rg=(l,k,a,b,s,u,h)=>`<div class="fl"><label>${l}: <b data-o="${k}"></b>${u}</label><input type="range" data-k="${k}" min="${a}" max="${b}" step="${s}">${h?`<small>${h}</small>`:''}</div>`;
-const dzW=k=>`<div class="dzw"><label class="dzl">${DZ[k][0]}</label><div class="dz" data-dz="${k}"></div><input type="file" hidden data-f="${k}" accept="${DZ[k][2]}"></div>`;
-const normUrl=(u,k)=>{u=(u||'').trim();if(!u)return'';if(/^(https?:\/\/|mailto:)/i.test(u))return u;if(k=='email'||/^[^\s@\/]+@[^\s@\/]+\.[^\s@\/]+$/.test(u))return'mailto:'+u;return'https://'+u.replace(/^\/+/,'')};
+const dzW=k=>`<div class="dzw"><label class="dzl">${DZ[k][0]}</label><div class="dz" data-dz="${k}"></div>${k=='bg'?'<div class="act dzx" id="bgpa"></div>':''}<input type="file" hidden data-f="${k}" accept="${DZ[k][2]}"></div>`;
+const normUrl=(u,k)=>{u=(u||'').trim();if(!u)return'';if(/^(https?:\/\/|mailto:)/i.test(u))return u;if(k=='email'||/^[^\s@\/]+@[^\s@\/]+\.[^\s@\/]+$/.test(u))return'mailto:'+u.replace(/^mailto:/i,'');return'https://'+u.replace(/^\/+/,'')};
 const mark=()=>{const b=document.getElementById('sbar');if(b){b.hidden=false;window.onbeforeunload=ev=>{ev.preventDefault();ev.returnValue=''}}updPrev()};
+const dav=()=>user&&user.user_metadata&&user.user_metadata.avatar_url||'';
 function fromMe(){
  const t=me.theme||{};
  return{un:me.username||'',dn:me.display_name||'',bi:me.bio||'',pr:!!me.presence_id,loc:t.loc||'',en:t.enter||'',
   ac:t.set?(me.accent||'#ffffff'):'#ffffff',tc:t.tc||'#f5f5f5',bgc:t.bgc||'#0a0a0a',cc:t.cc||'#141414',ic:t.ic||'#2a2a2a',
+  picm:hx(t.pic)?'custom':(['brand','text'].includes(t.pic)?t.pic:'text'),pcc:hx(t.pic)?t.pic:'#ffffff',bgp:/^\d{1,3}% \d{1,3}%$/.test(t.bgp||'')?t.bgp:'50% 50%',
   op:Math.round((t.op??.93)*100),bl:t.bl||0,r:t.r??20,sh:t.sh||'circle',fx:t.fx||'none',ls:t.ls||'fill',bfx:t.bfx||'none',
   tw:!!t.tw,tl:!!t.tl,grad:!!t.grad,mono:!!t.mono,anim:!!t.anim,swap:!!t.swap,vol:!!t.vol,disc:!!t.disc,gn:!!t.gn,gs:!!t.gs,gb:!!t.gb,
   as:{avatar:me.avatar_url||'',bg:me.bg_url||'',video:t.video||'',music:t.music||'',cursor:t.cursor||''},
-  links:(me.links||[]).map(l=>{const ic0=PL[l.icon]?l.icon:platFor(l.url);return{label:l.label||'',url:l.url||'',icon:ic0,id:l.id||'',mode:(l.id&&TPL[ic0])?'id':'url'}}),trash:[]};
+  links:(me.links||[]).map(l=>{const k=PL[l.icon]?l.icon:platFor(l.url),T=TPL[k];let id=l.id||'',mode='url';
+   if(T){if(!id)id=idFrom(k,l.url);if(T[3].test(String(id).replace(/^@/,'')))mode='id';else id=''}
+   return{label:l.label||'',url:l.url||'',icon:k,id,mode,img:LKIMG.test(l.img||'')?l.img:'',chk:''}}),trash:[]};
 }
 function dzHTML(k){
  const[,icn,,hint]=DZ[k],cur=k=='bg'?(S.as.bg||S.as.video):S.as[k],u=cu(cur);
- if(busy[k])return'<div class="spin"></div><b>Хуулж байна, түр хүлээнэ үү…</b>';
+ if(busy[k])return`<div class="spin"></div><b>${busy[k].p>0?'Шахаж байна…':'Хуулж байна, түр хүлээнэ үү…'}</b><small class="pct">${busy[k].p>0?Math.round(busy[k].p*100)+'%':''}</small>`;
  if(u){const pv=k=='music'?`<span class="pvi">${ic('music',30)}</span>`:(k=='bg'&&S.as.video?`<video src="${e(u)}" muted playsinline></video>`:`<img src="${e(u)}" alt="">`);
   return`${pv}<div class="dzb"><span class="dbtn">${ic('upload',16)}Солих</span><span class="dbtn x" data-rm="${k}">${ic('trash',16)}Устгах</span></div>`}
  return`${ic(icn,38)}<b>Файл оруулахын тулд дарна уу</b><small>${hint}</small>`;
 }
-const paint=k=>{const d=document.querySelector('.dz[data-dz="'+k+'"]');if(d)d.innerHTML=dzHTML(k)};
+const paint=k=>{const d=document.querySelector('.dz[data-dz="'+k+'"]');if(d)d.innerHTML=dzHTML(k);
+ if(k=='bg'){const a=document.getElementById('bgpa');if(a){const u=cu(S.as.bg||S.as.video);a.innerHTML=u&&!busy.bg?`<button type="button" class="g" id="bgpv">${ic('eye',16)}Утас, компьютер дээр харах</button>`:'';const b=document.getElementById('bgpv');if(b)b.onclick=async()=>{const pos=await bgDlg(u,!!S.as.video,S.bgp);if(pos&&pos!=S.bgp){S.bgp=pos;mark()}}}}};
+const paintP=k=>{const d=document.querySelector('.dz[data-dz="'+k+'"] .pct');if(d&&busy[k])d.textContent=Math.round(busy[k].p*100)+'%';else paint(k)};
 const trashIf=u=>{if(u)S.trash.push(u)};
 function setAs(k,url){const o=S.as[k];if(o&&pathOf(o)!=pathOf(url))S.trash.push(o);S.as[k]=url}
 async function handle(k,f){
  const kind=k=='bg'?(f.type.startsWith('video')?'video':'bg'):k;
- busy[k]=1;paint(k);
+ let raw=false;
  try{
-  const url=await up(kind,f);
+  if(k=='avatar'&&f.type.startsWith('image/')){
+   const gif=f.type=='image/gif'&&f.size<=LIM.image;
+   const keep=gif&&await dlg({icon:'image',title:'Хөдөлгөөнтэй GIF',body:'GIF-ээ хэвээр нь (хөдөлгөөнтэй) үлдээх үү? Тайрвал хөдөлгөөнгүй зураг болно.',ok:'Хэвээр үлдээх',cancel:'Тайрч тааруулах'});
+   if(!keep){const b=await cropDlg(f,{out:512,title:'Профайл зургаа тааруулах'});if(!b)return;f=new File([b],'avatar.'+(extOf(b.type)||'webp'),{type:b.type})}
+   raw=true;
+  }
+  busy[k]={p:0};paint(k);
+  const url=await up(kind,f,p=>{busy[k]={p};paintP(k)},raw);
   if(k=='bg'){const o=kind=='bg'?'video':'bg';trashIf(S.as[o]);S.as[o]='';setAs(kind,url)}else setAs(k,url);
-  mark();
- }catch(x){toast(/row-level security|exceeded|too large|payload/i.test(x.message||'')?'Хадгалах зай дүүрсэн эсвэл файлын лимит хэтэрсэн байна':(x.message||String(x)))}
- busy[k]=0;paint(k);
+  busy[k]=0;paint(k);mark();
+  if(k=='bg'){const pos=await bgDlg(cu(url),kind=='video',S.bgp);if(pos&&pos!=S.bgp){S.bgp=pos;mark()}}
+ }catch(x){toast(/row-level security|exceeded|too large|payload|maximum allowed/i.test(x.message||'')?'Хадгалах зай дүүрсэн, файл оруулалт түр хаалттай эсвэл файлын лимит хэтэрсэн байна':(x.message||String(x)))}
+ finally{if(busy[k]){busy[k]=0;paint(k)}}
 }
 function rm(k){
  if(k=='bg'){trashIf(S.as.bg);trashIf(S.as.video);S.as.bg='';S.as.video=''}else{trashIf(S.as[k]);S.as[k]=''}
  mark();paint(k);
 }
+/* Өөрийн холбоосын сайт HTTPS дэмждэг эсэхийг шалгана (http ↔ https автоматаар засна) */
+const PRB={};let prbOK=null;
+const ping=(u,ms)=>{const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);return fetch(u,{mode:'no-cors',credentials:'omit',cache:'no-store',redirect:'follow',referrerPolicy:'no-referrer',signal:c.signal}).then(()=>'ok',()=>c.signal.aborted?'slow':'fail').finally(()=>clearTimeout(t))};
+async function probe(url){
+ let u;try{u=new URL(url)}catch{return null}
+ if(!/^https?:$/.test(u.protocol)||!u.hostname.includes('.'))return null;
+ const h=u.hostname.toLowerCase();
+ if(HOST[h.replace(/^www\.|^m\./,'')])return'https';
+ if(PRB[h])return PRB[h];
+ if(prbOK==null)prbOK=ping('https://cdn.jsdelivr.net/npm/simple-icons@11.14.0/package.json',6000).then(r=>r=='ok');
+ if(!(await prbOK))return null;
+ const r=await ping('https://'+u.host+'/',7000);
+ return PRB[h]=r=='ok'?'https':r=='fail'?'http':null;
+}
+const chkTxt=l=>l.chk=='https'?ic('lock',13)+' HTTPS — шифрлэгдсэн, аюулгүй':l.chk=='http'?ic('alert',13)+' HTTP — шифрлэлтгүй сайт':l.chk=='…'?'Сайтыг шалгаж байна…':l.chk=='?'?'Сайтыг шалгаж чадсангүй':e(linkUrl(l)||'');
+const paintPv=i=>{const l=S.links[i],pv=document.querySelector('#llist [data-pv="'+i+'"]');if(!l||!pv)return;pv.className='pvu'+(l.chk=='https'?' okk':l.chk=='http'?' bad2':'');pv.innerHTML=l.mode=='id'?(String(l.id||'').trim()?e(linkUrl(l)||'Буруу байна — зөвхөн нэр/ID-гаа бичнэ үү'):''):chkTxt(l)};
+async function chk(i,quiet){
+ const l=S.links[i];if(!l||l.mode=='id'||l.icon=='email')return;
+ const u=normUrl(l.url,l.icon);if(!/^https?:\/\/[^\/\s]+\.[^\/\s]+/i.test(u)){l.chk='';paintPv(i);return}
+ l.chk='…';paintPv(i);
+ const r=await probe(u);if(S.links[i]!==l)return;
+ if(r){const fx=u.replace(/^https?:/i,r+':');l.chk=r;if(fx!==l.url){l.url=fx;const inp=document.querySelector('#llist input[data-li="'+i+'"][data-lf="url"]');if(inp)inp.value=fx;if(!quiet&&fx.toLowerCase()!=u.toLowerCase())toast(r=='https'?'Энэ сайт HTTPS дэмждэг тул https:// болголоо':'Энэ сайт HTTPS дэмждэггүй тул http:// болголоо');mark()}}
+ else l.chk='?';
+ paintPv(i);
+}
 function linkRow(l,i){
- const t=TPL[l.icon],idm=t&&l.mode=='id',pre=t?t[0].split('{id}')[0]:'',suf=t?t[0].split('{id}')[1]:'';
+ const t=TPL[l.icon],idm=t&&l.mode=='id',pre=t?t[0].split('{id}')[0].replace(/^https?:\/\/(www\.)?/,''):'',suf=t?t[0].split('{id}')[1]:'';
+ const im=limg({id:me.id},l),can=l.icon=='web'||canIco(me);
+ const icon=`<div class="lic">${plat(l.icon,42,im)}${can?`<button type="button" class="lib" data-ico="${i}" title="Дүрс солих" aria-label="Дүрс солих">${ic('image',13)}</button>`:''}</div>`;
  const body=idm
-  ?`<div class="ipw idw"><span class="pfx">${e(pre)}</span><input data-li="${i}" data-lf="id" maxlength="60" placeholder="${e(t[2])}" value="${e(l.id||'')}" autocomplete="off" autocapitalize="none" spellcheck="false"><span class="sfx">${e(suf)}</span></div><small class="mu">${e(t[1])}. Жишээ: ${e(t[2])}</small><small class="pvu" data-pv="${i}">${e(linkUrl(l)||'Буруу ID')}</small><button type="button" class="lnk" data-mode="${i}">Өөрийн URL оруулах</button>`
-  :`<input data-li="${i}" data-lf="url" placeholder="${l.icon=='email'?'name@mail.com':'https://...'}" value="${e(l.url)}" autocomplete="off" autocapitalize="none" spellcheck="false">${t?`<button type="button" class="lnk" data-mode="${i}">ID-аар оруулах</button>`:''}`;
- return`<div class="lr">${plat(l.icon,42)}<div class="lf"><input data-li="${i}" data-lf="label" maxlength="40" placeholder="Нэр" value="${e(l.label)}">${body}</div><div class="la"><button type="button" data-mv="${i}" data-d="-1" aria-label="Дээш">${ic('up',16)}</button><button type="button" data-mv="${i}" data-d="1" aria-label="Доош">${ic('down',16)}</button><button type="button" class="dg" data-del="${i}" aria-label="Устгах">${ic('trash',16)}</button></div></div>`;
+  ?`<div class="ipw idw"><span class="pfx">${e(pre)}</span><input data-li="${i}" data-lf="id" maxlength="80" placeholder="${e(t[2])}" value="${e(l.id||'')}" autocomplete="off" autocapitalize="none" spellcheck="false"><span class="sfx">${e(suf)}</span></div><small class="mu">Зөвхөн ${e(t[1].toLowerCase())}-аа бичнэ. Жишээ: ${e(t[2])}</small><small class="pvu" data-pv="${i}"></small>`
+  :`<input data-li="${i}" data-lf="url" inputmode="${l.icon=='email'?'email':'url'}" placeholder="${l.icon=='email'?'name@mail.com':'https://...'}" value="${e(l.url)}" autocomplete="off" autocapitalize="none" spellcheck="false"><small class="pvu" data-pv="${i}"></small>${t?`<button type="button" class="lnk" data-mode="${i}">Зөвхөн нэрээр оруулах</button>`:''}`;
+ return`<div class="lr">${icon}<div class="lf"><input data-li="${i}" data-lf="label" maxlength="40" placeholder="Нэр" value="${e(l.label)}">${body}${l.img?`<button type="button" class="lnk" data-icx="${i}">Өөрийн дүрсийг арилгах</button>`:''}</div><div class="la"><button type="button" data-mv="${i}" data-d="-1" aria-label="Дээш">${ic('up',16)}</button><button type="button" data-mv="${i}" data-d="1" aria-label="Доош">${ic('down',16)}</button><button type="button" class="dg" data-del="${i}" aria-label="Устгах">${ic('trash',16)}</button></div></div>`;
 }
 function paintLinks(){
  const L=document.getElementById('llist');if(!L)return;
- L.innerHTML=S.links.map(linkRow).join('')||'<p class="mu" style="text-align:center;margin-top:16px">Одоогоор холбоос алга.</p>';
+ L.innerHTML=S.links.map(linkRow).join('')||'<p class="mu" style="text-align:center;margin-top:16px">Одоогоор холбоос алга.</p>';S.links.forEach((_,i)=>paintPv(i));
 }
 const preH=()=>`<div class="fl"><label>Бэлэн загвар</label><div class="pre">${PRE.map(p=>`<button type="button" class="ps" data-pre="${p[0]}" aria-label="${p[1]}"><i style="--s1:${p[2].bgc};--s2:${p[2].ac};--s3:${p[2].cc}"></i><span>${p[1]}</span></button>`).join('')}</div><small>Загвар сонговол өнгөнүүд автоматаар солигдоно. Дараа нь доороос өөрөөр засаж болно.</small></div>`;
 const secC=()=>`<h2 class="sh">Файл оруулах</h2><div class="cd">${['bg','music','avatar','cursor'].map(dzW).join('')}</div>
@@ -61,11 +102,11 @@ ${sl('Дэвсгэрийн эффект','bfx',[['none','Байхгүй'],['snow
 ${sl('Профайл зургийн хэлбэр','sh',[['circle','Дугуй'],['round','Зөөлөн дөрвөлжин'],['square','Дөрвөлжин']])}${sl('Холбоосын загвар','ls',[['fill','Дүүрэн'],['outline','Хүрээтэй'],['pill','Дугуйрсан']])}
 ${rg('Хайрцгийн тунгалаг байдал','op',20,100,5,'%')}${rg('Хайрцгийн бүдгэрүүлэлт','bl',0,20,1,'px','Утсан дээр удаан ажиллаж болзошгүй')}${rg('Булангийн дугуйрал','r',0,40,1,'px')}
 ${tg('Нэрэнд гэрэл нэмэх','gn')}${tg('Холбоосуудад гэрэл нэмэх','gs')}${tg('Тэмдгүүдэд гэрэл нэмэх','gb')}</div>
-<h2 class="sh">Өнгө</h2><div class="cd">${preH()}${cp('Гол өнгө','ac')}${cp('Текстийн өнгө','tc')}${cp('Дэвсгэрийн өнгө','bgc')}${cp('Хайрцгийн өнгө','cc')}${cp('Дүрсний өнгө','ic')}${tg('Градиент ашиглах','grad','Хайрцгийг гол өнгөөр зөөлөн сүүдэрлэнэ')}</div>
-<h2 class="sh">Бусад</h2><div class="cd">${tg('Нэг өнгийн дүрс','mono','Холбоосын дүрсийг нэг өнгөөр харуулна')}${tg('Хөдөлгөөнт гарчиг','anim','Хөтчийн таб дээрх нэр хөдөлнө')}${tg('Өнгө сольж харуулах','swap','Холбоосыг гол өнгөөр дүүргэнэ')}${tg('Дууны хяналт','vol','Дууны түвшин тохируулагч гаргана')}${tg('Discord зургаа ашиглах','disc','Профайл зураг нь таны Discord зураг болно')}${tg('Бичигдэх bio','tw','Тайлбар үсэг үсгээр бичигдэнэ')}${tg('3D хөдөлгөөн','tl','Компьютер дээр хулганаар, утсан дээр хуруу болон гар утсаа хазайлгаж ажиллана')}</div>`;
-const secL=()=>`<div class="cd"><h3>${ic('link',20)}Холбоосоо нэмэх</h3><p class="mu">Платформоо сонгоод хаягаа оруулна уу.</p><div class="pgrid">${PLORD.filter(k=>PL[k]&&k!='web').map(k=>`<button type="button" class="pb" data-add="${k}">${plat(k,44)}<span>${PL[k][0]}</span></button>`).join('')}</div><button type="button" class="wide" data-add="web">${plat('web',36)}<span><b>Өөрийн холбоос нэмэх</b><small>Дурын хаяг, өөрөө нэр өгч болно</small></span></button></div><div id="llist"></div>`;
-const secA=()=>`<h2 class="sh">Үндсэн мэдээлэл</h2><div class="cd">${ip('Хэрэглэгчийн нэр','un','user','username',20)}<small class="mu">Нэрээ 7 хоногт нэг л удаа солино. Зөвхөн a-z, 0-9, _ ашиглана.</small><br><br>${ip('Харагдах нэр','dn','text','Таны нэр',40)}<div class="fl"><label>Таны bid</label><div class="ipw">${ic('badge',18)}<span style="padding:13px 0">#${me.bid}</span></div></div></div>
-<h2 class="sh">Discord</h2><div class="cd">${tg('Discord төлөвөө харуулах','pr','Онлайн эсвэл идэвхтэй байгаагаа хуудсан дээрээ харуулна. discord.gg/lanyard серверт нэгдсэн байх шаардлагатай.')}</div>
+<h2 class="sh">Өнгө</h2><div class="cd">${preH()}${cp('Гол өнгө','ac')}${cp('Текстийн өнгө','tc')}${cp('Дэвсгэрийн өнгө','bgc')}${cp('Хайрцгийн өнгө','cc')}${sl('Дүрсний өнгө','picm',[['text','Текстийн өнгөтэй'],['brand','Платформын өөрийн өнгөтэй'],['custom','Өөрөө сонгох']])}${cp('Дүрсний өөрийн өнгө','pcc')}${tg('Градиент ашиглах','grad','Хайрцгийг гол өнгөөр зөөлөн сүүдэрлэнэ')}</div>
+<h2 class="sh">Бусад</h2><div class="cd">${tg('Хөдөлгөөнт гарчиг','anim','Хөтчийн таб дээрх нэр хөдөлнө')}${tg('Өнгө сольж харуулах','swap','Холбоосыг гол өнгөөр дүүргэнэ')}${tg('Дууны хяналт','vol','Дууны түвшин тохируулагч гаргана')}${dav()?tg('Discord зургаа ашиглах','disc','Профайл зураг нь таны Discord зураг болно'):''}${tg('Бичигдэх bio','tw','Тайлбар үсэг үсгээр бичигдэнэ')}${tg('3D хөдөлгөөн','tl','Компьютер дээр хулганаар, утсан дээр хуруу болон гар утсаа хазайлгаж ажиллана')}</div>`;
+const secL=()=>`<div class="cd"><h3>${ic('link',20)}Холбоосоо нэмэх</h3><p class="mu">Платформоо сонгоод зөвхөн нэр эсвэл ID-гаа бичнэ. Бүтэн холбоос хуулбал нэрийг нь өөрөө салгаж авна.${canIco(me)?' Та баталгаажсан тул дүрс бүрийг өөрийн зургаар сольж болно.':''}</p><div class="pgrid">${PLORD.filter(k=>PL[k]&&k!='web').map(k=>`<button type="button" class="pb" data-add="${k}">${plat(k,44)}<span>${PL[k][0]}</span></button>`).join('')}</div><button type="button" class="wide" data-add="web">${plat('web',36)}<span><b>Өөрийн холбоос нэмэх</b><small>Дурын хаяг, өөрөө нэр өгч болно</small></span></button></div><div id="llist"></div><input type="file" hidden id="lif" accept="image/*">`;
+const secA=()=>`<h2 class="sh">Үндсэн мэдээлэл</h2><div class="cd">${ip('Хэрэглэгчийн нэр','un','user','username',20)}${user&&user.email?`<div class="fl"><label>Имэйл</label><div class="ipw">${ic('link',18)}<span class="sel" style="padding:13px 0">${e(user.email)}</span></div></div>`:''}<small class="mu">Нэрээ 7 хоногт нэг л удаа солино. Зөвхөн a-z, 0-9, _ ашиглана.</small><br><br>${ip('Харагдах нэр','dn','text','Таны нэр',40)}<div class="fl"><label>Таны bid</label><div class="ipw">${ic('badge',18)}<span style="padding:13px 0">#${me.bid}</span></div></div></div>
+<h2 class="sh">Discord</h2><div class="cd">${PRESENCE_ON?tg('Discord төлөвөө харуулах','pr','Онлайн эсвэл идэвхтэй байгаагаа хуудсан дээрээ харуулна. discord.gg/lanyard серверт нэгдсэн байх шаардлагатай.'):`<div class="mnt">${ic('alert',18)}<div><b>Discord төлөв түр засвартай байна</b><small>Онлайн төлөв харуулах боломжийг сайжруулж байна. Удахгүй дахин нээгдэнэ.</small></div></div>`}</div>
 <h2 class="sh">Бүртгэл устгах</h2><div class="cd dz2"><p class="mu" style="margin-bottom:12px">Бүртгэлээ устгавал хуудас, зураг, дуу, холбоос, үзэлт, like бүгд бүр мөсөн устна. Буцаах боломжгүй.</p><button class="g dng2" type="button" id="del">${ic('trash',18)}Бүртгэлээ устгах</button></div><h2 class="sh">Гарах</h2><div class="cd"><button class="g" type="button" id="lo">${ic('logout',18)}Системээс гарах</button></div>`;
 const secB=()=>`<h2 class="sh">Таны тэмдгүүд</h2>${BADGES.map(b=>{const on=b[3](me);return`<div class="br${on?' on':''}"><span class="bi">${ic(b[4],26)}</span><div><b>${b[1]}</b><small>${b[2]}</small></div>${on?`<span class="ok">${ic('check',20)}</span>`:''}</div>`}).join('')}`;
 function refresh(root){
@@ -73,15 +114,17 @@ function refresh(root){
   const k=el.dataset.k,o=root.querySelector('[data-o="'+k+'"]');
   if(el.type=='checkbox')el.checked=!!S[k];else el.value=S[k];
   if(o)o.textContent=el.value});
+ const pw=root.querySelector('[data-w="pcc"]');if(pw)pw.hidden=S.picm!='custom';
 }
 function bindAll(root){
  refresh(root);
  root.querySelectorAll('[data-k]').forEach(el=>{
   const k=el.dataset.k,o=root.querySelector('[data-o="'+k+'"]');
   el.addEventListener('input',()=>{
-   if(['ac','tc','bgc','cc','ic'].includes(k))S.tchg=true;
+   if(['ac','tc','bgc','cc','pcc','picm'].includes(k))S.tchg=true;
    if(k=='un')el.value=el.value.toLowerCase().replace(/[^a-z0-9_]/g,'');
    S[k]=el.type=='checkbox'?el.checked:el.type=='range'?+el.value:el.value;
+   if(k=='picm'){const pw=root.querySelector('[data-w="pcc"]');if(pw)pw.hidden=S.picm!='custom'}
    if(o)o.textContent=el.value;mark()});
  });
 }
@@ -96,62 +139,88 @@ function wireDz(root){
  });
 }
 async function save(v){
- const sv=document.getElementById('sv');sv.disabled=true;
+ const sv=document.getElementById('sv');if(!sv||sv.disabled)return;sv.disabled=true;sv.innerHTML='<span class="spin sm"></span>Хадгалж байна…';
  try{
+  if(Object.values(busy).some(Boolean))return toast('Файл хуулж дуусахыг хүлээнэ үү');
+  const bad=S.links.find(l=>!linkUrl(l));
+  if(bad){openTab('l');toast((bad.label||PL[bad.icon][0])+': '+(bad.mode=='id'?'нэр/ID буруу байна':'холбоос хоосон эсвэл буруу байна'));return}
+  /* шалгаагүй өөрийн холбоосуудыг HTTPS эсэхээр шалгана (дээд тал нь ~8 сек) */
+  const pend=S.links.map((l,i)=>l.mode!='id'&&l.icon!='email'&&!l.chk?chk(i,true):null).filter(Boolean);
+  if(pend.length)await Promise.race([Promise.all(pend),new Promise(r=>setTimeout(r,8000))]);
   const un=S.un.trim().toLowerCase();
-  if(un&&un!=me.username){const{data}=await sb.rpc('claim_username',{u:un});if(data!='ok'){toast(ERR[data]||String(data));return}}
-  const links=S.links.map(l=>({label:(l.label.trim()||PL[l.icon][0]).slice(0,40),url:linkUrl(l),icon:l.icon,...(l.mode=='id'&&l.id?{id:String(l.id).trim().replace(/^@/,'').slice(0,60)}:{})})).filter(l=>safe(l.url)!='#').slice(0,12);
-  const theme=themeObj();
-  const dav=user&&user.user_metadata&&user.user_metadata.avatar_url,avatar=S.disc&&dav?dav:S.as.avatar;
+  if(un&&un!=me.username){const{data,error}=await sb.rpc('claim_username',{u:un});if(error)throw error;if(data!='ok'){openTab('a');toast(ERR[data]||String(data));return}}
+  const ci=canIco(me);
+  const links=S.links.map(l=>({label:(l.label.trim()||PL[l.icon][0]).slice(0,40),url:linkUrl(l),icon:l.icon,...(l.mode=='id'&&TPL[l.icon]&&l.id?{id:idFrom(l.icon,l.id).slice(0,60)}:{}),...(l.img&&(l.icon=='web'||ci)?{img:l.img}:{})})).filter(l=>safe(l.url)!='#').slice(0,12);
+  const theme=themeObj(),avatar=S.disc&&dav()?dav():S.as.avatar;
   const{error}=await sb.from('profiles').update({display_name:S.dn.slice(0,40),bio:S.bi.slice(0,200),avatar_url:avatar||null,bg_url:S.as.bg||null,accent:S.ac,links,theme}).eq('id',me.id);
   if(error)throw error;
-  await sb.rpc('set_presence',{p_on:S.pr});
-  const keep=new Set(Object.values(S.as).map(pathOf)),del=[...new Set(S.trash.map(pathOf))].filter(p=>p&&!keep.has(p));
-  if(del.length)await sb.storage.from('media').remove(del);
-  window.onbeforeunload=null;await loadMe();toast('Амжилттай хадгаллаа');settings(v);
- }catch(x){toast(x.message||String(x))}
- finally{const b=document.getElementById('sv');if(b)b.disabled=false}
+  if(PRESENCE_ON)await sb.rpc('set_presence',{p_on:S.pr});
+  const keep=new Set([...Object.values(S.as).map(pathOf),...S.links.filter(l=>l.img).map(l=>me.id+'/'+l.img.split('?')[0])]);
+  const del=[...new Set(S.trash.map(pathOf))].filter(p=>p&&!keep.has(p));
+  if(del.length)await sb.storage.from('media').remove(del).catch(()=>{});
+  window.onbeforeunload=null;
+  const y=scrollY;await loadMe();
+  if(!me)return go('/');
+  settings(v,curT);scrollTo(0,y);toast('Амжилттай хадгаллаа');
+ }catch(x){toast(/c_len|check constraint/i.test(x.message||'')?'Хэт урт мэдээлэл байна. Bio 200, нэр 40 тэмдэгтээс ихгүй, холбоос 12-оос ихгүй байна.':/c_media/.test(x.message||'')?'Зургийн хаяг зөвшөөрөгдөөгүй байна.':(x.message||String(x)))}
+ finally{const b=document.getElementById('sv');if(b){b.disabled=false;b.textContent='Хадгалах'}}
 }
-function settings(v){
- if(!me)return v.innerHTML='<div class="card"><p>Эхлээд нэвтэрнэ үү.</p><br><button class="lg">Discord-оор нэвтрэх</button></div>';
- S=fromMe();busy={};window.onbeforeunload=null;
- v.innerHTML=`<div class="dashw"><div class="dash"><div class="tabs2">${TABS.map((t,i)=>`<button type="button" class="${i?'':'on'}" data-t="${t[0]}">${ic(t[2],18)}<span>${t[1]}</span></button>`).join('')}</div>
+function openTab(t){const b=document.querySelector('.tabs2 button[data-t="'+t+'"]');if(b)b.click()}
+function settings(v,tab){
+ if(!me)return v.innerHTML='<div class="card"><p>Эхлээд нэвтэрнэ үү.</p><br><button class="lg">Нэвтрэх</button></div>';
+ S=fromMe();busy={};window.onbeforeunload=null;curT=TABS.some(t=>t[0]==tab)?tab:'h';
+ v.innerHTML=`<div class="dashw"><div class="dash"><div class="tabs2">${TABS.map(t=>`<button type="button" class="${t[0]==curT?'on':''}" data-t="${t[0]}">${ic(t[2],18)}<span>${t[1]}</span></button>`).join('')}</div>
  ${me.username?`<a class="tpl" href="/${e(me.username)}">biof.site/${e(me.username)} ${ic('arrow',16)}</a>`:''}
- ${localStorage.tipx?'':'<div class="tip" id="tip">'+ic('spark',18)+'<span>Шинээр орж ирсэн үү? <a href="/tutorial">Заавар үзэх</a></span><button class="g" type="button" id="tx" aria-label="Хаах">'+ic('x',14)+'</button></div>'}<section data-s="h">${secH()}</section><section data-s="c" hidden>${secC()}</section><section data-s="l" hidden>${secL()}</section><section data-s="a" hidden>${secA()}</section><section data-s="b" hidden>${secB()}</section>
+ ${me.hidden?`<div class="tip warn">${ic('alert',18)}<span>Таны хуудас олон мэдэгдэл авсан тул түр нуугдсан байна. Админ шалгаад шийднэ. Дүрэм зөрчсөн зүйл байвал засна уу.</span></div>`:''}
+ ${localStorage.tipx?'':'<div class="tip" id="tip">'+ic('spark',18)+'<span>Шинээр орж ирсэн үү? <a href="/tutorial">Заавар үзэх</a></span><button class="g" type="button" id="tx" aria-label="Хаах">'+ic('x',14)+'</button></div>'}${TABS.map(t=>`<section data-s="${t[0]}"${t[0]==curT?'':' hidden'}>${{h:secH,c:secC,l:secL,a:secA,b:secB}[t[0]]()}</section>`).join('')}
  <div class="sbar" id="sbar" hidden><b>Хадгалаагүй өөрчлөлт байна!</b><button class="g" type="button" id="rs">Буцаах</button><button type="button" id="sv">Хадгалах</button></div></div><aside class="pvside" id="pvside"><button class="g pvx" type="button" id="pvx">${ic('x',16)}Хаах</button><div class="pvl">Урьдчилан харах</div><div class="pvw" id="pvw"></div></aside></div>`;
  bindAll(v);wireDz(v);paintLinks();updPrev();homeInit(v);
  const tx=v.querySelector('#tx');if(tx)tx.onclick=()=>{localStorage.tipx=1;const t0=v.querySelector('#tip');if(t0)t0.remove()};
  v.querySelectorAll('[data-pre]').forEach(b=>b.onclick=()=>{const p=PRE.find(x=>x[0]==b.dataset.pre);Object.assign(S,p[2]);S.tchg=true;refresh(v);mark()});
- const tb=[...v.querySelectorAll('.tabs2 button')];
- tb.forEach(b=>b.onclick=()=>{tb.forEach(x=>x.classList.toggle('on',x==b));v.querySelectorAll('section[data-s]').forEach(x=>x.hidden=x.dataset.s!=b.dataset.t)});
+ const tb=[...v.querySelectorAll('.tabs2 button[data-t]')];
+ tb.forEach(b=>b.onclick=()=>{curT=b.dataset.t;tb.forEach(x=>x.classList.toggle('on',x==b));v.querySelectorAll('section[data-s]').forEach(x=>x.hidden=x.dataset.s!=curT)});
  v.querySelector('.tabs2').insertAdjacentHTML('beforeend','<button type="button" class="pvb" id="pvb">'+ic('eye',18)+'<span>Урьдчилан харах</span></button>');
  document.getElementById('pvb').onclick=()=>document.getElementById('pvside').classList.add('show');
  document.getElementById('pvx').onclick=()=>document.getElementById('pvside').classList.remove('show');
  document.getElementById('ck').onclick=ev=>{if(ev.target.closest('#cks')){try{navigator.clipboard.writeText(location.origin+'/'+me.username)}catch{}localStorage.shared=1;toast('Холбоос хуулагдлаа');updPrev()}};
  v.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{
   if(S.links.length>=12)return toast('Хамгийн ихдээ 12 холбоос нэмнэ');
-  const k=b.dataset.add;S.links.push({icon:k,label:k=='web'?'':PL[k][0],url:'',id:'',mode:TPL[k]?'id':'url'});paintLinks();mark();
-  setTimeout(()=>{const a=document.querySelectorAll('#llist input[data-lf=url],#llist input[data-lf=id]');a[a.length-1]?.focus()},60)});
- const L=document.getElementById('llist');
- L.oninput=ev=>{const i=ev.target.dataset.li;if(i==null)return;const f=ev.target.dataset.lf;S.links[i][f]=ev.target.value;
-  if(f=='id'){const pv=L.querySelector('[data-pv="'+i+'"]');if(pv)pv.textContent=linkUrl(S.links[i])||'Буруу ID'}
+  const k=b.dataset.add;S.links.push({icon:k,label:k=='web'?'':PL[k][0],url:'',id:'',mode:TPL[k]?'id':'url',img:'',chk:''});paintLinks();mark();
+  setTimeout(()=>{const a=document.querySelectorAll('#llist input[data-lf=url],#llist input[data-lf=id]');const x=a[a.length-1];if(x){x.focus();x.scrollIntoView({block:'center'})}},60)});
+ const L=document.getElementById('llist'),LIF=document.getElementById('lif');let lt=0,lifI=-1;
+ L.oninput=ev=>{const i=ev.target.dataset.li;if(i==null)return;const f=ev.target.dataset.lf,l=S.links[i];l[f]=ev.target.value;
+  if(f=='id')paintPv(i);
+  if(f=='url'){l.chk='';paintPv(i);clearTimeout(lt);lt=setTimeout(()=>chk(+i),900)}
   mark()};
+ L.addEventListener('change',ev=>{const i=ev.target.dataset.li;if(i==null)return;const l=S.links[i];
+  if(ev.target.dataset.lf=='id'){const id=idFrom(l.icon,ev.target.value);if(id!==ev.target.value){ev.target.value=id;l.id=id;paintPv(i);mark()}}
+  if(ev.target.dataset.lf=='url'&&l.icon!='email'){const n=normUrl(l.url,l.icon);if(n&&n!=l.url){l.url=n;ev.target.value=n}clearTimeout(lt);chk(+i)}});
  L.onclick=ev=>{
-  const m=ev.target.closest('[data-mv]'),d=ev.target.closest('[data-del]'),md=ev.target.closest('[data-mode]');
+  const m=ev.target.closest('[data-mv]'),d=ev.target.closest('[data-del]'),md=ev.target.closest('[data-mode]'),ico=ev.target.closest('[data-ico]'),icx=ev.target.closest('[data-icx]');
   if(m){const i=+m.dataset.mv,j=i+ +m.dataset.d;if(j>=0&&j<S.links.length){[S.links[i],S.links[j]]=[S.links[j],S.links[i]];paintLinks();mark()}}
-  else if(d){S.links.splice(+d.dataset.del,1);paintLinks();mark()}
-  else if(md){const l=S.links[+md.dataset.mode];if(l.mode=='id'){l.url=linkUrl(l)||l.url;l.mode='url'}else l.mode='id';paintLinks();mark()}};
+  else if(d){const l=S.links[+d.dataset.del];if(l.img)trashIf(MEDIA+me.id+'/'+l.img);S.links.splice(+d.dataset.del,1);paintLinks();mark()}
+  else if(md){const l=S.links[+md.dataset.mode];l.id=idFrom(l.icon,l.url);l.mode='id';paintLinks();mark()}
+  else if(ico){lifI=+ico.dataset.ico;LIF.click()}
+  else if(icx){const l=S.links[+icx.dataset.icx];trashIf(MEDIA+me.id+'/'+l.img);l.img='';paintLinks();mark()}};
+ LIF.onchange=async()=>{
+  const f=LIF.files[0];LIF.value='';const l=S.links[lifI];if(!f||!l)return;
+  try{
+   if(!f.type.startsWith('image/'))throw Error('Зөвхөн зураг сонгоно уу');
+   let b=f;if(!(f.type=='image/gif'&&f.size<=512*1024)){b=await cropDlg(f,{out:128,shape:'square',title:'Дүрсээ тааруулах'});if(!b)return}
+   toast('Дүрс хуулж байна…');
+   const url=await up('lk',new File([b],'lk.'+(extOf(b.type)||'webp'),{type:b.type}),null,true);
+   if(l.img)trashIf(MEDIA+me.id+'/'+l.img);
+   l.img=url.slice(url.lastIndexOf('/')+1);paintLinks();mark();
+  }catch(x){toast(/row-level security/i.test(x.message||'')?'Файл оруулах эрхгүй эсвэл хязгаар дүүрсэн байна. v8.sql ажиллуулсан эсэхээ шалгана уу.':(x.message||String(x)))}};
  document.getElementById('lo').onclick=async()=>{await sb.auth.signOut();go('/')};
  document.getElementById('del').onclick=delAccount;
- document.getElementById('rs').onclick=()=>{window.onbeforeunload=null;settings(v)};
+ document.getElementById('rs').onclick=()=>{window.onbeforeunload=null;const y=scrollY;settings(v,curT);scrollTo(0,y)};
  document.getElementById('sv').onclick=()=>save(v);
 }
-
-const themeObj=()=>({loc:S.loc,enter:S.en,video:S.as.video,music:S.as.music,cursor:S.as.cursor,tc:S.tc,bgc:S.bgc,cc:S.cc,ic:S.ic,set:true,op:S.op/100,bl:S.bl,r:S.r,sh:S.sh,fx:S.fx,ls:S.ls,bfx:S.bfx,tw:S.tw,tl:S.tl,grad:S.grad,mono:S.mono,anim:S.anim,swap:S.swap,vol:S.vol,gn:S.gn,gs:S.gs,gb:S.gb,disc:S.disc});
+const themeObj=()=>({loc:S.loc,enter:S.en,video:S.as.video,music:S.as.music,cursor:S.as.cursor,tc:S.tc,bgc:S.bgc,cc:S.cc,ic:S.ic,pic:S.picm=='custom'?S.pcc:S.picm,bgp:S.bgp,set:true,op:S.op/100,bl:S.bl,r:S.r,sh:S.sh,fx:S.fx,ls:S.ls,bfx:S.bfx,tw:S.tw,tl:S.tl,grad:S.grad,mono:false,anim:S.anim,swap:S.swap,vol:S.vol,gn:S.gn,gs:S.gs,gb:S.gb,disc:S.disc});
 function pObj(){
- const dav=user&&user.user_metadata&&user.user_metadata.avatar_url;
- return{username:S.un||'username',display_name:S.dn||S.un||'Нэр',bid:me.bid,bio:S.bi,avatar_url:S.disc&&dav?dav:S.as.avatar,bg_url:S.as.bg,accent:S.ac,
-  links:S.links.filter(l=>linkUrl(l)).map(l=>({label:l.label||PL[l.icon][0],url:linkUrl(l),icon:l.icon})),
+ return{id:me.id,username:S.un||'username',display_name:S.dn||S.un||'Нэр',bid:me.bid,bio:S.bi,avatar_url:S.disc&&dav()?dav():S.as.avatar,bg_url:S.as.bg,accent:S.ac,
+  links:S.links.filter(l=>linkUrl(l)).map(l=>({label:l.label||PL[l.icon][0],url:linkUrl(l),icon:l.icon,img:l.img})),
   badges:me.badges,role:me.role,views:me.views,likes:me.likes,presence_id:null,theme:themeObj()};
 }
 function ckHTML(){
@@ -169,12 +238,12 @@ function updPrev(){
   const dn=ckItems().filter(x=>x[1]).length;if(S.xd!=null&&dn>S.xd)toast('Даалгавар биелэв! +20 XP');S.xd=dn;
   const pw=document.getElementById('pvw');if(!pw)return;
   const p=pObj(),k=skin(p),bg=cu(S.as.bg);
-  pw.style.cssText=k.vars+';background-color:'+k.bgc+(bg?';background-image:url('+bg+')':'');
+  pw.style.cssText=k.vars+';background-color:'+k.bgc+(bg?';background-image:url('+bg+');background-position:'+S.bgp:'');
   pw.innerHTML=cardHTML(p,{pv:1});
  });
 }
 
-const ckItems=()=>[['Профайл зураг сонгох',!!(S.as.avatar||S.disc)],['Өөрийнхөө тухай бичих',!!S.bi.trim()],['Эхний холбоосоо нэмэх',S.links.some(l=>linkUrl(l))],['Өнгө, загвараа сонгох',!!(me.theme&&me.theme.set)||!!S.tchg],['Хуудсаа хуваалцах',!!localStorage.shared]];
+const ckItems=()=>[['Профайл зураг сонгох',!!(S.as.avatar||(S.disc&&dav()))],['Өөрийнхөө тухай бичих',!!S.bi.trim()],['Эхний холбоосоо нэмэх',S.links.some(l=>linkUrl(l))],['Өнгө, загвараа сонгох',!!(me.theme&&me.theme.set)||!!S.tchg],['Хуудсаа хуваалцах',!!localStorage.shared]];
 const xpNow=()=>ckItems().filter(x=>x[1]).length*20+(localStorage.toured?20:0);
 function xpHTML(){
  const xp=xpNow(),lv=Math.floor(xp/40)+1,cur=xp%40;
@@ -182,7 +251,7 @@ function xpHTML(){
 }
 const TILES=[['c','image','Хуудсаа чимэх','Зураг, өнгө, дуу сонгоно'],['l','link','Холбоос нэмэх','Instagram, YouTube гэх мэт'],['a','user','Миний мэдээлэл','Нэр, хаяг, Discord'],['b','badge','Тэмдгүүд','Авсан тэмдгүүдээ хар']];
 function secH(){
- return`<div class="cd hello"><h3>${ic('spark',20)}Сайн уу, ${e(me.display_name||me.username||'найз')}!</h3><p class="mu" style="margin:6px 0 14px">Энд хуудсаа гараараа чимнэ. Хэн ч ойлгохоор хялбар. Зүгээр л товчнуудыг дар.</p><div class="act" style="justify-content:flex-start"><button type="button" id="tourb">${ic('play',16)}Заавар эхлүүлэх</button>${me.username?`<a href="/${e(me.username)}" target="_blank"><button type="button" class="g">${ic('eye',16)}Хуудсаа үзэх</button></a>`:''}<button type="button" class="g" id="jpgb">${ic('download',16)}JPG болгон татах</button></div></div>
+ return`<div class="cd hello"><h3>${ic('spark',20)}Сайн уу, ${e(me.display_name||me.username||'найз')}!</h3><p class="mu" style="margin:6px 0 14px">Энд хуудсаа гараараа чимнэ. Хэн ч ойлгохоор хялбар. Зүгээр л товчнуудыг дар.</p><div class="act" style="justify-content:flex-start"><button type="button" id="tourb">${ic('play',16)}Заавар эхлүүлэх</button>${me.username?`<a href="/${e(me.username)}" target="_blank"><button type="button" class="g">${ic('eye',16)}Хуудсаа үзэх</button></a>`:''}</div></div>
 <div class="cd" id="xpb" style="margin-top:14px"></div>
 <div class="cd" id="ck" style="margin-top:14px"></div>
 <h2 class="sh">Юу хийх вэ?</h2><div class="tiles">${TILES.map(t=>`<button type="button" class="tile" data-go="${t[0]}"><span>${ic(t[1],26)}</span><b>${t[2]}</b><small>${t[3]}</small></button>`).join('')}</div>
@@ -193,42 +262,39 @@ async function loadStats(){
  const el=document.getElementById('stt');if(!el)return;
  const from=new Date(Date.now()-13*864e5).toISOString().slice(0,10);
  const r=await sb.from('views_daily').select('day,n').eq('profile_id',me.id).gte('day',from).order('day');
+ if(!el.isConnected)return;
  const m={};(r.data||[]).forEach(x=>m[x.day]=x.n);
  const days=[];for(let i=13;i>=0;i--){const d=new Date(Date.now()-i*864e5).toISOString().slice(0,10);days.push([d,m[d]||0])}
  const mx=Math.max(1,...days.map(x=>x[1]));
  el.innerHTML=`<div class="stg"><div><b>${me.views}</b><span>Нийт үзэлт</span></div><div><b>${me.likes}</b><span>Нийт like</span></div><div><b>#${me.bid}</b><span>Таны bid</span></div><div><b>${bdg(me).length}</b><span>Тэмдэг</span></div></div>${r.error?'<p class="mu">Статистик одоохондоо байхгүй.</p>':`<div class="chart">${days.map(x=>`<div class="bar" title="${x[0]}: ${x[1]}"><i style="height:${Math.max(4,x[1]/mx*100)}%"></i><small>${x[0].slice(8)}</small></div>`).join('')}</div><p class="mu" style="margin-top:8px">Сүүлийн 14 өдрийн үзэлт</p>`}`;
 }
 const TOUR=[
- {t:'Тавтай морил!',x:'Би чамд хуудсаа хэрхэн хийхийг алхам алхмаар үзүүлье.'},
+ {t:'Тавтай морил!',x:'Би чамд хуудсаа хэрхэн хийхийг алхам алхмаар үзүүлье. "Дараах" товчийг дарж үргэлжлүүлээрэй.'},
  {t:'Эндээс эхэл',x:'Эдгээр таб бүр өөр хэсэг рүү аваачна.',sel:'.tabs2',tab:'h'},
- {t:'Хуудсаа чимэх',x:'Профайл зураг, дэвсгэр, дуугаа энд оруулна. Файлаа сонгоход л болно.',sel:'.dz[data-dz="avatar"]',tab:'c'},
+ {t:'Профайл зураг',x:'Энд дарж зургаа сонгоод, чирж тааруулна. Том файл автоматаар шахагдана.',sel:'.dz[data-dz="avatar"]',tab:'c'},
+ {t:'Дэвсгэр',x:'Зураг эсвэл видео оруулна. Утас, компьютер дээр хэрхэн харагдахыг шууд үзүүлнэ.',sel:'.dz[data-dz="bg"]',tab:'c'},
  {t:'Бэлэн загвар',x:'Өнгөө нэг товшоод сольж болно.',sel:'.pre',tab:'c'},
- {t:'Холбоосоо нэм',x:'Instagram, TikTok гэх мэт платформоо дарж хаягаа оруулна.',sel:'.pgrid',tab:'l'},
- {t:'Хуудас чинь ингэж харагдана',x:'Энд хийсэн бүх зүйл шууд харагдана. Хамгийн сүүлд "Хадгалах" товчийг дарна.',sel:'#pvw',alt:'#pvb',tab:'c'},
+ {t:'Холбоосоо нэм',x:'Платформоо дараад зөвхөн нэрээ бичнэ. Жишээ нь TikTok дээр зөвхөн "bold" гэж бичихэд хангалттай.',sel:'.pgrid',tab:'l'},
+ {t:'Хуудас чинь ингэж харагдана',x:'Энд хийсэн бүх зүйл шууд харагдана. Хамгийн сүүлд доор гарч ирэх "Хадгалах" товчийг дарна.',sel:'#pvw',alt:'#pvb',tab:'c'},
  {t:'Баяр хүргэе!',x:'Заавар дууслаа. Даалгавруудаа биелүүлээд XP цуглуул!',tab:'h'}];
 function homeInit(v){
  const xb=document.getElementById('xpb');if(xb)xb.innerHTML=xpHTML();
- v.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{const t=v.querySelector('.tabs2 button[data-t="'+b.dataset.go+'"]');if(t){t.click();scrollTo({top:0,behavior:'smooth'})}});
+ v.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{openTab(b.dataset.go);scrollTo({top:0,behavior:'smooth'})});
  const tb=document.getElementById('tourb');if(tb)tb.onclick=()=>startTour(TOUR);
  loadStats();
  const tp=new URLSearchParams(location.search).get('tour');
- if(tp==='1')setTimeout(()=>startTour(TOUR),500);
- else if(!localStorage.tourSeen&&!localStorage.toured&&tp!=='0')setTimeout(()=>startTour(TOUR),700);
- const jb=document.getElementById('jpgb');if(jb)jb.onclick=jpgFromS;
+ if(tp!=null)history.replaceState(0,'',location.pathname);
+ if(!homeInit.done&&(tp==='1'||(!localStorage.tourSeen&&!localStorage.toured&&tp!=='0')))setTimeout(()=>{if(document.querySelector('.tabs2')&&!document.querySelector('.tour,.dlgb'))startTour(TOUR)},700);
+ homeInit.done=1;
 }
 
-/* Холбоосын загвараас URL бүтээх */
+/* Холбоосын загвараас URL бүтээх (бүтэн холбоос хуулсан ч нэрийг нь салгана) */
 function linkUrl(l){
  const t=TPL[l.icon];
- if(l.mode=='id'&&t){const id=String(l.id||'').trim().replace(/^@/,'');return t[3].test(id)?t[0].replace('{id}',encodeURIComponent(id)):''}
- return normUrl(l.url,l.icon);
-}
-/* Хуудсыг JPG болгох: preview-ийг дэлгэцээс гадуур түр зуур зурж татна */
-async function jpgFromS(){
- const p=pObj(),k=skin(p),box=document.createElement('div');
- box.style.cssText=k.vars+';position:fixed;left:-9999px;top:0;width:420px;padding:28px 16px;background:'+k.bgc;
- box.innerHTML=cardHTML(p,{pv:1});document.body.append(box);
- await savePageJpg(box,S.un||'biof');box.remove();
+ if(l.mode=='id'&&t){const id=idFrom(l.icon,l.id);return t[3].test(id)?t[0].replace('{id}',encodeURIComponent(id)):''}
+ const u=normUrl(l.url,l.icon);
+ if(l.icon=='email')return/^mailto:[^\s@]+@[^\s@]+\.[^\s@]+$/i.test(u)?u:'';
+ return/^https?:\/\/[^\/\s]+\.[^\/\s]{2,}/i.test(u)?u:'';
 }
 /* Бүртгэл бүрмөсөн устгах */
 async function delAccount(){

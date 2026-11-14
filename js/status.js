@@ -14,7 +14,7 @@ async function statusPage(v){
   hist.push(s.ms||0);if(hist.length>24)hist.shift();last=Date.now();
   const all=db[0]=='ok'&&au[0]=='ok';
   const row=(n,l,ms)=>`<div class="srow"><span class="dot ${l[0]}"></span><b>${n}</b><span class="mu">${ms!=null?ms+' мс':''}</span><em class="${l[0]}">${l[1]}</em></div>`;
-  v.querySelector('#so').innerHTML=`<div class="big2 ${all?'ok':'bad2'}"><span class="live"><i></i>Шууд</span><h3>${all?'Бүх систем хэвийн ажиллаж байна':'Зарим үйлчилгээ удаан байна'}</h3><small class="mu">Сүүлд шинэчлэгдсэн: <span id="ago">0</span> сек өмнө</small></div>`;
+  v.querySelector('#so').innerHTML=`<div class="big2 ${all?'ok':'bad2'}"><span class="live"><i></i>Шууд</span><h3>${all?'Бүх систем хэвийн ажиллаж байна':db[0]=='down'?'Өгөгдлийн сан түр саатсан байна. Бид засаж байна.':'Зарим үйлчилгээ удаан байна'}</h3><small class="mu">Сүүлд шинэчлэгдсэн: <span id="ago">0</span> сек өмнө</small></div>`;
   v.querySelector('#sc').innerHTML=row('Вэб сайт',['ok','Хэвийн'],null)+row('Өгөгдлийн сан',db,s.ms)+row('Нэвтрэлт',au,a.ms)+row('Файл хадгалалт',d.uploads===false?['slow','Түр хаалттай']:['ok','Хэвийн'],null)+`<div class="spw">${spark()}</div>`;
   v.querySelector('#ss').innerHTML=`<div class="stg">${[['total','Нийт бүртгэл'],['today','Өнөөдөр шинэ бүртгэл'],['live','Идэвхтэй хуудас'],['blocked','Хаасан сэжигтэй хүсэлт']].map(x=>`<div><b>${d[x[0]]??'–'}</b><span>${x[1]}</span></div>`).join('')}</div>`;
  };

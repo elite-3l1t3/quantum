@@ -1,0 +1,300 @@
+BIOF.SITE — ТӨСЛИЙН БҮРЭН ТАЙЛБАР (Gemini-д зориулав)
+=====================================================
+Хэрэглэгч Монгол хэлээр ярьдаг. Хариултаа Монголоор өг. UI-ийн бүх текст Монгол.
+
+1. ТӨСӨЛ
+-------
+biof нь guns.lol / noiz.bio төрлийн "bio-link" вэбсайт. Хэрэглэгч biof.site/username хаягаар өөрийн хуудастай болно (линк, avatar, background зураг/видео, дуу, badge, view, like).
+- Зөвхөн Discord-оор нэвтэрнэ.
+- Хамгийн эхэнд бүртгүүлсэн хүн автоматаар ADMIN (#1). Хүн бүр bid (#1, #2, #3...) дугаартай.
+- Одоо WAITLIST горимд: эхний хэрэглэгчээс бусад нь зөвхөн username нөөцөлнө. Admin "release" хийх хүртэл тэдний хуудас нийтэд харагдахгүй, тохиргоо хийж чадахгүй.
+- Leaderboard ХАСАГДСАН.
+- /a хаяг нь TEMPLATE (жишээ профайл, өгөгдөлгүй, кодод DEMO объектоор тодорхойлогдсон).
+- Үйлчилгээний нөхцөл (/tos), Нууцлалын бодлого (/privacy) хуудастай.
+- Өнгөний загвар: шар-бор (amber/хүрэн), хөнгөн, lag-гүй, утас + компьютер дээр ажиллана.
+
+2. ТЕХНОЛОГИ БА ХОЛБООСУУД
+-------------------------
+- Frontend: цэвэр HTML/CSS/vanilla JS (framework байхгүй). Хостинг: GitHub Pages (static).
+- Backend: Supabase (Postgres, Auth, Storage, RLS, RPC функцүүд).
+- Домайн: https://biof.site (GitHub Pages CNAME). Түр хаяг: https://elite-3l1t3.github.io
+- Supabase project URL: https://zyrpzoqdoorekspavocs.supabase.co
+- Supabase anon key app.js-ийн хамгийн дээр (SB_KEY). Энэ нь нийтэд харагдах зориулалттай. service_role key-г КОД РУУ ХЭЗЭЭ Ч ОРУУЛЖ БОЛОХГҮЙ.
+- Library: @supabase/supabase-js@2.45.4 (jsDelivr CDN): https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js
+- Font: Bricolage Grotesque (Google Fonts), fallback system-ui.
+- Discord OAuth: https://discord.com/developers/applications
+  Redirect URI: https://zyrpzoqdoorekspavocs.supabase.co/auth/v1/callback
+- Supabase Dashboard: https://supabase.com/dashboard (SQL Editor, Authentication, Storage)
+- GitHub Pages docs: https://docs.github.com/pages
+
+3. ФАЙЛУУД (GitHub repo-гийн үндсэн хавтсанд)
+--------------------------------------------
+Frontend:
+- index.html       Нүүр хуудас shell (<body data-p="home">)
+- settings.html    Тохиргоо (data-p="settings")
+- admin.html       Admin самбар (data-p="admin")
+- 404.html         Профайл хуудас БА 404 (data-p="profile"). GitHub Pages үл мэдэгдэх замд 404.html үйлчилдэг тул biof.site/username энд ажиллана.
+- tos.html, privacy.html   Хууль, нөхцөл (data-p="doc"; агуулга нь шууд HTML дотор, app.js нь цэс+footer нэмнэ)
+- style.css        Бүх хуудсанд нийтлэг загвар
+- app.js           Бүх логик (нэг файл)
+Бүх shell нь: <div id="app"></div> + supabase CDN script + /app.js + /style.css.
+Extensionless URL (/settings, /admin, /tos, /privacy) GitHub Pages-д .html руу автоматаар зүүгдэнэ.
+- CNAME            Агуулга: biof.site
+
+SQL (Supabase SQL Editor дээр ажиллуулах):
+- schema.sql       ХУУЧИН суурь (хүснэгт, RLS, функц). Нэг л удаа. Дахин ажиллуулбал "relation already exists" алдаа гарна.
+- update.sql       theme багана, ensure_profile, claim_username, хуучин хэрэглэгчдийн профайл backfill
+- storage.sql      'media' bucket + upload policy, reserved: index, 404
+- waitlist.sql     approved багана, site хүснэгт, site_stats, шинэчилсэн handle_new_user / ensure_profile / admin_act / RLS
+Дараалал: schema.sql → update.sql → storage.sql → waitlist.sql (бүгд update/waitlist/storage нь давтаж ажиллуулж болно).
+Бүгдийг цэвэрлэх бол: drop table if exists vlog, likes, reserved, profile_private, profiles, site cascade; (auth.users доторх хэрэглэгчийг ч устга, эс бөгөөс #1 admin дахин тогтохгүй).
+
+4. ROUTING
+----------
+- body[data-p] нь хуудасны төрлийг заана: home | settings | admin | profile | doc.
+- Профайл: замаас (location.pathname) username-ийг авна (жижиг үсэг, .html-ийг тайлна).
+- /a → DEMO template (DB-гүй; like локал, view тоологдохгүй; "Өөрийн хуудсаа үүсгэх" товч).
+- Олдохгүй профайл → nf() 404 хуудас (боломжтой нэр бол "Энэ нэрийг авах" товчтой).
+- Reserved username (авч болохгүй): admin, login, settings, leaderboard, api, biof, www, help, support, terms, index, 404, a, tos, privacy + admin-ы нэмсэн.
+- Username дүрэм: ^[a-z0-9_]{2,20}$
+
+5. app.js БҮТЭЦ
+---------------
+Тогтмол/туслах: SB_URL, SB_KEY, sb (supabase client), $ (querySelector), e (HTML escape), safe(url) (http/https шалгах), cu(url) (CSS url-д аюулгүй эсэх), av(p) (avatar эсвэл эхний үсэгтэй дугуй), bdg(p) (badge жагсаалт), BR/bc (линкийн брэнд өнгө: instagram, tiktok, youtube, x, github, discord, twitch, spotify, telegram, facebook, snapchat), ERR (алдааны мессеж), toast() (давхардал шалгана), global error/unhandledrejection → toast.
+Төлөв: me (өөрийн profiles мөр), user (auth user), aud (дуу Audio объект).
+Функцүүд:
+- loadMe(): session авна, ensure_profile RPC дуудна, profiles-ээс өөрийн мөрийг уншина; localStorage.pending username байвал claim_username дуудна.
+- bar(): дээд цэс (biof, Template, Admin (admin бол), #bid username эсвэл "Discord-оор нэвтрэх"), ban мэдэгдэл.
+- doRoute()/route(): нэг нэгээр дараалуулсан (Promise chain) — давхар зурагдахаас сэргийлнэ. Skeleton карт харуулаад хуудсаа зурна. Footer (/tos, /privacy).
+- home(v): hero (Waitlist/Нээлттэй pill, username claim бар, live шалгалт), preview карт, marquee, features, алхмууд, FAQ, CTA. Reveal-on-scroll (IntersectionObserver). site_stats RPC-ээс тоо авна.
+- nf(v,name): 404.
+- profile(v,name): карт, avatar, нэр, @username · #bid · байршил, badge, bio (typewriter сонголттой), линкүүд, view/like/хуулах, дуу удирдлага (play/pause + volume), click-to-enter overlay, background зураг/видео. Өнгө (accent, текст), card opacity, булан radius theme-ээс. add_view RPC (өөрийн хуудас болон demo-д тоолохгүй).
+- shrink(file,max) / up(kind,file): зургийг canvas-аар жижигрүүлж webp болгоно (avatar 512px, bg 1920px; gif хэвээр), Supabase Storage 'media' bucket-д {uid}/{avatar|bg|video|music}.{ext} замаар upsert, public URL + ?v=timestamp буцаана. Хязгаар: зураг 12MB (оролт), видео 15MB (mp4/webm), дуу 10MB.
+- settings(v): waitlist-д байвал зөвхөн төлөвийн карт. Үгүй бол 4 tab: Профайл (username, нэр, bio, байршил, click-to-enter текст), Төрх (accent, текст өнгө, opacity, radius, typewriter, "Template ашиглах"), Медиа (avatar, bg, видео, дууг файлаар оруулах), Линк (мөр бүр "Нэр | https://url", дээд тал нь 12). Хадгалах → profiles update.
+- admin(v): admin-д л. Хэрэглэгчийн жагсаалт (500 хүртэл), хайлт (username/#bid), товчнууд: Approve, Ban/Unban, Нэр солих, Free (username-ийг сул болгох), Badge. Дээд хэсэгт: "Site release (бүгдийг нээх)", "Waitlist болгох", username Taken (reserve) / Available (release).
+- onAuthStateChange: бэлэн болсны дараа хэрэглэгч солигдвол loadMe + route.
+- localStorage: pending (нэвтрэхээс өмнө сонгосон username), vid (view давхардал шалгах санамсаргүй ID), Supabase session.
+
+6. ӨГӨГДЛИЙН САН (Supabase Postgres)
+----------------------------------
+profiles: id (uuid, auth.users), bid (int unique, gapless: max+1 advisory lock), username (unique, nullable), display_name, bio, avatar_url, bg_url, accent (#hex, default #e8a317), links (jsonb [{label,url}]), badges (text[] — admin өгсөн), role ('user'|'admin'), banned, views, likes, username_changed_at, created_at, theme (jsonb), approved (boolean).
+theme jsonb түлхүүрүүд: loc, enter, video, music, tc (текст өнгө), op (opacity 0.3-1), r (radius 0-40), tw (typewriter boolean).
+profile_private: id, discord_id, discord_name, ban_reason (зөвхөн эзэн + admin харна).
+reserved: username (admin нөөцөлсөн / системийн), note.
+likes: (profile_id, user_id) PK.
+vlog: (profile_id, visitor, at) PK — view давхардал (6 цагт 1).
+site: id=1, open boolean (waitlist нээлттэй эсэх).
+Storage: bucket 'media' (public, 15MB). Policy: бүгд унших; зөвхөн өөрийн {uid}/ хавтсанд insert/update/delete.
+
+Trigger: on_signup (auth.users insert) → handle_new_user(): bid олгоно, эхний хэрэглэгч role='admin' + approved=true, бусад approved = site.open.
+Функцүүд (бүгд security definer):
+- is_admin()
+- ensure_profile(): auth user-д профайл байхгүй бол үүсгэнэ (schema-аас өмнө бүртгүүлсэн хэрэглэгчийн засвар)
+- username_status(u) → 'available'|'taken'|'invalid'
+- claim_username(u) → 'ok'|'taken'|'invalid'|'cooldown' (өөрчлөлт 7 хоногт 1, admin үл хамаарна)|'banned'
+- add_view(pid, v), toggle_like(pid) → true/false/null
+- site_stats() → {open, waiting, live}
+- admin_act(act, target(bid), val): ban, unban, rename, free, badges (таслалаар), approve, reserve (val=username), release (val=username; эзэмшигчээс нь авна), open (site нээх + бүгдийг approve), close.
+RLS:
+- profiles SELECT: (username not null AND not banned AND approved) OR өөрийн мөр OR admin. UPDATE: өөрийн мөр AND not banned AND approved; зөвхөн багана: display_name, bio, avatar_url, bg_url, accent, links, theme (role, bid, views, likes, banned, badges, username, approved-г зөвхөн RPC өөрчилнө).
+- profile_private SELECT: эзэн/admin. likes SELECT: өөрийн. site SELECT: бүгд. reserved, vlog: шууд хандалтгүй (RPC-ээр).
+Автомат badge (кодод тооцоолно): Admin, OG (bid ≤ 100), 1K+ views, 50+ likes; нэмээд profiles.badges.
+
+7. ДИЗАЙН
+---------
+Өнгө: суурь #14100a, карт rgba(33,26,16,.94), хүрээ #3a2d18, input #2b2113, accent #e8a317 (хэрэглэгч бүр өөрчилнө), текст #f6ead2, бүдэг #b09a74.
+CSS хувьсагч: --a, --m, --bg, --c, --l, --i.
+Animation: зөвхөн transform + opacity (lag-гүй), backdrop-filter ашиглахгүй, prefers-reduced-motion хүндэтгэнэ. Keyframes: rise, pop, drift, fl, fl2, mq, sh, fade.
+Mobile: @media (max-width:520px) ба 780px. Input font 16px (iOS zoom-оос сэргийлнэ).
+
+8. СУУЛГАХ АЛХАМ
+----------------
+1. Discord Developer Portal → app үүсгэ → OAuth2 Redirect: Supabase callback (дээр). Client ID/Secret-ийг Supabase → Authentication → Providers → Discord дээр хий.
+2. Supabase → Authentication → URL Configuration: Site URL https://biof.site, Redirect URLs https://biof.site/** (хүсвэл https://elite-3l1t3.github.io/**).
+3. SQL файлуудыг дээрх дарааллаар ажиллуул.
+4. GitHub repo-д бүх frontend файл + CNAME оруул (хуучин leaderboard.html-ийг устга). Pages → custom domain biof.site.
+5. Өөрөө хамгийн түрүүнд Discord-оор нэвтэр → #1 admin болно.
+6. Release хийхдээ: /admin → "Site release (бүгдийг нээх)".
+
+9. ӨМНӨ ЗАСАГДСАН АЛДААНУУД (дахин гаргахгүй байх)
+-----------------------------------------------
+- "Cannot set properties of null (setting 'textContent')" spam: нэвтэрсэн үед route() давхар ажиллаж typewriter interval устсан элемент руу бичдэг байсан. Засвар: route-ыг дараалуулсан, давхар trigger-ийг арилгасан, интервал isConnected шалгана, toast давхардал шалгана.
+- Хуучин бүртгэлтэй хэрэглэгчид профайлгүй (trigger дараа нэмэгдсэн) → ensure_profile + backfill.
+- "relation profiles already exists": schema.sql-ийг дахин ажиллуулсан. Үүний оронд update/waitlist/storage.sql ашигла.
+- Товчны текст хоёр мөр болох → button{white-space:nowrap}.
+
+10. АНХААРАХ / ХЯЗГААР
+----------------------
+- View давхардал нь browser-ийн санамсаргүй ID дээр тулгуурласан тул бүрэн найдвартай биш.
+- Supabase free plan: storage 1GB, файл тус бүр хязгаартай.
+- Одоогоор БАЙХГҮЙ: Discord presence (Lanyard), custom domain per user, live preview, waitlist дугаар (position), admin эрх шилжүүлэх, banned хэрэглэгчийн файл автоматаар устгах.
+- tos/privacy нь жишиг загвар, хуульчаар шалгуулах нь зүйтэй. Холбоо барих: Discord-оор admin (#1).
+- Код нэмэхдээ: аюулгүй байдлын үүднээс хэрэглэгчийн оруулсан текстийг үргэлж e()-ээр escape хий, URL-ыг safe()/cu()-ээр шалга, шинэ багана нэмбэл RLS + column grant-ийг шинэчил, admin үйлдлийг зөвхөн security definer RPC-ээр хий.
+- Давтан засвар хийхдээ app.js-ийн тухайн функцийг л өөрчил; туршилтгүйгээр том рефактор хийхгүй.
+
+
+11. V2 ӨӨРЧЛӨЛТ (энэ хэсэг дээрх тайлбараас ҮЛЭМЖ ШИНЭ — зөрвөл энэ хэсэг үнэн)
+-------------------------------------------------------------------------
+app.js УСТСАН. Код нь /js/ хавтсанд модуль болж хуваагдсан (бүгд classic script, нийтлэг global scope; bundler байхгүй):
+- js/core.js     тохиргоо, sb client, туслах функцүүд (e, safe, cu, av, bdg, bc), toast, DEMO, loadMe, bar, .lg (login) товчны click delegation
+- js/upload.js   shrink(), up() (Storage upload), sel() (select helper)           — зөвхөн settings.html
+- js/settings.js settings()                                                       — зөвхөн settings.html
+- js/home.js     home()                                                           — зөвхөн index.html
+- js/profile.js  nf(), presence() (Lanyard), profile()                            — зөвхөн 404.html
+- js/admin.js    admin()                                                          — зөвхөн admin.html
+- js/main.js     doRoute()/route() (дараалуулсан), auth listener, favicon, boot   — бүх хуудас
+Хуудас бүр зөвхөн хэрэгтэй script-ээ ачаална: core → (хуудасны script-үүд) → main. Cache-bust: ?v=2 (шинэчлэх бүрд тоог нэм).
+
+АЮУЛГҮЙ БАЙДАЛ
+- Хуудас бүрт Content-Security-Policy meta: script зөвхөн self + cdn.jsdelivr.net; connect зөвхөн Supabase + api.lanyard.rest; img/media зөвхөн self, Supabase Storage, cdn.discordapp.com. Inline onclick ашиглахгүй (class="lg" + delegation). Шинэ гадаад домайн хэрэгтэй бол meta CSP-ийг БҮХ html-д засна.
+- cu(): avatar/bg/video/music URL зөвхөн манай Storage (…/storage/v1/object/public/media/) эсвэл Discord CDN. DB-д мөн CHECK constraint c_media.
+- DB: c_len constraint (bio≤200, нэр≤40, линк≤12, theme/links<4KB). anon-д admin_act, claim_username, ensure_profile, toggle_like, set_presence EXECUTE эрх хураасан (v2.sql).
+- Like: зөвхөн approved, ban-гүй хэрэглэгч. View: минутад профайл бүрт 30-аас ихгүй, 6 цагт 1 visitor-д 1.
+SUPABASE FREE QUOTA
+- Storage: bucket лимит 8MB, mime шүүлтүүр; клиент: зураг ≤12MB (webp болгож жижигрүүлнэ), видео ≤8MB, дуу ≤5MB; cacheControl 1 жил (?v=timestamp-аар шинэчлэгдэнэ) → egress бага.
+- vlog хуучин мөрийг (>1 өдөр) санамсаргүй цэвэрлэнэ.
+- Клиент талд: ensure_profile зөвхөн профайл байхгүй үед; site_stats 60 сек sessionStorage cache; view RPC-г 6 цагт 1 удаа (localStorage v_<profileId>); realtime ашиглахгүй.
+- Supabase Dashboard дээр хий: Authentication → Providers → Email-ийг унтраа, "Allow anonymous sign-ins" унтраа (зөвхөн Discord үлдээ). Authentication → Rate Limits-ийг шалга.
+ШИНЭ FEATURE (guns.lol шиг)
+- theme jsonb нэмэлт түлхүүр: sh (avatar хэлбэр circle|round|square), fx (нэрний эффект none|glow|sparkle), ls (линкийн загвар fill|outline|pill), tl (3D tilt, зөвхөн hover төхөөрөмж).
+- Discord presence: profiles.presence_id (opt-in; set_presence RPC). Профайл дээр api.lanyard.rest-аас online/idle/dnd/offline + идэвхтэй үйл ажиллагаа харуулна. Хэрэглэгч discord.gg/lanyard серверт нэгдсэн байх ёстой.
+SQL ДАРААЛАЛ: schema → update → storage → waitlist → v2.sql.
+
+
+12. V3 ӨӨРЧЛӨЛТ (хамгийн сүүлийн, зөрвөл энэ хэсэг үнэн)
+------------------------------------------------------
+- Шинэ: js/icons.js — бүх SVG дүрс (ic(), icf()), платформын дүрсүүд (PL, plat(), platFor()), тэмдгүүд (BADGES, bdg()). Emoji ашиглахгүй. Бүх хуудас core.js-ийн дараа icons.js ачаална. Cache-bust ?v=3.
+- Профайл хуудас (biof.site/нэр, 404.html + js/profile.js): САЙТЫН НЭВТЭРХ ЦЭС, FOOTER, WATERMARK, "biof" гарчиг БАЙХГҮЙ. Табын гарчиг = хэрэглэгчийн нэр, favicon = хэрэглэгчийн avatar. Үндсэн загвар саармаг хар (шар биш). Хэрэглэгч өөрөө сонгоно: бэлэн 8 загвар (Харанхуй, Цэнхэр, Нил ягаан, Ягаан, Улаан, Ногоон, Шар, Цагаан) + гол өнгө, текст, дэвсгэр, хайрцаг (theme.cc), дүрсний өнгө. theme.set=true байхад л profiles.accent хэрэглэгдэнэ; үгүй бол #ffffff.
+- body.prof класс профайл дээр сайтын amber хувьсагчдыг саармагаар солино (CSS).
+- /a (жишээ хуудас) болон 404-д nav+footer харуулдаг (chrome() — core.js).
+- Тохируулга (js/settings.js, guns.lol хэв маяг): 4 tab (Тохируулга, Холбоосууд, Данс, Тэмдгүүд). Dropzone upload (дэвсгэр зураг/видео, дуу, профайл зураг, курсор; drag-drop, spinner, preview, устгах). Хадгалаагүй өөрчлөлтийн доод самбар (Буцаах/Хадгалах). Холбоосын сонголтын тор (28 платформ + өөрийн URL), дараалал солих, устгах. Хадгалахад ашиглагдахаа больсон файлуудыг Storage-оос устгана (квот хэмнэнэ).
+- theme jsonb нэмэлт түлхүүр: bgc, cc, ic, set, op, bl (blur), grad, mono, anim, swap, vol, gn/gs/gb (glow), bfx (snow|ember), cursor, disc.
+- Нүүр хуудас (js/home.js): энгийн Монгол хэл — "Өөрийн хуудсаа үүсгээрэй", Discord-оор нэвтрэх товч, 3 алхам, боломжууд, асуулт хариулт. Утсанд тохирсон.
+- SQL: v3.sql (accent default #ffffff). Дараалал: schema → update → storage → waitlist → v2 → v3.
+
+
+13. V4 ӨӨРЧЛӨЛТ (хамгийн сүүлийн, зөрвөл энэ хэсэг үнэн)
+------------------------------------------------------
+- Профайл хуудсан дээр зөвхөн зүүн дээд буланд жижиг "biof" текст (a.wm, href="/") байна; өөр сайтын цэс/footer байхгүй. /a ба 404-д цэс+footer хэвээр.
+- Leaderboard эргэж орсон: leaderboard.html + js/board.js (Үзэлт / Like, дээд 50, 60 сек sessionStorage cache). Цэс: Тэргүүлэгчид, Заавар, Жишээ.
+- Заавар: tutorial.html + js/tutorial.js. Нийтэд харагдана; #1 админ (role='admin') "Заавар засах" товчоор алхмуудыг бичнэ (site_content хүснэгт, k='tutorial', JSON [{t,x}], RPC admin_set_tutorial). Тохиргооны дээд талд шинэ хэрэглэгчид зориулсан "Заавар үзэх" зөвлөмж (localStorage.tipx-ээр хаагдана).
+- Бүртгэл хаах: site.reg_open. admin_act: reg_close / reg_open. Хаалттай үед handle_new_user/ensure_profile 'registration_closed' алдаа өгч шинэ хэрэглэгч үүсэхгүй (эхний хэрэглэгчээс бусад), claim_username 'closed' буцаана. Нүүр хуудас "Бүртгэл хаалттай" мэдэгдэл харуулж, нэр авах хэсгийг идэвхгүй болгоно (бүртгэлтэй хүн нэвтэрч болно). Discord redirect дээр error_description байвал toast гаргана.
+- Үзэлт: ямар ч хүн/төхөөрөмж (нэвтрээгүй, хуудасны эзэн ч) орвол +1; нэг төхөөрөмжөөс 30 минутад нэг удаа (клиент localStorage v_<id> + сервер vlog). Минутад 60-аас илүүг сервер татгалзана.
+- Нэмэлт засвар: хоосон bio-д зай үлдээхгүй, Enter товч нэр авна, шаардлагагүй ResizeObserver/AbortError toast хаасан, <noscript> мэдэгдэл, утсан дээрх "biof" текстийн давхцлаас сэргийлэх padding.
+- SQL дараалал: schema → update → storage → waitlist → v2 → v3 → v4.
+- Туршилт: бүх хуудасны функцийг хуурамч DOM дээр ажиллуулж ReferenceError шалгасан (жинхэнэ хөтөч дээр биш).
+
+
+14. V5 ӨӨРЧЛӨЛТ (хамгийн сүүлийн, зөрвөл энэ хэсэг үнэн)
+------------------------------------------------------
+ЗОРИЛГО: өдөрт ~100 шинэ хэрэглэгч, нийт ~10k хэрэглэгч, Supabase/GitHub free plan хязгаарт багтаах, бот/DDoS/нэр "snipe" хийхээс хамгаалах.
+SQL: v5.sql (дараалал: schema → update → storage → waitlist → v2 → v3 → v4 → v5).
+- Хурд хязгаарлагч: rl хүснэгт + rl_hit(key,lim,secs) + client_ip() (request.headers дахь cf-connecting-ip / x-forwarded-for). username_status 40/мин/IP, claim_username 12/цаг/хэрэглэгч, add_view 120/мин/IP, toggle_like 30/мин, report_profile 5/цаг/IP. Эдгээр нь "best effort"; жинхэнэ DDoS хамгаалалт = Cloudflare (доор).
+- Бот хамгаалалт: signup_gate() — бүртгэл хаалттай, өдрийн хязгаар (site.daily_cap, default 300), Discord акаунтын нас (site.min_age_days, default 7; Discord ID-ийн snowflake-аас тооцно). handle_new_user/ensure_profile үүнийг ашиглана. Нэр доод тал нь 3 тэмдэгт. claim_username нь 'rate' | 'young' | 'full' | 'closed' буцаана.
+- Үзэлт: add_view нь bigint (шинэ тоо) буцаана; нэг төхөөрөмж 10 минутад нэг удаа +1; эзэн ч тоологдоно; клиент талын throttle байхгүй (сервер шийднэ). Алдаа гарвал console.warn, админд toast.
+- Storage: bucket лимит 5MB; клиент лимит зураг 5MB / видео 4MB / дуу 3MB; avatar 256px, дэвсгэр 1280px webp q.78; media_allowed() — нийт 900MB, хэрэглэгч бүр 8MB, site.uploads_open=false бол хаана. Хадгалах үед ашиглагдахаа больсон файлыг устгана.
+- Мэдэгдэл (report): reports хүснэгт, report_profile RPC, профайл дээрх туг товч, админ хуудсанд жагсаалт + "Шийдсэн".
+- RLS профайл жагсаалт: (select auth.uid()) / (select is_admin()) — кэштэй, хурдан.
+- Админ (js/admin.js): сервер талын хайлт + хуудаслалт (25), мэдэгдлүүд, бүртгэл/файл оруулалт хаах, доод нас, өдрийн хязгаар.
+- js/card.js (шинэ): cardHTML(), skin() — профайл хуудас болон тохиргооны LIVE урьдчилан харах хоёулаа ашигладаг.
+- Тохиргоо: баруун талд (компьютер) / "Урьдчилан харах" товч (утас) live preview; "Хуудсаа бэлдэх" checklist + progress.
+- Нүүр хуудас: Playfair Display гарчиг, алтлаг (#e2b858) luxury загвар, count-up тоо, шилдэг хуудсуудын жагсаалт, бичсэн нэрээр live preview карт, Discord товч. Профайл хуудас нь хэрэглэгчийн өөрийн загвартай (саармаг үндэс).
+- Туршилт: бүх хуудасны функц + save() payload-ийг хуурамч DOM дээр шалгасан (жинхэнэ хөтөч/Supabase дээр биш). SQL-ийг Postgres дээр ажиллуулж туршаагүй.
+
+CLOUDFLARE (DDoS) — дэлгэрэнгүй:
+1) Cloudflare free бүртгэл → biof.site нэмэх → бүртгэгчийн nameserver-ийг солих.
+2) DNS: CNAME @ → elite-3l1t3.github.io (Proxied/улбар шар үүл). GitHub Pages → Custom domain biof.site → Enforce HTTPS (эхний хэдэн минут proxy-г түр унтраах хэрэгтэй байж магадгүй).
+3) SSL/TLS = Full. Security → Bots → Bot Fight Mode ON.
+4) Security → WAF → Rate limiting: 1 дүрэм (free): 100 хүсэлт/10 сек/IP → 1 минут блок. Халдлагын үед "Under Attack Mode".
+5) Supabase: Authentication → Rate Limits-ийг шалгах; Dashboard → Reports-оор квот хянах. Free plan 7 хоног хандалтгүй бол төсөл түр зогсдог (трафиктай бол асуудалгүй).
+КВОТЫН АНХААРУУЛГА: Storage 1GB — 10k хэрэглэгч бүгд видео/дуу оруулбал дүүрнэ. media_allowed() 900MB дээр оруулалтыг автоматаар зогсооно. Өргөжүүлэх бол Supabase Pro эсвэл Cloudflare R2-д шилжүүл.
+GITHUB PAGES ДҮРЭМ: арилжаа/төлбөртэй үйлчилгээ явуулж болохгүй (одоо байхгүй), 100GB/сар зөөлөн лимит.
+
+
+15. V7 ӨӨРЧЛӨЛТ (хамгийн сүүлийн, зөрвөл энэ хэсэг үнэн)
+------------------------------------------------------
+Нэр: biof = Bio Flex. Хэл: Монгол (үндсэн), English, Русский (js/i18n.js — Монгол текстээр түлхүүрлэсэн толь бичиг, DOM-ыг MutationObserver-ээр орчуулна; толь бичигт байхгүй текст Монголоор үлдэнэ).
+Скрипт ачаалал: бүх хуудас core → icons → ui → i18n → [хуудасны сангууд] → main. main.js нь ensure() ашиглан дутуу ачаалагдсан js файлыг өөрөө ачаалахыг оролдож, олдохгүй бол "Файл олдсонгүй: /js/xxx.js" гэж тодорхой мэдэгдэнэ. Глобал функцийн нэрэнд window-ийн өөрийн шинж чанар (status, name, top...) бүү ашигла: статус хуудасны функц = statusPage.
+Шинэ файлууд: js/ui.js (dlg() custom цонх, linkGo() гадны холбоос баталгаажуулалт — HTTPS/HTTP SVG тэмдэг, badge дээр дарах/удаан дарахад тайлбар, click ripple + курсор, зураг/бичлэг татах саад, хэл сонгох цэс, supportHTML()), js/i18n.js, js/tour.js (startTour: гэрэлтүүлсэн хэсэг + алхам алхмаар заавар), js/status.js (statusPage), status.html.
+Самбар (settings.html, js/settings.js): "Миний самбар" — Нүүр (мэндчилгээ, XP/түвшин, даалгаврууд, том товчнууд, 14 хоногийн үзэлтийн график, дэмжих карт), Чимэх, Холбоосууд (алдартай платформууд эхэнд: PLORD), Миний мэдээлэл, Тэмдгүүд. Анх орсон хүнд tour автоматаар (localStorage.tourSeen / toured). XP: даалгавар бүр +20, tour +20.
+Платформын жинхэнэ лого: Simple Icons 11.14.0 SVG-ийг jsDelivr-ээс <img class="si"> болгон тавьж, ачаалагдаагүй бол өмнөх тэмдэглэгээ (monogram) үлдэнэ. CSP img-src-д https://cdn.jsdelivr.net нэмсэн.
+Профайл: гадны холбоос бүр дээр HTTPS (түгжээ) / HTTP (анхааруулга) SVG; дарахад custom баталгаажуулалт. Хуудсан дээр текст select хийхгүй (user-select:none), зураг/видео дээр баруун товч, drag хориотой (зөвхөн саад; screenshot/devtools-оос бүрэн хамгаалахгүй). Утсан дээр 3D: хуруу + deviceorientation (iOS-д эхний товшилтоор зөвшөөрөл).
+Хаасан хэрэглэгч: admin_act('ban') нэр + bid-аас бусад бүх өгөгдлийг (display_name, bio, avatar, bg, links, badges, theme, views, likes, likes, vlog, views_daily, reports) устгана; admin.js purgeFiles() Storage дахь файлуудыг устгана (policy "media admin del"). Зочин /нэр руу орвол ban_info() RPC-ээр "Энэ хэрэглэгчийг хориглосон" хуудас гарна.
+Статус: site_status() RPC (10 сек кэштэй), counters (хаасан хүсэлтийн шард), status хуудас болон нүүр хуудсанд 15–20 сек тутам шинэчлэгдэнэ (polling).
+Analytics: views_daily (өдөр бүрийн үзэлт; 35 хоногоос хуучныг цэвэрлэнэ).
+Сайт бүрэн нээгдсэн: v6.sql нь site.open=true, бүх profiles.approved=true болгоно.
+SQL дараалал: schema → update → storage → waitlist → v2 → v3 → v4 → v5 → v6. Туршилт: Postgres дээр ажиллуулаагүй; JS-ийг хуурамч DOM дээр (MN/EN/RU горим) шалгасан.
+
+
+16. V8 ӨӨРЧЛӨЛТ (хамгийн сүүлийн, зөрвөл энэ хэсэг үнэн)
+------------------------------------------------------
+- Утсан дээр хажуу тийш хөдлөх асуудал: click ripple/курсор нь тусдаа fixed + overflow:hidden хайрцаг (.ripc) дотор; body{overflow-x:hidden/clip}; .h2:before, .mq-ийн сөрөг margin арилсан.
+- Хүлээлгийн горим БҮРЭН ХАСАГДСАН: v7.sql нь site.open=true, reg_open=true, бүх profiles.approved=true, approved default true, handle_new_user/ensure_profile үргэлж approved=true. UI-аас waitlist текст, "Хүлээлгийн төлөв", admin-ы approve/close товч арилсан.
+- bId → bid (UI дээр).
+- Нүүр хуудсанд Тэргүүлэгчид (Үзэлт/Like tab, дээд 10, "Бүгдийг харах") орсон. /leaderboard хэвээр.
+- Топбар: biof, хэл, Миний самбар/нэвтрэх, 3 зураасан цэс (#mnb → .mnu: Нүүр, Тэргүүлэгчид, Заавар, Жишээ хуудас, Статус, Дэмжих, Админ, нөхцөл). Цэсийг ui.js удирдана.
+- Курсор: .cur нь зөвхөн хулгана (pointerType!='touch') үед үүснэ; хэрэглэгчийн өөрийн курсор (theme.cursor, 32px PNG) байвал body.ucur нэмэгдэж site-ийн цагираг нуугдана.
+- 3D tilt: дарсан газартаа түгжигдэнэ (.tlock), дахин ойролцоо дарвал/гадна дарвал суллагдана; утсан дээр хуруу + deviceorientation.
+- Баталгаажсан холбоос (HOST жагсаалтад байгаа платформын https) асуулгүй нээгдэнэ. Бусад нь custom dialog-оор HTTPS/HTTP SVG-тэй асуулттай.
+- Холбоосын URL загвар (icons.js TPL): Roblox https://www.roblox.com/users/{id}/profile гэх мэт 24 платформ. Хэрэглэгч зөвхөн ID/нэрээ бичиж Хадгална; links[] дотор {icon,label,url,id}. settings.js linkUrl(l) нь URL бүтээнэ; "Өөрийн URL оруулах" горимтой.
+- Олноор тэмдэг олгох (admin): RPC admin_badge_bulk(bids[],badge,remove), admin_badge_range(from,to,badge,remove); admin.js-д checkbox-оор сонгох болон "Тэмдэг олгох" tab.
+- JPG: ui.js savePageJpg(el,name) (html2canvas 1.4.1 нь jsDelivr-ээс хэрэгтэй үед ачаалагдана). Профайлын эзэнд болон /a дээр #jp товч; самбарт jpgFromS().
+- Бүртгэл устгах: RPC delete_my_account() (admin/хориглосон хэрэглэгчид боломжгүй), delAccount() Storage файлыг эхлээд устгана.
+- Заавар: /settings?tour=1 нь үргэлж эхэлнэ; tour-д сум (--ax) нэмсэн; нэвтрээгүй хүнд "Нэвтэрч эхлэх" товч.
+- Аюулгүй байдал: frame-buster (core.js эхэнд), client cool() throttle (like 700мс, claim 2с, report 5с), ensure_profile rate limit, Storage: зөвхөн <uid>/(avatar|bg|video|music|cursor).<ext> нэртэй, хэрэглэгч бүр ≤6 файл (media_allowed).
+- SRI: supabase-js-ийн <script> дээр integrity нэмэх бол: curl -s https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js | openssl dgst -sha384 -binary | openssl base64 -A  → integrity="sha384-..." crossorigin="anonymous" (хэш тооцоолох сүлжээ энд байгаагүй тул хийгээгүй).
+- SQL дараалал: ... v6 → v7. Туршилт: JS-ийг хуурамч DOM дээр MN/EN/RU горимд 26 шалгалтаар; дундаж duplicate declaration шалгалт. SQL-ийг Postgres дээр ажиллуулаагүй.
+
+
+17. V9 ӨӨРЧЛӨЛТ (хамгийн сүүлийн, зөрвөл энэ хэсэг үнэн)
+------------------------------------------------------
+SQL: _dev/v8.sql (дараалал: ... v6 → v7 → v8). "_dev" хавтас нь "_"-ээр эхэлдэг тул GitHub Pages нийтэд гаргахгүй.
+Cache-bust: ?v=9 (main.js дотор const V='9').
+
+НЭВТРЭЛТ
+- "Нэвтрэх" товч (class="lg") → login() цонх: Discord ЭСВЭЛ имэйл рүү очих 6 оронтой код (sb.auth.signInWithOtp + verifyOtp type 'email').
+- Discord акаунтын насны шаардлага БҮРЭН хасагдсан (site.min_age_days=0; handle_new_user/ensure_profile/claim_username дахин бичигдсэн, biof_make_profile()).
+- "Нээлттэй" pill хасагдсан. Бүртгэл үргэлж нээлттэй; зөвхөн админ яаралтай үед түр хааж болно.
+
+ИМЭЙЛ (support@biof.site, Titan) ТОХИРУУЛАХ — Supabase Dashboard:
+1) Authentication → Providers → Email: Enable. "Confirm email" ON. "Email OTP Length" = 6.
+2) Project Settings → Authentication → SMTP Settings → Enable Custom SMTP:
+   Sender email: support@biof.site   Sender name: biof
+   Host: smtp.titan.email   Port: 465 (SSL)  (ажиллахгүй бол 587)
+   Username: support@biof.site   Password: Titan имэйлийн нууц үг (КОД РУУ ХЭЗЭЭ Ч БҮҮ ОРУУЛ)
+3) Authentication → Email Templates → "Confirm signup" БОЛОН "Magic Link" хоёуланд:
+   Subject: biof нэвтрэх код
+   Body: <h2>Таны biof код: {{ .Token }}</h2><p>Энэ кодыг 1 цагийн дотор оруулна уу. Та хүсээгүй бол энэ имэйлийг үл тоомсорло.</p>
+4) Authentication → Rate Limits → "Emails sent per hour" (жишээ 100).
+5) DNS (domain бүртгэгч / Cloudflare): Titan-ийн өгсөн SPF (TXT v=spf1 include:spf.titan.email ~all), DKIM, MX бичлэгүүд байх ёстой — эс бөгөөс код spam руу орно.
+
+ХОРИГ, ДАВЖ ЗААЛДАХ, МЭДЭГДЭЛ
+- Хориглогдсон хэрэглэгч нэвтэрмэгц home/settings/admin/tutorial дээр banPage() (core.js): шалтгаан + давж заалдах (appeals хүснэгт, submit_appeal RPC; 24 цагт 1, нийт 5).
+- Хориглогдсон хуудсыг хэн ч (админ, эзэн ч) нээхэд "Энэ хэрэглэгчийг хориглосон" гарна. page_info(u) RPC → 'banned'|'hidden'|null.
+- Мэдэгдэл: бэлэн сонголт (RCAT, icons.js) + тайлбар → flag_profile RPC (flags хүснэгт). Нэвтэрсэн өөр өөр 5 хүн (site.flag_hide) 3 хоногт мэдэгдвэл хуудас АВТОМАТААР ТҮР НУУГДАНА (profiles.hidden=true; устгахгүй, хорихгүй). verified/staff/админ нуугдахгүй. Админ "Ил гаргах / Нуух / Хориглох / Шийдсэн".
+- admin_mod(act,pid,id) RPC: flags_done, hide, unhide, flag_hide, appeal_ok, appeal_no.
+- profiles SELECT RLS: (username not null AND not banned AND not hidden) OR өөрийн OR админ.
+
+ТЭМДЭГ
+- MANUAL (icons.js): verified, staff, partner, creator, supporter, vip, bughunter, og. Админ товчон дээр дарж олныг зэрэг сонгоно (bpHTML/bpWire/bpGet, admin.js). Өөр нэртэй тэмдэг ч нэмж болно. Олноор: хэрэглэгч чагтлах эсвэл bid муж.
+
+ХОЛБООС
+- Платформ (TPL) бүрт зөвхөн нэр/ID бичнэ; бүтэн URL эсвэл @нэр хуулбал idFrom() нэрийг салгана. Xbox, PlayStation нэмэгдсэн.
+- Платформын дүрс: дэвсгэргүй, зөвхөн дүрс (CSS mask, Simple Icons). Өнгө: theme.pic = 'text' | 'brand' | '#hex'.
+- Өөрийн холбоос ("web"): дүрсээ зургаар солино (links[].img = "lk_xxxxxxxx.webp?v=..", MEDIA/<uid>/ дотор). Verified/админ бүх платформын дүрсийг сольж болно (сервер талд links_guard trigger шалгана).
+- Өөрийн холбоосын сайт HTTPS дэмждэг эсэхийг no-cors fetch-ээр шалгаж http↔https автоматаар засна (settings.html CSP connect-src https:). Мэдэгдэж буй платформын http холбоос профайл дээр https болно (upU, card.js).
+
+ФАЙЛ
+- Лимитээс том файл автоматаар шахагдана (upload.js): зураг → webp/jpeg (чанар/хэмжээг бууруулна), видео → webm (canvas+MediaRecorder, ≤45 сек), дуу → opus/webm (WebCodecs; боломжгүй бол MediaRecorder). Лимит: зураг 5MB, видео 4MB, дуу 3MB. Хэрэглэгч ≤20 файл, ≤12MB (media_ok()).
+- Профайл зураг: cropDlg — чирэх, гулсуур/хуруугаар томруулах, дугуй хүрээ. GIF бол хөдөлгөөнтэй үлдээх эсэхийг асууна.
+- Дэвсгэр: bgDlg — компьютер (16:10) ба утас (9:19.5) дээр хэрхэн харагдахыг үзүүлж, чирж байрлал (theme.bgp "x% y%") тохируулна. Профайл дээр дэвсгэр зураг нь fixed div (.bgv.bgi) болсон (iOS-д background-attachment:fixed эвдэрдэг байсан).
+
+БУСАД
+- Тохиргоонд "Хадгалах" дарахад тухайн таб, гүйлгэсэн байрлалдаа үлдэнэ (settings(v,curT)).
+- Tour (tour.js) дахин бичигдсэн: бөмбөлөг үргэлж дэлгэц дотор, гарын товч (→ ← Esc), ?tour=1 нэг л удаа.
+- JPG татах функц бүрэн хасагдсан.
+- Discord төлөв (Lanyard) түр засвартай: core.js PRESENCE_ON=false. Засвар дуусвал true болго.
+- Өгөгдлийн сан унтарсан/5xx/хариугүй үед бүх хуудсанд "Түр засвартай байна" статус дэлгэц (downPage, core.js), 30 сек тутам автоматаар дахин шалгана. /status хуудас үргэлж ажиллана.
+- Select: товч, цэс, дүрс, холбоос сонгогдохгүй; текст (bio, тайлбар, нөхцөл г.м.) сонгогдоно (.sel класс).
+- crypto.randomUUID байхгүй хуучин хөтөч дээр профайл эвдэрдэг алдаа засагдсан.
+- Туршилт: Playwright (Chromium) + хуурамч Supabase дээр бүх хуудас (MN/EN, утас/компьютер) — консолын алдаагүй. SQL-ийг жинхэнэ Postgres дээр ажиллуулж туршаагүй.

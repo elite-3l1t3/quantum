@@ -2,15 +2,20 @@
 function dlg(o){
  return new Promise(res=>{
   const d=document.createElement('div');d.className='dlgb';
-  d.innerHTML=`<div class="dlg" role="dialog" aria-modal="true"><div class="dlgi${o.danger?' risk':''}">${ic(o.icon||'spark',26)}</div><h3>${e(o.title||'')}</h3>${o.html||(o.body?`<p class="mu">${e(o.body)}</p>`:'')}${o.input?`<input class="dli" maxlength="${o.input.max||300}" placeholder="${e(o.input.placeholder||'')}" value="${e(o.input.value||'')}" autocomplete="off">`:''}<div class="act dla"><button type="button" class="g" data-r="0">${e(o.cancel||'Болих')}</button><button type="button" class="${o.danger?'dng':''}" data-r="1">${e(o.ok||'Тийм')}</button></div></div>`;
-  const ok=()=>done(o.input?d.querySelector('.dli').value.trim():true);
+  d.innerHTML=`<div class="dlg${o.wide?' wide':''}" role="dialog" aria-modal="true">${o.icon===false?'':`<div class="dlgi${o.danger?' risk':''}">${ic(o.icon||'spark',26)}</div>`}<h3>${e(o.title||'')}</h3>${o.html||(o.body?`<p class="mu">${e(o.body)}</p>`:'')}${o.input?`<input class="dli" maxlength="${o.input.max||300}" placeholder="${e(o.input.placeholder||'')}" value="${e(o.input.value||'')}" autocomplete="off">`:''}<div class="act dla"><button type="button" class="g" data-r="0">${e(o.cancel||'Болих')}</button><button type="button" class="${o.danger?'dng':''}" data-r="1">${e(o.ok||'Тийм')}</button></div></div>`;
+  const no=o.input||o.collect?null:false;
+  /* collect(d) нь утга буцаана; undefined буцаавал цонх хаагдахгүй (шалгалт) */
+  const ok=()=>{const v=o.collect?o.collect(d):(o.input?d.querySelector('.dli').value.trim():true);if(v!==undefined)done(v)};
   const done=v=>{d.classList.add('out');setTimeout(()=>d.remove(),180);document.removeEventListener('keydown',kd);res(v)};
-  const kd=ev=>{if(ev.key=='Escape')done(o.input?null:false);else if(ev.key=='Enter'&&o.input&&document.activeElement&&document.activeElement.classList.contains('dli'))ok()};
-  d.onclick=ev=>{if(ev.target==d){done(o.input?null:false);return}const b=ev.target.closest('[data-r]');if(b){if(b.dataset.r=='1')ok();else done(o.input?null:false)}};
+  const kd=ev=>{if(ev.key=='Escape')done(no);else if(ev.key=='Enter'&&o.input&&document.activeElement&&document.activeElement.classList.contains('dli'))ok()};
+  d.onclick=ev=>{if(ev.target==d){done(no);return}const b=ev.target.closest('[data-r]');if(b){if(b.dataset.r=='1')ok();else done(no)}};
   document.addEventListener('keydown',kd);document.body.append(d);
+  if(o.wire)o.wire(d);
   const i=d.querySelector('.dli');if(i)setTimeout(()=>i.focus(),60);
  });
 }
+/* Сонголтын жагсаалт (radio) */
+const optsHTML=(name,L,cur)=>`<div class="opts">${L.map(x=>`<label class="opt"><input type="radio" name="${name}" value="${e(x[0])}"${x[0]==cur?' checked':''}><span>${x[2]?ic(x[2],18):''}<b>${e(x[1])}</b>${x[3]?`<small>${e(x[3])}</small>`:''}</span></label>`).join('')}</div>`;
 /* Гадны холбоос: баталгаажсан (мэдэгдэж буй платформын https) холбоосыг асуухгүй нээнэ */
 async function linkGo(url){
  let host='',https=false,mail=false,trusted=false;
@@ -53,7 +58,7 @@ document.addEventListener('pointerdown',ev=>{const b=ev.target.closest&&ev.targe
  document.addEventListener('mouseleave',()=>{if(c)c.classList.remove('show')});
 })();
 /* Зураг, бичлэг татахаас сэргийлэх (бүрэн хамгаалалт биш, зөвхөн саад) */
-document.addEventListener('contextmenu',ev=>{const t=ev.target;if(t.closest&&t.closest('img,video,.av,.card,.bgv,.pt')&&!t.closest('input,textarea'))ev.preventDefault()});
+document.addEventListener('contextmenu',ev=>{const t=ev.target;if(t.closest&&t.closest('img,video,.av,.bgv,.pt,.lk')&&!t.closest('input,textarea'))ev.preventDefault()});
 document.addEventListener('dragstart',ev=>{if(ev.target.closest&&ev.target.closest('img,video'))ev.preventDefault()});
 /* Гурван зураасан цэс */
 function menuItems(){
@@ -92,16 +97,6 @@ document.addEventListener('click',ev=>{
 const ACC='MN620050099106666308';
 const supportHTML=()=>`<div class="sup rv" id="support"><span class="cup">${ic('coffee',34)}</span><div class="supb"><h3>Надад кофе авч өгөөрэй</h3><p class="mu">biof-ийг үнэгүй байлгахад туслаарай. Дэмжлэг нь сайн дурын, баярлалаа!</p><div class="acc"><div><small class="mu">Monpay данс</small><code>${ACC}</code></div><button class="g" type="button" data-cpy="1">${ic('copy',16)}Хуулах</button></div></div></div>`;
 document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-cpy]');if(!b)return;try{navigator.clipboard.writeText(ACC)}catch{}b.innerHTML=ic('check',16)+'Хуулагдлаа';toast('Данс хуулагдлаа. Баярлалаа!');setTimeout(()=>{b.innerHTML=ic('copy',16)+'Хуулах'},2200)});
-/* Хуудсыг JPG зураг болгон татах (html2canvas-ийг хэрэгтэй үед л ачаална) */
-async function savePageJpg(el,name){
- try{
-  if(!window.html2canvas)await new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';s.onload=ok;s.onerror=()=>no(Error('Зураг үүсгэгч ачаалагдсангүй'));document.head.append(s)});
-  const bg=getComputedStyle(document.body).backgroundColor||'#0a0a0a';
-  const cv=await html2canvas(el,{backgroundColor:bg,scale:2,useCORS:true,logging:false,ignoreElements:n=>!!(n.classList&&(n.classList.contains('rip')||n.classList.contains('cur')||n.classList.contains('wm')||n.classList.contains('ripc')))});
-  const a=document.createElement('a');a.href=cv.toDataURL('image/jpeg',.92);a.download=(name||'biof')+'.jpg';document.body.append(a);a.click();a.remove();
-  toast('JPG зураг татагдлаа');
- }catch(x){toast('JPG татаж чадсангүй: '+(x.message||x))}
-}
 /* Load/error: жинхэнэ платформын логог CDN-ээс авна, олдохгүй бол тэмдэглэгээ үлдэнэ */
-document.addEventListener('load',ev=>{const t=ev.target;if(t&&t.classList&&t.classList.contains('si'))t.parentNode.classList.add('ok')},true);
+document.addEventListener('load',ev=>{const t=ev.target;if(t&&t.classList&&t.classList.contains('si')&&t.parentNode)t.parentNode.classList.add('ok')},true);
 document.addEventListener('error',ev=>{const t=ev.target;if(t&&t.classList&&t.classList.contains('si'))t.remove()},true);
