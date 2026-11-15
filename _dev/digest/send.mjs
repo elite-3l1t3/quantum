@@ -6,7 +6,9 @@ const { SB_SERVICE, RESEND_KEY } = process.env;
 const MAX = Math.min(95, +process.env.DIGEST_MAX || 40); // Resend үнэгүй: өдөрт 100 (нэвтрэх кодтой хамт)
 if (!SB_SERVICE || !RESEND_KEY) { console.log('SB_SERVICE эсвэл RESEND_KEY secret алга — алгаслаа.'); process.exit(0); }
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const r = await fetch(`${SB}/rest/v1/rpc/digest_rows`, { method: 'POST', headers: { apikey: SB_SERVICE, Authorization: 'Bearer ' + SB_SERVICE, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_limit: MAX }) });
+// Шинэ sb_secret_ түлхүүрийг зөвхөн apikey толгойд; хуучин service_role (JWT) түлхүүрийг Authorization-д ч явуулна
+const H = { apikey: SB_SERVICE, 'Content-Type': 'application/json', ...(SB_SERVICE.startsWith('sb_') ? {} : { Authorization: 'Bearer ' + SB_SERVICE }) };
+const r = await fetch(`${SB}/rest/v1/rpc/digest_rows`, { method: 'POST', headers: H, body: JSON.stringify({ p_limit: MAX }) });
 if (!r.ok) { console.error('digest_rows', r.status, await r.text()); process.exit(1); }
 const rows = (await r.json()).filter(x => x.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x.email));
 if (!rows.length) { console.log('Тайлан авах хүн алга'); process.exit(0); }
