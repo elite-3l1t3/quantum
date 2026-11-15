@@ -43,6 +43,7 @@ const bc=u=>(typeof PL!='undefined'&&PL[platFor(u)]||[])[1]||'#e2b858';
 const go=p=>{location.href=p};
 const ERR={taken:'Энэ нэр аль хэдийн авагдсан байна',invalid:'Нэр 3-20 тэмдэгт байх ба зөвхөн a-z, 0-9, _ ашиглана',cooldown:'Нэрээ 7 хоногт нэг л удаа солино',banned:'Таньд эрх алга',closed:'Бүртгэл одоогоор түр хаалттай байна',rate:'Хэт олон оролдлого хийлээ. Хэдэн секундийн дараа дахин оролдоно уу.',young:'Бүртгэл үүсгэж чадсангүй. Дахин оролдоно уу.',full:'Өнөөдрийн бүртгэлийн хязгаар дүүрсэн. Маргааш дахин оролдоно уу.',none:'Хуудас олдсонгүй',self:'Өөрийн хуудсыг мэдэгдэх боломжгүй',dup:'Та энэ хуудсыг аль хэдийн мэдэгдсэн байна',short:'Дор хаяж 10 тэмдэгт бичнэ үү',open:'Таны хүсэлт шалгагдаж байна',wait:'24 цагт нэг удаа хүсэлт илгээнэ',max:'Хүсэлтийн хязгаар дууссан',notbanned:'Таны бүртгэл хориглогдоогүй байна'};
 
+try{const r=new URLSearchParams(location.search).get('ref');if(r&&/^[a-z0-9_]{3,20}$/i.test(r)){localStorage.ref=r.toLowerCase();const u=new URL(location.href);u.searchParams.delete('ref');history.replaceState(0,'',u.pathname+u.search+u.hash)}}catch{}
 async function loadMe(){
  const{data:{session}}=await sb.auth.getSession();user=session?.user||null;me=null;
  if(!user)return;
@@ -50,9 +51,10 @@ async function loadMe(){
  const r0=await q();if(r0.error&&r0.status>=500)throw Error('db');me=r0.data;
  if(!me){const r=await sb.rpc('ensure_profile');me=(await q()).data;if(!me){const m=(r.error&&r.error.message)||'';toast(/registration_closed/.test(m)?'Бүртгэл одоогоор түр хаалттай байна.':/daily_limit/.test(m)?ERR.full:r.data=='rate'?ERR.rate:m?'Профайл үүссэнгүй: '+m:'Профайл үүссэнгүй. SQL файлуудыг ажиллуулсан эсэхээ шалгана уу.');return}}
  if(!me.username&&localStorage.pending){const u=localStorage.pending;localStorage.removeItem('pending');const{data}=await sb.rpc('claim_username',{u});if(data&&data!='ok')toast(ERR[data]||String(data));me=(await q()).data}
+ if(me&&me.username&&localStorage.ref&&!me.banned){const{data,error}=await sb.rpc('use_ref',{p_ref:localStorage.ref});if(!error&&!['later','rate'].includes(data))localStorage.removeItem('ref');if(data=='ok'){toast('Урилгаар нэгдсэн тул "Найз" тэмдэг авлаа!');me=(await q()).data||me}}
 }
 const LGN={mn:'MN',en:'EN',ru:'RU'};
-const bar=()=>`<nav><b><a href="/" aria-label="biof">biof</a></b><button class="lgs g" id="lgs" type="button" aria-label="Хэл">${ic('globe',16)}<span>${LGN[localStorage.lang||'mn']||'MN'}</span></button>${me?`<a href="/settings"><button type="button" class="pnl">${ic('home',16)}<span>Миний самбар</span></button></a>`:'<button class="lg" type="button">Нэвтрэх</button>'}<button class="mnb g" id="mnb" type="button" aria-label="Цэс" aria-expanded="false">${ic('menu',20)}</button></nav>${me&&me.banned?'<div class="bad">Таны бүртгэлийг хориглосон байна.</div>':''}`;
+const bar=()=>`<nav><b><a href="/" aria-label="biof">biof</a></b><button class="g srb" id="srb" type="button" aria-label="Хайх" title="Хайх">${ic('search',18)}</button><button class="lgs g" id="lgs" type="button" aria-label="Хэл">${ic('globe',16)}<span>${LGN[localStorage.lang||'mn']||'MN'}</span></button>${me?`<a href="/settings"><button type="button" class="pnl">${ic('home',16)}<span>Миний самбар</span></button></a>`:'<button class="lg" type="button">Нэвтрэх</button>'}<button class="mnb g" id="mnb" type="button" aria-label="Цэс" aria-expanded="false">${ic('menu',20)}</button></nav>${me&&me.banned?'<div class="bad">Таны бүртгэлийг хориглосон байна.</div>':''}`;
 const foot=()=>`<footer><div class="fnav"><a href="/tos">Үйлчилгээний нөхцөл</a><a href="/privacy">Нууцлалын бодлого</a><a href="/status">Статус</a><a href="/#support">Дэмжих</a></div><p>© biof · Bio Flex</p></footer>`;
 
 /* Нэвтрэх: Discord эсвэл имэйл рүү очих код */

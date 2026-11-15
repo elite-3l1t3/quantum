@@ -34,7 +34,9 @@ async function putFile(kind,body,ct){
 /* Хуучин up(): файлыг шалгаж, шаардлагатай бол шахаад хуулна. onp(0..1) явц */
 async function up(kind,f,onp,raw){
  const T={avatar:'image',bg:'image',video:'video',music:'audio',cursor:'image',lk:'image'}[kind];
- if(!f||!f.type.startsWith(T))throw Error('Буруу төрлийн файл сонгосон байна');
+ const vid2mp3=kind=='music'&&f&&f.type.startsWith('video/');
+ if(!f||!(f.type.startsWith(T)||vid2mp3))throw Error('Буруу төрлийн файл сонгосон байна');
+ if(vid2mp3){if(f.size>HARD.video)throw Error('Видео хэт том байна. '+Math.round(HARD.video/MB)+'MB-аас бага файл сонгоно уу.');toast('Видеоны дууг MP3 болгож байна…');const sb0=await soundOf(f);if(!sb0)throw Error('Энэ видеонд дуу олдсонгүй (эсвэл таны хөтөч уншиж чадсангүй).');const b=await toMp3(f,LIM.audio,onp,sb0);return(await putFile('music',b,'audio/mpeg')).url}
  if(f.size>HARD[T])throw Error('Файл хэт том байна ('+Math.round(f.size/MB)+'MB). '+Math.round(HARD[T]/MB)+'MB-аас бага файл сонгоно уу.');
  let body=f,ct=f.type;
  if(T=='image'){
@@ -45,7 +47,7 @@ async function up(kind,f,onp,raw){
  }else if(T=='video'){
   if(f.size>LIM.video||!/^video\/(mp4|webm)$/.test(f.type)){toast('Видео том байна. Автоматаар шахаж байна, түр хүлээнэ үү…');body=await packVideo(f,LIM.video,onp);ct=body.type}
  }else if(T=='audio'){
-  if(f.size>LIM.audio){toast('Дуу том байна. Автоматаар шахаж байна…');body=await packAudio(f,LIM.audio,onp);ct=body.type}
+  if(f.size>LIM.audio){toast('Дуу том байна. MP3 болгож шахаж байна…');body=await packAudio(f,LIM.audio,onp);ct=body.type}
  }
  if(body.size>LIM[T])throw Error('Шахсан ч гэсэн '+Math.round(LIM[T]/MB)+'MB-аас хэтэрлээ. Богино эсвэл жижиг файл сонгоно уу.');
  return(await putFile(kind,body,ct)).url;
@@ -117,8 +119,48 @@ async function decodeTo48k(f){
  ac.close&&ac.close().catch(()=>{});
  return buf;
 }
-async function packAudio(f,lim,onp){
- const buf=await decodeTo48k(f);
+/* ---------- MP3 (lamejs, сайт дээрээ хадгалсан /js/vendor/lame.min.js) ---------- */
+let LAME=null;
+const loadLame=()=>LAME||(LAME=new Promise((ok,no)=>{if(window.lamejs)return ok(window.lamejs);const x=document.createElement('script');x.src='/js/vendor/lame.min.js?v=1.2.1';x.onload=()=>window.lamejs?ok(window.lamejs):no(Error('lamejs'));x.onerror=()=>{LAME=null;no(Error('MP3 хөрвүүлэгч ачаалагдсангүй'))};document.head.append(x)}));
+async function resample(buf,ch,sr,dur){
+ const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext,len=Math.ceil(dur*sr),oc=new OAC(ch,len,sr),src=oc.createBufferSource();
+ src.buffer=buf;src.connect(oc.destination);src.start(0);return oc.startRendering();
+}
+/* AudioBuffer → MP3 Blob. lim байтад багтаахаар bitrate сонгоно, хэт урт бол таслана */
+async function bufToMp3(buf,lim,onp){
+ const lame=await loadLame();
+ let dur=buf.duration;const KB=[128,112,96,80,64,56,48,40,32];
+ let kbps=KB.find(k=>dur*k*125<=lim*.95);
+ if(!kbps){kbps=32;dur=Math.floor(lim*.95/(32*125));toast('Дуу урт тул эхний '+Math.max(1,Math.round(dur/60))+' минутыг авна')}
+ const ch=kbps>=96&&buf.numberOfChannels>1?2:1,sr=kbps>=64?44100:32000;
+ const pcm=await resample(buf,ch,sr,dur);if(onp)onp(.1);
+ const enc=new lame.Mp3Encoder(ch,sr,kbps),L=pcm.getChannelData(0),R=ch>1?pcm.getChannelData(1):null,N=1152,out=[];
+ const i16=a=>{const r=new Int16Array(a.length);for(let i=0;i<a.length;i++){const v=Math.max(-1,Math.min(1,a[i]));r[i]=v<0?v*32768:v*32767}return r};
+ for(let i=0;i<L.length;i+=N*40){
+  const end=Math.min(L.length,i+N*40);
+  for(let j=i;j<end;j+=N){const l=i16(L.subarray(j,Math.min(end,j+N)));const m=R?enc.encodeBuffer(l,i16(R.subarray(j,Math.min(end,j+N)))):enc.encodeBuffer(l);if(m.length)out.push(new Uint8Array(m))}
+  if(onp)onp(.1+.88*end/L.length);await new Promise(r=>setTimeout(r,0));
+ }
+ const t=enc.flush();if(t.length)out.push(new Uint8Array(t));
+ const b=new Blob(out,{type:'audio/mpeg'});
+ if(b.size>lim)throw Error('Дууг хангалттай шахаж чадсангүй. Богино дуу сонгоно уу.');
+ return b;
+}
+/* Файлд (видео/аудио) сонсогдох дуу байгаа эсэх. Байвал AudioBuffer, үгүй бол null */
+async function soundOf(f){
+ if(f.size>100*MB)return null;
+ try{const b=await decodeTo48k(f);if(!b||b.duration<.5)return null;
+  const d=b.getChannelData(0),st=Math.max(1,Math.floor(d.length/20000));let s=0,n=0;for(let i=0;i<d.length;i+=st){s+=d[i]*d[i];n++}
+  return Math.sqrt(s/n)>.002?b:null}catch{return null}
+}
+/* Видео эсвэл том дууг MP3 болгоно */
+async function toMp3(f,lim,onp,buf){
+ buf=buf||await decodeTo48k(f);
+ try{return await bufToMp3(buf,lim,onp)}
+ catch(x){if(/хангалттай/.test(x.message||''))throw x;console.warn('mp3 fallback',x);return packAudioBuf(buf,lim,onp)}
+}
+async function packAudio(f,lim,onp){return toMp3(f,lim,onp)}
+async function packAudioBuf(buf,lim,onp){
  let dur=buf.duration;const ch=Math.min(2,buf.numberOfChannels||1);
  const minB=40000,maxB=128000;
  if(dur*minB/8>lim*.94){dur=Math.floor(lim*.94*8/minB);toast('Дуу урт тул эхний '+Math.round(dur/60)+' минутыг авна')}

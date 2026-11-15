@@ -333,3 +333,18 @@ FAVICON: /favicon.ico (16/32/48), /favicon.svg, /apple-touch-icon.png, /icon-192
 - Ачааллын үеэр хоосон/хуучин агуулгын оронд skeleton харагдана (main.js).
 - Тэргүүлэгчдийн таб: "7 хоног / Үзэлт / Like" — утсанд багтана (.lbt). 7 хоногийн мэдээлэл алга/алдаатай бол эхлэхдээ "Үзэлт" руу автоматаар шилжинэ.
 - Загвар ачаалагдахгүй бол жинхэнэ алдааны мессеж харагдана.
+
+
+20. V12 ӨӨРЧЛӨЛТ (хамгийн сүүлийн)
+---------------------------------
+SQL: _dev/v11.sql (дараалал: ... v8 → v10 → v11). Локал Postgres 16 дээр v8→v10→v11 (2 удаа) ажиллуулж бүх шинэ RPC-г тестэлсэн.
+СКРИПТ: supabase-js 2.45.4 болон lamejs 1.2.1 сайтдаа хадгалагдсан (/js/vendor/, npm integrity шалгасан). CSP script-src 'self' (CDN скрипт байхгүй, илүү аюулгүй). Simple Icons зураг л jsDelivr-ээс.
+ДУУ: Дуу хэсэгт видео сонговол дууг нь MP3 болгоно (lamejs, /js/vendor/lame.min.js хэрэгтэй үед л ачаалагдана). 3MB-аас том дууг ч MP3 болгож шахна (bitrate автоматаар, хэт урт бол таслана). Дэвсгэр видео дуутай бол theme.vsnd: 'ask' (асуух, анхдагч) | 'use' (автоматаар хуудасны дуу болгох) | 'off' (ашиглахгүй). Тохиргоо → Чимэх → Бусад.
+ЭФФЕКТ: theme.bfx: none|snow|ember|bubbles|stars|rain|hearts|matrix (matrix = canvas, 20fps). theme.fx: none|glow|sparkle|rainbow|neon|glitch|type. theme.frame: none|gold|silver|neon (бүгд) + fire|ice|sakura|galaxy (зөвхөн verified; сервер links_guard trigger шалгана). prefers-reduced-motion хүндэтгэнэ.
+ХАЙЛТ: цэс дээрх томруулдаг шил / "Хүн хайх" (цэс, тэргүүлэгчид). search_users(q) RPC (≥2 тэмдэгт, IP-ээр минутад 60, хориглогдсон/нуугдсан гарахгүй).
+УРИЛГА: biof.site/?ref=нэр → localStorage.ref → нэр авмагц use_ref RPC (шинэ бүртгэл ≤3 хоног, нэг удаа, урьсан хүн өдөрт 20). Хоёулаа "Найз" тэмдэг, profiles.invites ≥5 бол "5+ найз". Самбар → Нүүр → "Найзаа урих".
+АДМИН: Тойм → "Supabase үнэгүй эрхийн хэрэглээ" (admin_usage RPC: DB 500MB, Storage 1GB, MAU 50k; 75%/90% анхааруулга).
+МЭДЭЭЛЭЛ ТАТАХ: Миний мэдээлэл → "Мэдээллээ татах (JSON)" (профайл, private, давж заалдах, баталгаажуулалт, загвар, like, файлын жагсаалт).
+7 ХОНОГИЙН ИМЭЙЛ: Миний мэдээлэл → "7 хоног бүрийн тайлан" (theme.digest). .github/workflows/digest.yml Даваа 09:17 (УБ) _dev/digest/send.mjs ажиллуулна: digest_rows RPC (зөвхөн service_role) → Resend batch.
+  GitHub → Settings → Secrets and variables → Actions → New repository secret: SB_SERVICE (Supabase → Settings → API → service_role key), RESEND_KEY (Resend API key). Secret байхгүй бол юу ч илгээхгүй. DIGEST_MAX=40 (Resend үнэгүй өдөрт 100 — нэвтрэх кодтой хамт тоологдоно).
+ЗАСВАР: профайлын document listener-ууд маршрут солигдоход цэвэрлэгдэнэ (window.RC AbortController); glitch нэр зөв байрлалд.

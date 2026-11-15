@@ -23,7 +23,7 @@ shield:'<path d="M12 3 4 6v6c0 4.5 3.2 8 8 9 4.8-1 8-4.5 8-9V6z"/>',
 badge:'<path d="M12 3l2.4 1.8 3 .1 1 2.8 2.3 1.9-.9 2.9.9 2.9-2.3 1.9-1 2.8-3 .1L12 21l-2.4-1.8-3-.1-1-2.8L3.3 14.4l.9-2.9-.9-2.9 2.3-1.9 1-2.8 3-.1z"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
 star:'<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
 sliders:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
-logout:'<path d="M9 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3M16 8l4 4-4 4M20 12H9"/>',menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',download:'<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',trophy:'<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M9 20h6M10 17h4"/>',lock:'<rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',unlock:'<rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 7.5-2"/>',alert:'<path d="M12 4 3 20h18z"/><path d="M12 10v4M12 17v.5"/>',coffee:'<path d="M5 9h11v5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z"/><path d="M16 10h2a2.5 2.5 0 0 1 0 5h-2M8 3v3M12 3v3"/>',globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/>',home:'<path d="M4 11 12 4l8 7v9H5z"/><path d="M10 20v-6h4v6"/>',chart:'<path d="M5 20V10M12 20V4M19 20v-7"/>',pulse:'<path d="M3 12h4l2-6 4 12 2-6h6"/>',bolt:'<path d="M13 3 5 14h6l-1 7 8-11h-6z"/>',flag:'<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',plus:'<path d="M12 5v14M5 12h14"/>',x:'<path d="M6 6l12 12M18 6 6 18"/>'};
+logout:'<path d="M9 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3M16 8l4 4-4 4M20 12H9"/>',menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',download:'<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',trophy:'<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M9 20h6M10 17h4"/>',lock:'<rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',unlock:'<rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 7.5-2"/>',alert:'<path d="M12 4 3 20h18z"/><path d="M12 10v4M12 17v.5"/>',coffee:'<path d="M5 9h11v5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z"/><path d="M16 10h2a2.5 2.5 0 0 1 0 5h-2M8 3v3M12 3v3"/>',globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/>',home:'<path d="M4 11 12 4l8 7v9H5z"/><path d="M10 20v-6h4v6"/>',chart:'<path d="M5 20V10M12 20V4M19 20v-7"/>',pulse:'<path d="M3 12h4l2-6 4 12 2-6h6"/>',bolt:'<path d="M13 3 5 14h6l-1 7 8-11h-6z"/>',flag:'<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',plus:'<path d="M12 5v14M5 12h14"/>',x:'<path d="M6 6l12 12M18 6 6 18"/>',search:'<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>'};
 const ic=(n,s=20,w=1.8)=>`<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]||''}</svg>`;
 const icf=(n,s=20)=>ic(n,s).replace('fill="none"','fill="currentColor"');
 const PL={discord:['Discord','#5865F2','Dc'],youtube:['YouTube','#FF0033'],instagram:['Instagram','#E1306C'],x:['X','#16181c'],tiktok:['TikTok','#141414','Tt'],telegram:['Telegram','#229ED9'],spotify:['Spotify','#1DB954'],soundcloud:['SoundCloud','#FF5500','Sc'],github:['GitHub','#24292f','Gh'],twitch:['Twitch','#9146FF','Tw'],snapchat:['Snapchat','#FFFC00','Sn'],facebook:['Facebook','#1877F2','f'],reddit:['Reddit','#FF4500','Rd'],linkedin:['LinkedIn','#0A66C2','in'],steam:['Steam','#1b2838','St'],paypal:['PayPal','#003087','Pp'],pinterest:['Pinterest','#E60023','Pi'],threads:['Threads','#141414','@'],bluesky:['Bluesky','#1185FE','Bs'],vk:['VK','#0077FF','VK'],patreon:['Patreon','#FF424D','Pa'],kofi:['Ko-fi','#FF5E5B','Kf'],roblox:['Roblox','#2b2f36','Rb'],xbox:['Xbox','#107C10','Xb'],playstation:['PlayStation','#003791','PS'],applemusic:['Apple Music','#FA243C','Am'],gitlab:['GitLab','#E24329','Gl'],email:['Имэйл','#4b5563'],web:['Вэб хуудас','#4b5563']};
@@ -60,6 +60,8 @@ const BADGES=[
 ['supporter','Дэмжигч','biof-ийг дэмжсэн',p=>has(p,'supporter'),'coffee'],
 ['vip','VIP','Онцгой хэрэглэгч',p=>has(p,'vip'),'trophy'],
 ['bughunter','Алдаа олсон','Сайтын алдаа олж мэдэгдсэн',p=>has(p,'bughunter'),'bolt'],
+['friend','Найз','Найзаа урьсан эсвэл урилгаар нэгдсэн',p=>has(p,'friend'),'heart'],
+['inviter','5+ найз','5-аас олон найз урьсан',p=>(p.invites||0)>=5,'user'],
 ['views','1K үзэлт','Хуудас 1000 удаа үзэгдэх',p=>p.views>=1000,'eye'],
 ['likes','50 like','Хуудас 50 like авах',p=>p.likes>=50,'heart']];
 /* Админ гараар олгож болох тэмдгүүд */
@@ -135,3 +137,10 @@ function embInfo(u){
  if(/^https:\/\/(?:www\.|m\.)?soundcloud\.com\/[\w-]+\/(?:sets\/)?[\w-]+/i.test(u))return{k:'soundcloud',src:'https://w.soundcloud.com/player/?url='+encodeURIComponent(u.split('?')[0])+'&auto_play=true&visual=false&show_comments=false',h:166};
  return null;
 }
+
+/* Профайл зургийн хүрээ. v=1 бол зөвхөн баталгаажсан хэрэглэгчид (сервер ч шалгана) */
+const FRAMES=[['none','Байхгүй',0],['gold','Алт',0],['silver','Мөнгө',0],['neon','Неон',0],['fire','Гал',1],['ice','Мөс',1],['sakura','Сакура',1],['galaxy','Галактик',1]];
+/* Нэрний эффект */
+const NAMEFX=[['none','Байхгүй'],['glow','Гэрэлтэх'],['sparkle','Гялбаа'],['rainbow','Солонго'],['neon','Неон анивчих'],['glitch','Glitch'],['type','Бичигдэх']];
+/* Хөдөлгөөнт дэвсгэр */
+const BGFX=[['none','Байхгүй'],['snow','Цас'],['ember','Оч'],['bubbles','Бөмбөлөг'],['stars','Од'],['rain','Бороо'],['hearts','Зүрх'],['matrix','Matrix']];

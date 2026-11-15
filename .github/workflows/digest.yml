@@ -1,0 +1,21 @@
+name: Weekly digest email
+on:
+  schedule:
+    - cron: '17 1 * * 1'   # Даваа гараг 09:17 (Улаанбаатар)
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Send digest
+        env:
+          SB_SERVICE: ${{ secrets.SB_SERVICE }}
+          RESEND_KEY: ${{ secrets.RESEND_KEY }}
+          DIGEST_MAX: '40'
+        run: node _dev/digest/send.mjs

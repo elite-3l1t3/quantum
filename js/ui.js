@@ -62,7 +62,7 @@ document.addEventListener('contextmenu',ev=>{const t=ev.target;if(t.closest&&t.c
 document.addEventListener('dragstart',ev=>{if(ev.target.closest&&ev.target.closest('img,video'))ev.preventDefault()});
 /* Гурван зураасан цэс */
 function menuItems(){
- const L=[['/','home','Нүүр'],['/leaderboard','trophy','Тэргүүлэгчид'],['/tutorial','spark','Заавар'],['/a','eye','Жишээ хуудас'],['/status','pulse','Статус'],['/#support','coffee','Дэмжих']];
+ const L=[['/','home','Нүүр'],['#search','search','Хүн хайх'],['/leaderboard','trophy','Тэргүүлэгчид'],['/tutorial','spark','Заавар'],['/a','eye','Жишээ хуудас'],['/status','pulse','Статус'],['/#support','coffee','Дэмжих']];
  if(typeof me!='undefined'&&me){L.unshift(['/settings','user','Миний самбар']);if(me.role=='admin')L.splice(1,0,['/admin','shield','Админ самбар']);else if(me.role=='moderator')L.splice(1,0,['/admin','shield','Модератор самбар'])}
  L.push(['/tos','link','Үйлчилгээний нөхцөл'],['/privacy','lock','Нууцлалын бодлого']);
  return L;
@@ -74,7 +74,7 @@ document.addEventListener('click',ev=>{
   if(document.querySelector('.mnu')){closeMenu();return}
   const k=document.createElement('div');k.className='mnbk';
   const m=document.createElement('div');m.className='mnu';
-  m.innerHTML=`<div class="mnh"><b>biof</b><span class="mu">Bio Flex</span><button class="g mnx" type="button" aria-label="Хаах">${ic('x',18)}</button></div>`+menuItems().map((x,i)=>`<a href="${x[0]}" style="--i:${i}">${ic(x[1],20)}<span>${x[2]}</span></a>`).join('');
+  m.innerHTML=`<div class="mnh"><b>biof</b><span class="mu">Bio Flex</span><button class="g mnx" type="button" aria-label="Хаах">${ic('x',18)}</button></div>`+menuItems().map((x,i)=>`<a href="${x[0]}"${x[0]=='#search'?' data-search="1"':''} style="--i:${i}">${ic(x[1],20)}<span>${x[2]}</span></a>`).join('');
   document.body.append(k,m);b.setAttribute('aria-expanded','true');return;
  }
  if(ev.target.closest&&(ev.target.closest('.mnbk')||ev.target.closest('.mnx')||ev.target.closest('.mnu a')))closeMenu();
@@ -100,3 +100,30 @@ document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.clos
 /* Load/error: жинхэнэ платформын логог CDN-ээс авна, олдохгүй бол тэмдэглэгээ үлдэнэ */
 document.addEventListener('load',ev=>{const t=ev.target;if(t&&t.classList&&t.classList.contains('si')&&t.parentNode)t.parentNode.classList.add('ok')},true);
 document.addEventListener('error',ev=>{const t=ev.target;if(t&&t.classList&&t.classList.contains('si'))t.remove()},true);
+
+/* Хэрэглэгч хайх (нэр эсвэл @хаяг) */
+async function searchUsers(q){
+ q=String(q||'').trim().replace(/^@/,'');if(q.length<2)return[];
+ const r=await sb.rpc('search_users',{q});
+ if(!r.error)return r.data||[];
+ const c=q.toLowerCase().replace(/[^a-z0-9_ёөүа-я .-]/gi,'');if(c.length<2)return[];
+ const f=await sb.from('profiles').select('bid,username,display_name,avatar_url,views,badges').not('username','is',null).or('username.ilike.'+c+'%,display_name.ilike.%'+c+'%').order('views',{ascending:false}).limit(12);
+ return(f.data||[]).map(p=>({...p,verified:(p.badges||[]).some(x=>String(x).toLowerCase()=='verified')}));
+}
+const srRow=p=>`<a href="/${e(p.username)}">${av(p)}<span><b>${e(p.display_name||p.username)}${p.verified?` <span class="vb">${ic('badge',15)}</span>`:''}</b><small>@${e(p.username)} · ${ic('eye',12)} ${p.views||0}</small></span></a>`;
+function searchDlg(){
+ if(document.querySelector('.srd'))return;
+ const d=document.createElement('div');d.className='dlgb srd';
+ d.innerHTML=`<div class="dlg" role="dialog" aria-modal="true"><h3>Хүн хайх</h3><div class="sri">${ic('search',18)}<input id="srq" maxlength="30" placeholder="Нэр эсвэл @хаяг" autocomplete="off" autocapitalize="none" spellcheck="false"></div><div class="srl" id="srl"><p class="mu" style="text-align:center;padding:10px">Дор хаяж 2 үсэг бичнэ үү</p></div><div class="act"><button type="button" class="g" data-x="1">Хаах</button></div></div>`;
+ const close=()=>{d.classList.add('out');setTimeout(()=>d.remove(),180);document.removeEventListener('keydown',kd)};
+ const kd=ev=>{if(ev.key=='Escape')close()};
+ d.onclick=ev=>{if(ev.target==d||ev.target.closest('[data-x]'))close()};
+ document.addEventListener('keydown',kd);document.body.append(d);
+ const i=d.querySelector('#srq'),L=d.querySelector('#srl');let t=0,n=0;
+ i.oninput=()=>{clearTimeout(t);const q=i.value;if(q.trim().replace(/^@/,'').length<2){L.innerHTML='<p class="mu" style="text-align:center;padding:10px">Дор хаяж 2 үсэг бичнэ үү</p>';return}
+  L.innerHTML='<p class="mu" style="text-align:center;padding:10px">Хайж байна…</p>';
+  t=setTimeout(async()=>{const my=++n,R=await searchUsers(q).catch(()=>[]);if(my!=n||!L.isConnected)return;L.innerHTML=R.map(srRow).join('')||'<p class="mu" style="text-align:center;padding:10px">Олдсонгүй</p>'},300)};
+ i.onkeydown=ev=>{if(ev.key=='Enter'){const a=L.querySelector('a');if(a)location.href=a.href}};
+ setTimeout(()=>i.focus(),60);
+}
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('#srb,[data-search]');if(b){ev.preventDefault();searchDlg()}});

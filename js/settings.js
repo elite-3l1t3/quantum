@@ -1,8 +1,9 @@
 let S=null,busy={},curT='h';
 const TABS=[['h','Нүүр','home'],['c','Чимэх','sliders'],['l','Холбоосууд','link'],['a','Миний мэдээлэл','user'],['b','Тэмдгүүд','badge']];
-const DZ={bg:['Дэвсгэр','image','image/*,video/*','Зураг эсвэл видео. Том бол автоматаар шахна.'],music:['Дуу','music','audio/*','mp3, m4a, ogg. Том бол автоматаар шахна.'],avatar:['Профайл зураг','user','image/*','jpg, png, gif, webp. Сонгоод тайрч тааруулна.'],cursor:['Курсор','cursor','image/png,image/webp,image/gif','Жижиг зураг, 32px болгон багасгана']};
+const DZ={bg:['Дэвсгэр','image','image/*,video/*','Зураг эсвэл видео. Том бол автоматаар шахна.'],music:['Дуу','music','audio/*,video/*','mp3, m4a, ogg. Видео сонговол дууг нь MP3 болгоно.'],avatar:['Профайл зураг','user','image/*','jpg, png, gif, webp. Сонгоод тайрч тааруулна.'],cursor:['Курсор','cursor','image/png,image/webp,image/gif','Жижиг зураг, 32px болгон багасгана']};
 const ip=(l,k,i,ph,m)=>`<div class="fl"><label>${l}</label><div class="ipw">${ic(i,18)}<input data-k="${k}" maxlength="${m||60}" placeholder="${ph||''}" autocomplete="off"></div></div>`;
 const sl=(l,k,o)=>`<div class="fl"><label>${l}</label><select data-k="${k}">${o.map(x=>`<option value="${x[0]}">${x[1]}</option>`).join('')}</select></div>`;
+const slx=(l,k,o)=>`<div class="fl"><label>${l}</label><select data-k="${k}">${o.map(x=>`<option value="${x[0]}"${x[2]?' disabled':''}>${x[1]}</option>`).join('')}</select></div>`;
 const tg=(l,k,h,dis)=>`<div class="tgr${dis?' dis':''}"><div><b>${l}</b>${h?`<small>${h}</small>`:''}</div><label class="sw2"><input type="checkbox" data-k="${k}"${dis?' disabled':''}><i></i></label></div>`;
 const cp=(l,k)=>`<div class="fl" data-w="${k}"><label>${l}</label><div class="cpk"><input type="color" data-k="${k}"><span data-o="${k}"></span></div></div>`;
 const rg=(l,k,a,b,s,u,h)=>`<div class="fl"><label>${l}: <b data-o="${k}"></b>${u}</label><input type="range" data-k="${k}" min="${a}" max="${b}" step="${s}">${h?`<small>${h}</small>`:''}</div>`;
@@ -16,7 +17,7 @@ function fromMe(){
   ac:t.set?(me.accent||'#ffffff'):'#ffffff',tc:t.tc||'#f5f5f5',bgc:t.bgc||'#0a0a0a',cc:t.cc||'#141414',ic:t.ic||'#2a2a2a',
   picm:hx(t.pic)?'custom':(['brand','text'].includes(t.pic)?t.pic:'text'),pcc:hx(t.pic)?t.pic:'#ffffff',bgp:/^\d{1,3}% \d{1,3}%$/.test(t.bgp||'')?t.bgp:'50% 50%',
   op:Math.round((t.op??.93)*100),bl:t.bl||0,r:t.r??20,sh:t.sh||'circle',fx:t.fx||'none',ls:t.ls||'fill',bfx:t.bfx||'none',
-  font:FONTS[t.font]?t.font:'def',idx:!t.noidx,tw:!!t.tw,tl:!!t.tl,grad:!!t.grad,mono:!!t.mono,anim:!!t.anim,swap:!!t.swap,vol:!!t.vol,disc:!!t.disc,gn:!!t.gn,gs:!!t.gs,gb:!!t.gb,
+  font:FONTS[t.font]?t.font:'def',idx:!t.noidx,frame:FRAMES.some(x=>x[0]==t.frame)?t.frame:'none',vsnd:['ask','use','off'].includes(t.vsnd)?t.vsnd:'ask',digest:!!t.digest,tw:!!t.tw,tl:!!t.tl,grad:!!t.grad,mono:!!t.mono,anim:!!t.anim,swap:!!t.swap,vol:!!t.vol,disc:!!t.disc,gn:!!t.gn,gs:!!t.gs,gb:!!t.gb,
   as:{avatar:me.avatar_url||'',bg:me.bg_url||'',video:t.video||'',music:t.music||'',cursor:t.cursor||''},
   links:(me.links||[]).map(l=>{if(l.emb){const x=embInfo(l.url);return{label:l.label||'',url:l.url||'',icon:x?x.k:'youtube',id:'',mode:'emb',img:'',chk:''}}const k=PL[l.icon]?l.icon:platFor(l.url),T=TPL[k];let id=l.id||'',mode='url';
    if(T){if(!id)id=idFrom(k,l.url);if(T[3].test(String(id).replace(/^@/,'')))mode='id';else id=''}
@@ -49,8 +50,18 @@ async function handle(k,f){
   if(k=='bg'){const o=kind=='bg'?'video':'bg';trashIf(S.as[o]);S.as[o]='';setAs(kind,url)}else setAs(k,url);
   busy[k]=0;paint(k);mark();
   if(k=='bg'){const pos=await bgDlg(cu(url),kind=='video',S.bgp);if(pos&&pos!=S.bgp){S.bgp=pos;mark()}}
+  if(k=='bg'&&kind=='video'&&S.vsnd!='off')await bgSound(f);
  }catch(x){toast(/row-level security|exceeded|too large|payload|maximum allowed/i.test(x.message||'')?'Хадгалах зай дүүрсэн, файл оруулалт түр хаалттай эсвэл файлын лимит хэтэрсэн байна':(x.message||String(x)))}
  finally{if(busy[k]){busy[k]=0;paint(k)}}
+}
+/* Дэвсгэр видео дуутай бол түүнийг хуудасны дуу (MP3) болгох — тохиргоо: асуух / автомат / ашиглахгүй */
+async function bgSound(f){
+ const buf=await soundOf(f);if(!buf)return;
+ if(S.vsnd=='ask'){const ok=await dlg({icon:'music',title:'Видео дуутай байна',body:S.as.music?'Энэ видеоны дууг хуудасны дуу болгох уу? Одоогийн дуу солигдоно.':'Энэ видеоны дууг хуудасны дуу болгох уу? (Тохиргоо → Бусад хэсгээс "асуухгүй" болгож болно)',ok:'Дууг ашиглах',cancel:'Дуугүй'});if(!ok)return}
+ busy.music={p:0};paint('music');
+ try{const b=await toMp3(f,LIM.audio,p=>{busy.music={p};paintP('music')},buf);const url=(await putFile('music',b,'audio/mpeg')).url;setAs('music',url);mark();toast('Видеоны дуу хуудасны дуу боллоо')}
+ catch(x){toast(x.message||String(x))}
+ finally{busy.music=0;paint('music')}
 }
 function rm(k){
  if(k=='bg'){trashIf(S.as.bg);trashIf(S.as.video);S.as.bg='';S.as.video=''}else{trashIf(S.as[k]);S.as[k]=''}
@@ -100,15 +111,17 @@ const secC=()=>`<h2 class="sh">Загварууд</h2><div class="cd" id="tplc">
 <h2 class="sh">Файл оруулах</h2><div class="cd">${['bg','music','avatar','cursor'].map(dzW).join('')}</div>
 <h2 class="sh">Ерөнхий тохиргоо</h2><div class="cd">
 ${ip('Тайлбар (bio)','bi','text','Өөрийнхөө тухай товч бичнэ үү',200)}${ip('Байршил','loc','pin','Жишээ нь: Улаанбаатар',30)}${ip('Орох дэлгэцийн бичвэр','en','spark','Орохын тулд дарна уу',40)}
-${sl('Фонт','font',Object.keys(FONTS).map(k=>[k,FONTS[k][0]]))}${sl('Дэвсгэрийн эффект','bfx',[['none','Байхгүй'],['snow','Цас'],['ember','Оч']])}${sl('Нэрний эффект','fx',[['none','Байхгүй'],['glow','Гэрэлтэх'],['sparkle','Гялбаа']])}
+${sl('Фонт','font',Object.keys(FONTS).map(k=>[k,FONTS[k][0]]))}${sl('Дэвсгэрийн эффект','bfx',BGFX)}${sl('Нэрний эффект','fx',NAMEFX)}${slx('Профайл зургийн хүрээ','frame',FRAMES.map(f=>[f[0],f[1]+(f[2]&&!canIco(me)?' (баталгаажсан)':''),f[2]&&!canIco(me)]))}
 ${sl('Профайл зургийн хэлбэр','sh',[['circle','Дугуй'],['round','Зөөлөн дөрвөлжин'],['square','Дөрвөлжин']])}${sl('Холбоосын загвар','ls',[['fill','Дүүрэн'],['outline','Хүрээтэй'],['pill','Дугуйрсан']])}
 ${rg('Хайрцгийн тунгалаг байдал','op',20,100,5,'%')}${rg('Хайрцгийн бүдгэрүүлэлт','bl',0,20,1,'px','Утсан дээр удаан ажиллаж болзошгүй')}${rg('Булангийн дугуйрал','r',0,40,1,'px')}
 ${tg('Нэрэнд гэрэл нэмэх','gn')}${tg('Холбоосуудад гэрэл нэмэх','gs')}${tg('Тэмдгүүдэд гэрэл нэмэх','gb')}</div>
 <h2 class="sh">Өнгө</h2><div class="cd">${preH()}${cp('Гол өнгө','ac')}${cp('Текстийн өнгө','tc')}${cp('Дэвсгэрийн өнгө','bgc')}${cp('Хайрцгийн өнгө','cc')}${sl('Дүрсний өнгө','picm',[['text','Текстийн өнгөтэй'],['brand','Платформын өөрийн өнгөтэй'],['custom','Өөрөө сонгох']])}${cp('Дүрсний өөрийн өнгө','pcc')}${tg('Градиент ашиглах','grad','Хайрцгийг гол өнгөөр зөөлөн сүүдэрлэнэ')}</div>
-<h2 class="sh">Бусад</h2><div class="cd">${tg('Хөдөлгөөнт гарчиг','anim','Хөтчийн таб дээрх нэр хөдөлнө')}${tg('Өнгө сольж харуулах','swap','Холбоосыг гол өнгөөр дүүргэнэ')}${tg('Дууны хяналт','vol','Дууны түвшин тохируулагч гаргана')}${dav()?tg('Discord зургаа ашиглах','disc','Профайл зураг нь таны Discord зураг болно'):''}${tg('Бичигдэх bio','tw','Тайлбар үсэг үсгээр бичигдэнэ')}${tg('3D хөдөлгөөн','tl','Компьютер дээр хулганаар, утсан дээр хуруу болон гар утсаа хазайлгаж ажиллана')}</div>`;
+<h2 class="sh">Бусад</h2><div class="cd">${tg('Хөдөлгөөнт гарчиг','anim','Хөтчийн таб дээрх нэр хөдөлнө')}${tg('Өнгө сольж харуулах','swap','Холбоосыг гол өнгөөр дүүргэнэ')}${tg('Дууны хяналт','vol','Дууны түвшин тохируулагч гаргана')}${sl('Дэвсгэр видеоны дуу','vsnd',[['ask','Дуутай бол асуух'],['use','Автоматаар хуудасны дуу болгох'],['off','Дууг ашиглахгүй']])}${dav()?tg('Discord зургаа ашиглах','disc','Профайл зураг нь таны Discord зураг болно'):''}${tg('Бичигдэх bio','tw','Тайлбар үсэг үсгээр бичигдэнэ')}${tg('3D хөдөлгөөн','tl','Компьютер дээр хулганаар, утсан дээр хуруу болон гар утсаа хазайлгаж ажиллана')}</div>`;
 const secL=()=>`<div class="cd"><h3>${ic('link',20)}Холбоосоо нэмэх</h3><p class="mu">Платформоо сонгоод зөвхөн нэр эсвэл ID-гаа бичнэ. Бүтэн холбоос хуулбал нэрийг нь өөрөө салгаж авна.${canIco(me)?' Та баталгаажсан тул дүрс бүрийг өөрийн зургаар сольж болно.':''}</p><div class="pgrid">${PLORD.filter(k=>PL[k]&&k!='web').map(k=>`<button type="button" class="pb" data-add="${k}">${plat(k,44)}<span>${PL[k][0]}</span></button>`).join('')}</div><button type="button" class="wide" data-add="web">${plat('web',36)}<span><b>Өөрийн холбоос нэмэх</b><small>Дурын хаяг, өөрөө нэр өгч болно</small></span></button><button type="button" class="wide" data-add="emb">${plat('youtube',36)}<span><b>Видео / дуу оруулах</b><small>YouTube, Spotify, SoundCloud — хуудсан дээр шууд тоглоно (3 хүртэл)</small></span></button></div><div id="llist"></div><input type="file" hidden id="lif" accept="image/*">`;
 const secA=()=>`<h2 class="sh">Үндсэн мэдээлэл</h2><div class="cd">${ip('Хэрэглэгчийн нэр','un','user','username',20)}${user&&user.email?`<div class="fl"><label>Имэйл</label><div class="ipw">${ic('link',18)}<span class="sel" style="padding:13px 0">${e(user.email)}</span></div></div>`:''}<small class="mu">Нэрээ 7 хоногт нэг л удаа солино. Зөвхөн a-z, 0-9, _ ашиглана.</small><br><br>${ip('Харагдах нэр','dn','text','Таны нэр',40)}<div class="fl"><label>Таны bid</label><div class="ipw">${ic('badge',18)}<span style="padding:13px 0">#${me.bid}</span></div></div></div>
 <h2 class="sh">Хайлт</h2><div class="cd">${tg('Google хайлтад харагдах','idx','Асаалттай үед таны хуудас тэргүүлэгчдэд орвол Google-ээр хайхад гарч болно.')}</div>
+${user&&user.email?`<h2 class="sh">Имэйл тайлан</h2><div class="cd">${tg('7 хоног бүрийн тайлан','digest','Даваа гараг бүр хуудсаа хэдэн хүн үзсэнийг '+e(user.email)+' хаяг руу авна.')}</div>`:''}
+<h2 class="sh">Миний мэдээлэл</h2><div class="cd"><p class="mu" style="margin-bottom:10px">Таны biof дээрх бүх мэдээллийг (профайл, холбоос, тохиргоо, хүсэлтүүд, загварууд) нэг файл болгон татна.</p><button type="button" class="g" id="exp">${ic('download',16)}Мэдээллээ татах (JSON)</button></div>
 <h2 class="sh">Discord</h2><div class="cd">${PRESENCE_ON?tg('Discord төлөвөө харуулах','pr','Онлайн эсвэл идэвхтэй байгаагаа хуудсан дээрээ харуулна. discord.gg/lanyard серверт нэгдсэн байх шаардлагатай.'):`<div class="mnt">${ic('alert',18)}<div><b>Discord төлөв түр засвартай байна</b><small>Онлайн төлөв харуулах боломжийг сайжруулж байна. Удахгүй дахин нээгдэнэ.</small></div></div>`}</div>
 <h2 class="sh">Бүртгэл устгах</h2><div class="cd dz2"><p class="mu" style="margin-bottom:12px">Бүртгэлээ устгавал хуудас, зураг, дуу, холбоос, үзэлт, like бүгд бүр мөсөн устна. Буцаах боломжгүй.</p><button class="g dng2" type="button" id="del">${ic('trash',18)}Бүртгэлээ устгах</button></div><h2 class="sh">Гарах</h2><div class="cd"><button class="g" type="button" id="lo">${ic('logout',18)}Системээс гарах</button></div>`;
 const secB=()=>`<h2 class="sh">Баталгаажсан тэмдэг</h2><div class="cd" id="vrq"><p class="mu">Ачаалж байна…</p></div><h2 class="sh">Таны тэмдгүүд</h2>${BADGES.map(b=>{const on=b[3](me);return`<div class="br${on?' on':''}"><span class="bi">${ic(b[4],26)}</span><div><b>${b[1]}</b><small>${b[2]}</small></div>${on?`<span class="ok">${ic('check',20)}</span>`:''}</div>`}).join('')}`;
@@ -220,10 +233,12 @@ function settings(v,tab){
   }catch(x){toast(/row-level security/i.test(x.message||'')?'Файл оруулах эрхгүй эсвэл хязгаар дүүрсэн байна. v8.sql ажиллуулсан эсэхээ шалгана уу.':(x.message||String(x)))}};
  document.getElementById('lo').onclick=async()=>{await sb.auth.signOut();go('/')};
  document.getElementById('del').onclick=delAccount;
+ const ex=document.getElementById('exp');if(ex)ex.onclick=exportMe;
+ const iv=document.getElementById('invc');if(iv)iv.onclick=()=>{try{navigator.clipboard.writeText(location.origin+'/?ref='+me.username)}catch{}toast('Урилгын холбоос хуулагдлаа')};
  document.getElementById('rs').onclick=()=>{window.onbeforeunload=null;const y=scrollY;settings(v,curT);scrollTo(0,y)};
  document.getElementById('sv').onclick=()=>save(v);
 }
-const themeObj=()=>({font:S.font,noidx:!S.idx,loc:S.loc,enter:S.en,video:S.as.video,music:S.as.music,cursor:S.as.cursor,tc:S.tc,bgc:S.bgc,cc:S.cc,ic:S.ic,pic:S.picm=='custom'?S.pcc:S.picm,bgp:S.bgp,set:true,op:S.op/100,bl:S.bl,r:S.r,sh:S.sh,fx:S.fx,ls:S.ls,bfx:S.bfx,tw:S.tw,tl:S.tl,grad:S.grad,mono:false,anim:S.anim,swap:S.swap,vol:S.vol,gn:S.gn,gs:S.gs,gb:S.gb,disc:S.disc});
+const themeObj=()=>({font:S.font,noidx:!S.idx,frame:S.frame,vsnd:S.vsnd,digest:!!S.digest,loc:S.loc,enter:S.en,video:S.as.video,music:S.as.music,cursor:S.as.cursor,tc:S.tc,bgc:S.bgc,cc:S.cc,ic:S.ic,pic:S.picm=='custom'?S.pcc:S.picm,bgp:S.bgp,set:true,op:S.op/100,bl:S.bl,r:S.r,sh:S.sh,fx:S.fx,ls:S.ls,bfx:S.bfx,tw:S.tw,tl:S.tl,grad:S.grad,mono:false,anim:S.anim,swap:S.swap,vol:S.vol,gn:S.gn,gs:S.gs,gb:S.gb,disc:S.disc});
 function pObj(){
  return{id:me.id,username:S.un||'username',display_name:S.dn||S.un||'Нэр',bid:me.bid,bio:S.bi,avatar_url:S.disc&&dav()?dav():S.as.avatar,bg_url:S.as.bg,accent:S.ac,
   links:S.links.filter(l=>linkUrl(l)).map(l=>({label:l.label||(l.mode=='emb'?'':PL[l.icon][0]),url:linkUrl(l),icon:l.icon,img:l.img,emb:l.mode=='emb'?1:0})),
@@ -260,6 +275,7 @@ function secH(){
  return`<div class="cd hello"><h3>${ic('spark',20)}Сайн уу, ${e(me.display_name||me.username||'найз')}!</h3><p class="mu" style="margin:6px 0 14px">Энд хуудсаа гараараа чимнэ. Хэн ч ойлгохоор хялбар. Зүгээр л товчнуудыг дар.</p><div class="act" style="justify-content:flex-start"><button type="button" id="tourb">${ic('play',16)}Заавар эхлүүлэх</button>${me.username?`<a href="/${e(me.username)}" target="_blank"><button type="button" class="g">${ic('eye',16)}Хуудсаа үзэх</button></a>`:''}</div></div>
 <div class="cd" id="xpb" style="margin-top:14px"></div>
 <div class="cd" id="ck" style="margin-top:14px"></div>
+${me.username?`<div class="cd" style="margin-top:14px"><h3>${ic('heart',20)}Найзаа урих</h3><p class="mu">Энэ холбоосоор найз чинь бүртгүүлбэл та хоёулаа <b>"Найз"</b> тэмдэг авна. 5-аас олон найз урибал <b>"5+ найз"</b> тэмдэг.</p><div class="inv"><code class="sel">${e(location.origin)}/?ref=${e(me.username)}</code><button type="button" class="g" id="invc">${ic('copy',16)}Хуулах</button></div><small class="mu">Урьсан найз: <b>${me.invites||0}</b></small></div>`:''}
 <h2 class="sh">Юу хийх вэ?</h2><div class="tiles">${TILES.map(t=>`<button type="button" class="tile" data-go="${t[0]}"><span>${ic(t[1],26)}</span><b>${t[2]}</b><small>${t[3]}</small></button>`).join('')}</div>
 <h2 class="sh">Миний статистик</h2><div class="cd" id="stt"><p class="mu">Ачаалж байна…</p></div>
 ${supportHTML()}`;
@@ -314,13 +330,13 @@ async function delAccount(){
 }
 
 /* ---------- Хуудасны загварууд: бэлэн + хэрэглэгчдийн нийтэлсэн (verified) ---------- */
-const TKEYS=['tc','bgc','cc','op','bl','r','sh','fx','ls','bfx','grad','gn','gs','gb','swap','pic','font','tw','tl'];
+const TKEYS=['tc','bgc','cc','op','bl','r','sh','fx','ls','bfx','grad','gn','gs','gb','swap','pic','font','tw','tl','frame'];
 const oneOf=(x,L,d)=>L.includes(x)?x:d;
 function applyTpl(v,theme,accent){
  const th={...TBASE,...(theme&&typeof theme=='object'?theme:{})},pic=th.pic;
  Object.assign(S,{ac:hx(accent)?accent:S.ac,tc:hx(th.tc)?th.tc:TBASE.tc,bgc:hx(th.bgc)?th.bgc:TBASE.bgc,cc:hx(th.cc)?th.cc:TBASE.cc,
   op:Math.round(clampN(th.op,.2,1,.93)*100),bl:clampN(th.bl,0,20,0),r:clampN(th.r,0,40,20),sh:oneOf(th.sh,['circle','round','square'],'circle'),
-  fx:oneOf(th.fx,['none','glow','sparkle'],'none'),ls:oneOf(th.ls,['fill','outline','pill'],'fill'),bfx:oneOf(th.bfx,['none','snow','ember'],'none'),
+  fx:oneOf(th.fx,NAMEFX.map(x=>x[0]),'none'),ls:oneOf(th.ls,['fill','outline','pill'],'fill'),bfx:oneOf(th.bfx,BGFX.map(x=>x[0]),'none'),frame:(()=>{const f=FRAMES.find(x=>x[0]==th.frame);return f&&(!f[2]||canIco(me))?f[0]:S.frame})(),
   grad:!!th.grad,gn:!!th.gn,gs:!!th.gs,gb:!!th.gb,swap:!!th.swap,font:FONTS[th.font]?th.font:'def',
   picm:hx(pic)?'custom':oneOf(pic,['brand','text'],'text'),pcc:hx(pic)?pic:S.pcc,tchg:true});
  if('tw' in th)S.tw=!!th.tw;if('tl' in th)S.tl=!!th.tl;
@@ -387,4 +403,15 @@ async function loadVerify(){
   const{data,error}=await sb.rpc('request_verify',{p_proof:pf,p_note:document.getElementById('vnt').value});
   b.disabled=false;if(error)return toast(error.message);
   if(data=='ok'){toast('Хүсэлт илгээгдлээ!');loadVerify()}else toast(VERR[data]||String(data))};
+}
+
+/* Өөрийн бүх мэдээллийг JSON болгон татах */
+async function exportMe(){
+ if(!cool('exp',5000))return;
+ const q=(t,c,col)=>sb.from(t).select(c||'*').eq(col||'user_id',me.id).then(r=>r.data||[],()=>[]);
+ const[pv,ap,vr,tp,fv,lk]=await Promise.all([sb.from('profile_private').select('*').eq('id',me.id).maybeSingle().then(r=>r.data,()=>null),q('appeals'),q('verify_req'),q('tpls','*','owner'),q('tpl_favs','tpl_id'),q('likes','profile_id')]);
+ let files=[];try{const{data}=await sb.storage.from('media').list(me.id,{limit:100});files=(data||[]).map(f=>({name:f.name,url:MEDIA+me.id+'/'+f.name,size:f.metadata&&f.metadata.size}))}catch{}
+ const out={exported_at:new Date().toISOString(),site:'biof.site',account:{email:user&&user.email||null,provider:user&&user.app_metadata&&user.app_metadata.provider||null},profile:me,private:pv,appeals:ap,verify_requests:vr,templates:tp,favourite_templates:fv,likes_given:lk,files};
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,2)],{type:'application/json'}));a.download='biof-'+(me.username||me.bid)+'.json';document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+ toast('Мэдээлэл татагдлаа');
 }

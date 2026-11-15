@@ -16,6 +16,6 @@ async function board(v,by){
  const auto=!by;by=LB_TABS.some(t=>t[0]==by)?by:'week';
  let rows=await lbFetch(by,50);
  if(rows==null||(auto&&by=='week'&&!rows.length)){by='views';rows=await lbFetch('views',50)}
- v.innerHTML=`<div class="dash"><h1 class="sec2" style="margin:12px 0 6px">Тэргүүлэгчид</h1><p class="mu" style="text-align:center">${by=='week'?'Сүүлийн 7 хоногт хамгийн их үзэгдсэн хуудсууд.':'Бүх цагийн хамгийн олон үзэлттэй, хамгийн их таалагдсан хуудсууд.'}</p>${lbTabsHTML(by)}<div class="cd">${lbRowsHTML(rows,by)}</div></div>`;
+ v.innerHTML=`<div class="dash"><h1 class="sec2" style="margin:12px 0 6px">Тэргүүлэгчид</h1><p class="mu" style="text-align:center">${by=='week'?'Сүүлийн 7 хоногт хамгийн их үзэгдсэн хуудсууд.':'Бүх цагийн хамгийн олон үзэлттэй, хамгийн их таалагдсан хуудсууд.'}</p>${lbTabsHTML(by)}<button type="button" class="g" data-search="1" style="width:100%;margin-bottom:12px;justify-content:flex-start;gap:10px">${ic('search',18)}<span>Хүн хайх…</span></button><div class="cd">${lbRowsHTML(rows,by)}</div></div>`;
  v.querySelectorAll('[data-by]').forEach(b=>b.onclick=()=>board(v,b.dataset.by));
 }
