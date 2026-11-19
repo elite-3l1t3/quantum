@@ -650,3 +650,4 @@ button.lk{width:100%;font:inherit;font-weight:700;cursor:pointer;color:inherit}
 #fw{min-width:0}
 @media(display-mode:standalone){[data-install]{display:none!important}}
 button,a,.lk,.tile,.pb{touch-action:manipulation}
+.doc a{color:var(--a);text-decoration:underline;text-underline-offset:2px}.doc ul{padding-left:20px}.doc li{margin:4px 0}
