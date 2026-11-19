@@ -25,9 +25,10 @@ function startTour(steps){
   bb.classList.toggle('abv',abv);bb.classList.toggle('nar',!nar);
   bb.style.setProperty('--ax',Math.max(24,Math.min(bw-24,r.left+r.width/2-left))+'px');
  };
- const place=()=>{
+ const place=(noScroll)=>{
   const s=steps[i],el=target(s),my=++tk;
   if(!el){center();return}
+  if(noScroll===true){put(el);return}
   const r=el.getBoundingClientRect();
   const big=r.height>innerHeight*.6;
   if(big?(r.top<70||r.top>innerHeight*.35):(r.top<70||r.bottom>innerHeight-40)){
@@ -48,7 +49,7 @@ function startTour(steps){
   bb.classList.remove('pop');void bb.offsetWidth;bb.classList.add('pop');
   setTimeout(place,60);
  };
- let rt=0;const rz=()=>{clearTimeout(rt);rt=setTimeout(place,80)};
+ let rt=0;const rz=()=>{clearTimeout(rt);rt=setTimeout(()=>place(true),60)};
  const kd=ev=>{if(ev.key=='Escape')end(false);else if(ev.key=='ArrowRight'||ev.key=='Enter'){ev.preventDefault();next()}else if(ev.key=='ArrowLeft')back()};
  const end=done=>{if(!ov.isConnected)return;ov.remove();const pv=q('#pvside.show');if(pv)pv.classList.remove('show');
   removeEventListener('resize',rz);removeEventListener('scroll',rz);document.removeEventListener('keydown',kd);localStorage.tourSeen=1;

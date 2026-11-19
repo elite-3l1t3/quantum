@@ -1,7 +1,7 @@
 /* Тэргүүлэгчид: бүх цагийн үзэлт / like, мөн 7 хоногийн шилдэг (top_week RPC) */
 const LB_TABS=[['week','bolt','7 хоног'],['views','eye','Үзэлт'],['likes','heart','Like']];
-const sGet=k=>{try{const c=JSON.parse(sessionStorage[k]||'null');return c&&Date.now()-c.t<6e4?c.r:null}catch{return null}};
-const sSet=(k,r)=>{try{sessionStorage[k]=JSON.stringify({t:Date.now(),r})}catch{}};
+const sGet=k=>{try{const c=JSON.parse(localStorage[k]||'null');return c&&Date.now()-c.t<3e5?c.r:null}catch{return null}};
+const sSet=(k,r)=>{try{localStorage[k]=JSON.stringify({t:Date.now(),r})}catch{}};
 async function lbFetch(by,n){
  const key='lb3_'+by+n,c=sGet(key);if(c)return c;
  let rows=[];

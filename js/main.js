@@ -1,4 +1,4 @@
-const V='15';const T0=document.title;
+const V='16';const T0=document.title;
 const NEED={home:['board','home'],settings:['card','upload','tour','settings'],admin:['admin'],board:['board'],tutorial:['tutorial'],status:['status'],profile:['card','profile']};
 const PROBE={card:'cardHTML',upload:'up',tour:'startTour',settings:'settings',home:'home',profile:'profile',admin:'admin',board:'board',tutorial:'tutorial',status:'statusPage'};
 const loadJs=s=>new Promise((ok,no)=>{const x=document.createElement('script');x.src='/js/'+s+'.js?v='+V;x.onload=ok;x.onerror=()=>no(Error('Файл олдсонгүй: /js/'+s+'.js. GitHub дээр js хавтас руу оруулсан эсэхээ шалгана уу.'));document.head.append(x)});
@@ -38,9 +38,15 @@ if(/error_description/.test(location.hash+location.search)){
 /* Эхлэл: сервер амьд эсэх ба хэрэглэгчийг зэрэг шалгана. Сервер унтарсан бол засварын хуудас. */
 if(document.body.dataset.p!='doc')app.innerHTML='<div class="w"><div class="card sk"></div></div>';
 (async()=>{
- const tmo=(p,ms)=>Promise.race([p,new Promise((_,no)=>setTimeout(()=>no(Error('timeout')),ms))]);
- const[h,lm]=await Promise.all([document.body.dataset.p=='doc'?true:health(),tmo(loadMe(),15000).then(()=>null,x=>x)]);
- if(!h&&document.body.dataset.p!='status')DOWN=true;
- else if(lm&&lm.message!='timeout')console.warn('loadMe',lm);
+ const P0=document.body.dataset.p,tmo=(p,ms)=>Promise.race([p,new Promise((_,no)=>setTimeout(()=>no(Error('timeout')),ms))]);
+ /* Хурдан эхлэл: хэрэглэгчийг ачаалмагц хуудсаа зурна. Сервер шалгалт ард нь зэрэг явна. */
+ const hp=P0=='doc'?Promise.resolve(true):health();
+ const lm=await tmo(loadMe(),15000).then(()=>null,x=>x);
+ if(lm){const h=await hp;if(!h&&P0!='status')DOWN=true;else if(lm.message!='timeout')console.warn('loadMe',lm)}
  ready=true;route();
+ if(!lm)hp.then(h=>{if(!h&&P0!='status'&&P0!='doc'&&!DOWN){DOWN=true;downPage('db')}});
 })();
+/* Апп (PWA): service worker бүртгэх, суулгах товч */
+if('serviceWorker' in navigator&&location.protocol=='https:')addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
+addEventListener('beforeinstallprompt',ev=>{ev.preventDefault();window.BIP=ev;document.documentElement.classList.add('can-install')});
+addEventListener('appinstalled',()=>{window.BIP=null;document.documentElement.classList.remove('can-install');toast('biof апп суулаа!')});

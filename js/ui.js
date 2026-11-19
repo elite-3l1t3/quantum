@@ -53,7 +53,7 @@ document.addEventListener('pointerdown',ev=>{const b=ev.target.closest&&ev.targe
   if(!c){c=document.createElement('i');c.className='cur';box.append(c)}
   x=ev.clientX;y=ev.clientY;
   if(f)return;
-  f=requestAnimationFrame(()=>{f=0;c.style.transform='translate3d('+x+'px,'+y+'px,0)';c.classList.add('show');const t=ev.target;c.classList.toggle('big',!!(t&&t.closest&&t.closest('a,button,.dz,.pb,.fqh,.bd,.tile')))});
+  f=requestAnimationFrame(()=>{f=0;c.style.transform='translate3d('+x+'px,'+y+'px,0)';c.classList.add('show');const t=ev.target;c.classList.toggle('cbig',!!(t&&t.closest&&t.closest('a,button,.dz,.pb,.fqh,.bd,.tile')))});
  },{passive:true});
  document.addEventListener('mouseleave',()=>{if(c)c.classList.remove('show')});
 })();
@@ -64,6 +64,7 @@ document.addEventListener('dragstart',ev=>{if(ev.target.closest&&ev.target.close
 function menuItems(){
  const L=[['/','home','Нүүр'],['#search','search','Хүн хайх'],['/leaderboard','trophy','Тэргүүлэгчид'],['/tutorial','spark','Заавар'],['/a','eye','Жишээ хуудас'],['/status','pulse','Статус'],['/#support','coffee','Дэмжих']];
  if(typeof me!='undefined'&&me){L.unshift(['/settings','user','Миний самбар']);if(me.role=='admin')L.splice(1,0,['/admin','shield','Админ самбар']);else if(me.role=='moderator')L.splice(1,0,['/admin','shield','Модератор самбар'])}
+ if(!matchMedia('(display-mode: standalone)').matches)L.push(['#install','phone','Апп суулгах']);
  L.push(['/tos','link','Үйлчилгээний нөхцөл'],['/privacy','lock','Нууцлалын бодлого']);
  return L;
 }
@@ -74,7 +75,7 @@ document.addEventListener('click',ev=>{
   if(document.querySelector('.mnu')){closeMenu();return}
   const k=document.createElement('div');k.className='mnbk';
   const m=document.createElement('div');m.className='mnu';
-  m.innerHTML=`<div class="mnh"><b>biof</b><span class="mu">Bio Flex</span><button class="g mnx" type="button" aria-label="Хаах">${ic('x',18)}</button></div>`+menuItems().map((x,i)=>`<a href="${x[0]}"${x[0]=='#search'?' data-search="1"':''} style="--i:${i}">${ic(x[1],20)}<span>${x[2]}</span></a>`).join('');
+  m.innerHTML=`<div class="mnh"><b>biof</b><span class="mu">Bio Flex</span><button class="g mnx" type="button" aria-label="Хаах">${ic('x',18)}</button></div>`+menuItems().map((x,i)=>`<a href="${x[0]}"${x[0]=='#search'?' data-search="1"':x[0]=='#install'?' data-install="1"':''} style="--i:${i}">${ic(x[1],20)}<span>${x[2]}</span></a>`).join('');
   document.body.append(k,m);b.setAttribute('aria-expanded','true');return;
  }
  if(ev.target.closest&&(ev.target.closest('.mnbk')||ev.target.closest('.mnx')||ev.target.closest('.mnu a')))closeMenu();
@@ -127,3 +128,38 @@ function searchDlg(){
  setTimeout(()=>i.focus(),60);
 }
 document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('#srb,[data-search]');if(b){ev.preventDefault();searchDlg()}});
+
+/* Апп суулгах: Android/Chrome дээр шууд, iPhone дээр заавар */
+async function installApp(){
+ if(window.BIP){const p=window.BIP;window.BIP=null;p.prompt();try{const r=await p.userChoice;if(r&&r.outcome=='accepted')toast('Суулгаж байна…')}catch{}return}
+ const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+ dlg({icon:'phone',title:'biof-ийг апп болгох',ok:'Ойлголоо',cancel:'Хаах',html:ios?`<ol class="ins"><li>Safari-ийн доод талын <b>Хуваалцах</b> товчийг дарна</li><li><b>Add to Home Screen</b> (Нүүр дэлгэцэд нэмэх)-г сонгоно</li><li><b>Add</b> дарна. Ингээд biof апп шиг нээгдэнэ.</li></ol>`:`<ol class="ins"><li>Хөтчийн цэс (<b>⋮</b>)-ийг нээнэ</li><li><b>Install app</b> эсвэл <b>Add to Home screen</b>-г сонгоно</li><li>Ингээд biof дэлгэцэн дээр апп болж харагдана, илүү хурдан нээгдэнэ.</li></ol>`});
+}
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-install]');if(b){ev.preventDefault();installApp()}});
+/* Хуваалцах: утсан дээр системийн хуваалцах цонх, үгүй бол хуулна */
+async function shareUrl(url,title){
+ if(navigator.share&&matchMedia('(pointer:coarse)').matches){try{await navigator.share({title:title||'biof',url});return true}catch(x){if(x&&x.name=='AbortError')return false}}
+ try{await navigator.clipboard.writeText(url);toast('Холбоос хуулагдлаа')}catch{toast(url)}return true;
+}
+/* QR код (сайт дээрээ хадгалсан qrcode-generator, хэрэгтэй үед л ачаална) */
+let QRL=null;
+const loadQR=()=>QRL||(QRL=new Promise((ok,no)=>{if(window.qrcode)return ok(window.qrcode);const x=document.createElement('script');x.src='/js/vendor/qrcode.js?v=1.4.4';x.onload=()=>window.qrcode?ok(window.qrcode):no(Error('qr'));x.onerror=()=>{QRL=null;no(Error('QR ачаалагдсангүй'))};document.head.append(x)}));
+async function qrCanvas(text,size,fg,bg){
+ const Q=await loadQR(),q=Q(0,'Q');q.addData(text);q.make();
+ const n=q.getModuleCount(),pad=4,cell=Math.floor(size/(n+pad*2)),S=cell*(n+pad*2),c=document.createElement('canvas');c.width=c.height=S;
+ const x=c.getContext('2d');x.fillStyle=bg;x.fillRect(0,0,S,S);x.fillStyle=fg;
+ const eye=(r,cc)=>(r<7&&cc<7)||(r<7&&cc>=n-7)||(r>=n-7&&cc<7);
+ const rr=(X,Y,w,h,rad)=>{x.beginPath();x.roundRect?x.roundRect(X,Y,w,h,rad):x.rect(X,Y,w,h);x.fill()};
+ for(let r=0;r<n;r++)for(let cc=0;cc<n;cc++)if(q.isDark(r,cc)&&!eye(r,cc))x.fillRect((cc+pad)*cell,(r+pad)*cell,cell,cell);
+ const ey=(r,cc)=>{const X=(cc+pad)*cell,Y=(r+pad)*cell;x.fillStyle=fg;x.beginPath();x.roundRect?x.roundRect(X,Y,cell*7,cell*7,cell*.6):x.rect(X,Y,cell*7,cell*7);x.fill();x.fillStyle=bg;x.beginPath();x.roundRect?x.roundRect(X+cell,Y+cell,cell*5,cell*5,cell*.4):x.rect(X+cell,Y+cell,cell*5,cell*5);x.fill();x.fillStyle=fg;x.beginPath();x.roundRect?x.roundRect(X+cell*2,Y+cell*2,cell*3,cell*3,cell*.3):x.rect(X+cell*2,Y+cell*2,cell*3,cell*3);x.fill()};
+ ey(0,0);ey(0,n-7);ey(n-7,0);
+ return c;
+}
+async function qrDlg(url,name,fg){
+ const L=h=>{const v=[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));return(.299*v[0]+.587*v[1]+.114*v[2])/255};
+ fg=/^#[0-9a-f]{6}$/i.test(fg||'')&&L(fg)<.5?fg:'#111111';
+ let c;try{c=await qrCanvas(url,600,fg,'#ffffff')}catch(x){return toast(x.message||'QR алдаа')}
+ const u=c.toDataURL('image/png');
+ const r=await dlg({icon:'qr',title:'QR код',ok:'PNG татах',cancel:'Хаах',html:`<div class="qrw"><img src="${u}" alt="QR" width="240" height="240"></div><p class="mu sel" style="margin-top:8px">${e(url.replace(/^https?:\/\//,''))}</p><p class="mu" style="font-size:12px">Утасны камераар уншуулахад таны хуудас нээгдэнэ. Story, нэрийн хуудсандаа ашиглаарай.</p>`});
+ if(r){const a=document.createElement('a');a.href=u;a.download='biof-'+(name||'qr')+'-qr.png';document.body.append(a);a.click();a.remove()}
+}

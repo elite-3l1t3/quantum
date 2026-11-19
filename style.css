@@ -333,7 +333,7 @@ button.dng{background:#d9483a;background-image:none;color:#fff}
 .rip{position:fixed;z-index:60;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;border:2px solid var(--a);pointer-events:none;animation:ripple .65s ease-out forwards}
 @keyframes ripple{from{opacity:.9;transform:scale(1)}to{opacity:0;transform:scale(7)}}
 .cur{position:fixed;left:-14px;top:-14px;z-index:60;width:28px;height:28px;border:1.5px solid var(--a);border-radius:50%;pointer-events:none;opacity:0;transition:opacity .2s,width .2s,height .2s,margin .2s,background .2s;mix-blend-mode:normal}
-.cur.show{opacity:.7}.cur.big{width:44px;height:44px;margin:-8px 0 0 -8px;background:rgba(226,184,88,.12)}
+.cur.show{opacity:.7}.cur.cbig{width:44px;height:44px;margin:-8px 0 0 -8px;background:rgba(226,184,88,.12)}
 /* самбар */
 .tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
 .tile{flex-direction:column;align-items:flex-start;gap:6px;text-align:left;background:var(--c);color:#f4efe6;border:1px solid var(--l);box-shadow:none;border-radius:20px;padding:18px;white-space:normal;transition:transform .2s,border-color .2s}
@@ -409,7 +409,7 @@ body{overflow-x:hidden}
 .ripc{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:60}
 .ripc .rip{position:absolute}
 .ripc .cur{position:absolute;left:0;top:0;margin:-14px 0 0 -14px}
-.ripc .cur.big{margin:-22px 0 0 -22px}
+.ripc .cur.cbig{margin:-22px 0 0 -22px}
 body.ucur .ripc .cur{display:none}
 body.ucur a,body.ucur button,body.ucur .lk,body.ucur input,body.ucur .dz,body.ucur .card{cursor:inherit!important}
 .nls{display:none}
@@ -630,3 +630,23 @@ nav{gap:10px}nav b{margin-right:auto}
 .usg{display:grid;gap:12px}.usg .ub{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px}
 .usg .pbar{height:10px}.usg .pbar.warn i{background:#f5b301}.usg .pbar.bad i{background:#ff6b5a}
 .inv{display:flex;gap:8px;align-items:center;margin-top:10px}.inv code{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:10px 12px;border-radius:10px;background:var(--i);border:1px solid var(--l);font-size:13px}
+@media(min-width:1040px){.pvside{max-height:calc(100vh - 92px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}}
+/* ===== v13: данс, миний тухай, QR, апп, холбоосын статистик ===== */
+.abt{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:4px 0 10px}
+.abc{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;padding:4px 10px;border-radius:99px;background:var(--i);border:1px solid var(--l)}
+.abc.bd{border-color:var(--a);color:var(--a)}
+button.lk{width:100%;font:inherit;font-weight:700;cursor:pointer;color:inherit}
+.lk.bnk>span{display:flex;flex-direction:column;line-height:1.25}.lk.bnk .bac{font-weight:500;opacity:.65;font-size:12px}
+.lk.bnk:after{display:none}
+.bnkd{display:flex;flex-direction:column;gap:2px;padding:14px;margin:6px 0 10px;border-radius:14px;background:var(--i);border:1px solid var(--l)}
+.bnkd b{font-size:22px;letter-spacing:.06em}
+.qrw{display:grid;place-items:center;padding:8px}.qrw img{width:240px;height:240px;border-radius:16px;background:#fff;image-rendering:pixelated}
+.ins{text-align:left;padding-left:20px;margin:6px 0 4px;color:#e6e0d2}.ins li{margin:6px 0}
+.clk{display:grid;gap:6px;margin-top:8px}
+.clr{position:relative;display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:12px;background:var(--i);overflow:hidden}
+.clr span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;position:relative;z-index:1}
+.clr b{position:relative;z-index:1}.clr .pt{position:relative;z-index:1}
+.clr i{position:absolute;left:0;top:0;bottom:0;background:rgba(226,184,88,.14);border-radius:12px}
+#fw{min-width:0}
+@media(display-mode:standalone){[data-install]{display:none!important}}
+button,a,.lk,.tile,.pb{touch-action:manipulation}

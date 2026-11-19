@@ -92,10 +92,12 @@ async function profile(v,name){
  const RM=matchMedia('(prefers-reduced-motion:reduce)').matches;
  if(!RM){if(t.bfx=='matrix')matrixFx(k.ac);else if(BGFX.some(x=>x[0]==t.bfx&&x[0]!='none'))fxp(t.bfx)}
  if(t.anim){const full=document.title+' ';let i=0;window.TT=setInterval(()=>{document.title=full.slice(i)+full.slice(0,i);i=(i+1)%full.length},400)}
- let liked=false;if(me&&!demo)liked=!!(await sb.from('likes').select('user_id').eq('profile_id',p.id).eq('user_id',me.id).maybeSingle()).data;
- v.innerHTML=cardHTML(p,{liked,demo,own});
+ let liked=false,following=false;if(me&&!demo){const[lr,fr]=await Promise.all([sb.from('likes').select('user_id').eq('profile_id',p.id).eq('user_id',me.id).maybeSingle(),own||p.followers==null?{data:null}:sb.from('follows').select('followee').eq('follower',me.id).eq('followee',p.id).maybeSingle()]);liked=!!lr.data;following=!!(fr&&fr.data)}
+ v.innerHTML=cardHTML(p,{liked,demo,own,following});
  if(p.hidden)v.insertAdjacentHTML('afterbegin',`<div class="tip warn hbx">${ic('alert',18)}<span>${own?'Таны хуудас олон мэдэгдэл авсан тул нийтэд түр нуугдсан байна. Админ шалгаад шийднэ.':'Энэ хуудас нийтэд нуугдсан (олон мэдэгдэл). Админ самбараас шийднэ үү.'}</span></div>`);
- v.querySelectorAll('a.lk').forEach(a=>a.onclick=ev=>{ev.preventDefault();linkGo(a.getAttribute('href'))});
+ const hk=u=>{let h=5381;for(const c of String(u))h=((h<<5)+h+c.charCodeAt(0))>>>0;return h.toString(36)};
+ v.querySelectorAll('a.lk').forEach(a=>a.onclick=ev=>{ev.preventDefault();const u=a.getAttribute('href');if(!demo&&p.id){const k=hk(u),key='ck_'+p.id+'_'+k;let t=0;try{t=+localStorage[key]||0}catch{}if(Date.now()-t>18e5){try{localStorage[key]=Date.now()}catch{}sb.rpc('add_click',{p_pid:p.id,p_k:k}).then(()=>{},()=>{})}}linkGo(u)});
+ v.querySelectorAll('.lk.bnk').forEach(b=>b.onclick=async()=>{const acc=b.dataset.acc;try{await navigator.clipboard.writeText(acc.replace(/\s/g,''))}catch{}dlg({icon:'bank',title:'Дансны дугаар хуулагдлаа',ok:'Ойлголоо',cancel:'Хаах',html:`<div class="bnkd"><small class="mu">${e(b.dataset.bank)}</small><b class="sel">${e(acc)}</b>${b.dataset.hold?`<span class="sel">${e(b.dataset.hold)}</span>`:''}</div><p class="mu" style="font-size:12px">Шилжүүлэхийн өмнө хүлээн авагчийн нэрийг заавал шалгаарай.</p>`})});
  v.querySelectorAll('[data-emb]').forEach(d=>{const go=()=>{const f=document.createElement('iframe');f.src=d.dataset.emb;f.title=d.getAttribute('aria-label')||'';f.allow='autoplay; encrypted-media; picture-in-picture; fullscreen';f.allowFullscreen=true;f.loading='lazy';f.referrerPolicy='strict-origin-when-cross-origin';if(+d.dataset.h)f.style.height=d.dataset.h+'px';d.replaceChildren(f);d.classList.add('on');d.removeAttribute('role');d.onclick=d.onkeydown=null;if(aud&&!aud.paused)aud.pause()};d.onclick=go;d.onkeydown=ev=>{if(ev.key=='Enter'||ev.key==' '){ev.preventDefault();go()}}});
  if(demo){
   v.insertAdjacentHTML('beforeend',`<div class="demo-tools"><h3>${ic('sliders',20)}Загвар сонгоод үз</h3><p class="mu">Доорх өнгөнүүдээс сонгоход энэ хуудас шууд өөрчлөгдөнө. Өөрийн хуудсанд ч ингэж сонгоно.</p><div class="pre">${PRE.map(x=>`<button type="button" class="ps" data-dp="${x[0]}" aria-label="${x[1]}"><i style="--s1:${x[2].bgc};--s2:${x[2].ac};--s3:${x[2].cc}"></i><span>${x[1]}</span></button>`).join('')}</div></div>`);
@@ -108,12 +110,24 @@ async function profile(v,name){
  if(t.tl){const c=v.querySelector('#pcard');if(c)tilt(c)}
  let lc=+p.likes;
  $('#lk').onclick=async()=>{
-  if(demo){lc+=$('#lk').classList.contains('g')?1:-1;$('#lc').textContent=lc;$('#lk').classList.toggle('g');return}
-  if(!user)return login();
-  if(!cool('like',700))return;
-  const{data}=await sb.rpc('toggle_like',{pid:p.id});if(data==null)return toast(ERR.rate);
-  lc+=data?1:-1;$('#lc').textContent=lc;$('#lk').className=(data?'':'g')+' pop'};
- $('#sh').onclick=()=>{try{navigator.clipboard.writeText(location.origin+'/'+p.username)}catch{}$('#sh').innerHTML=ic('check',16)+'Хуулагдлаа';setTimeout(()=>{const b=$('#sh');if(b)b.innerHTML=ic('copy',16)+'Линк хуулах'},2000)};
+  const b=$('#lk'),c=$('#lc');
+  if(demo){lc+=b.classList.contains('g')?1:-1;c.textContent=lc;b.classList.toggle('g');return}
+  if(!user)return login('signup');
+  if(!cool('like',600))return;
+  const was=!b.classList.contains('g');lc+=was?-1:1;c.textContent=lc;b.className=(was?'g':'')+' pop';
+  const{data,error}=await sb.rpc('toggle_like',{pid:p.id});
+  if(error||data==null||data===was){lc+=was?1:-1;c.textContent=lc;b.className=was?'':'g';if(error||data==null)toast(ERR.rate)}};
+ const fw=v.querySelector('#fw');
+ if(fw)fw.onclick=async()=>{
+  if(!user)return login('signup');if(!cool('follow',800))return;
+  const was=fw.classList.contains('g'),fc=v.querySelector('#fc');
+  const set=on=>{fw.className=on?'g':'';fw.innerHTML=ic(on?'check':'plus',16)+'<span>'+(on?'Дагаж байна':'Дагах')+'</span>'};
+  set(!was);
+  const{data,error}=await sb.rpc('toggle_follow',{p_pid:p.id});
+  if(error||data==null){set(was);return toast(error?'Дагах боломжгүй (v12.sql)':ERR.rate)}
+  set(data);p.followers=Math.max(0,(p.followers||0)+(data?1:-1));if(fc)fc.textContent=p.followers;else if(data){const ch=v.querySelector('.chip');if(ch)ch.insertAdjacentHTML('afterend',`<span class="chip">${ic('users',16)}<span id="fc">${p.followers}</span></span>`)}};
+ $('#sh').onclick=()=>shareUrl(location.origin+'/'+p.username,(p.display_name||p.username)+' · biof');
+ const qb=v.querySelector('#qrb');if(qb)qb.onclick=()=>qrDlg(location.origin+'/'+p.username,p.username,k.ac);
  const rp=v.querySelector('#rp');if(rp)rp.onclick=()=>reportDlg(p);
  if(cu(t.music)){
   aud=new Audio();aud.preload='none';aud.src=t.music;aud.loop=true;aud.volume=.5;

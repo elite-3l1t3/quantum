@@ -47,7 +47,7 @@ async function home(v){
  v.querySelectorAll('.cnt').forEach(el=>num(el,+el.dataset.n||0));
  const paint=(s,ms,first)=>{const d=s||{};[['total',d.total],['blocked',d.blocked],['live',d.live],['ms',ms]].forEach(x=>{const el=v.querySelector('[data-s="'+x[0]+'"]');if(!el)return;if(x[1]==null){el.textContent='–';return}first?num(el,+x[1]):el.textContent=x[1]})};
  paint(ss.d,ss.ms,true);
- window.PI=setInterval(async()=>{if(document.hidden)return;try{const r=await getStatus();if(r.d)paint(r.d,r.ms,false)}catch{}},20000);
+ window.PI=setInterval(async()=>{if(document.hidden)return;try{const r=await getStatus();if(r.d)paint(r.d,r.ms,false)}catch{}},60000);
  const io='IntersectionObserver' in window?new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting){x.target.classList.add('in');io.unobserve(x.target)}}),{threshold:.12}):null;
  v.querySelectorAll('.rv').forEach(x=>io?io.observe(x):x.classList.add('in'));
 }
