@@ -49,7 +49,7 @@ async function loadMe(){
  if(!user)return;
  const q=()=>sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
  const r0=await q();if(r0.error&&r0.status>=500)throw Error('db');me=r0.data;
- if(!me){const r=await sb.rpc('ensure_profile');me=(await q()).data;if(!me){const m=(r.error&&r.error.message)||'';toast(/registration_closed/.test(m)?'Бүртгэл одоогоор түр хаалттай байна.':/daily_limit/.test(m)?ERR.full:r.data=='rate'?ERR.rate:m?'Профайл үүссэнгүй: '+m:'Профайл үүссэнгүй. SQL файлуудыг ажиллуулсан эсэхээ шалгана уу.');return}}
+ if(!me){const r=await sb.rpc('ensure_profile');me=(await q()).data;if(!me){const m=(r.error&&r.error.message)||'';toast(/registration_closed/.test(m)?'Бүртгэл одоогоор түр хаалттай байна.':/daily_limit/.test(m)?ERR.full:r.data=='rate'?ERR.rate:r.data=='unconfirmed'?'Имэйлээ баталгаажуулна уу (кодоо оруулна уу).':m?'Профайл үүссэнгүй: '+m:'Профайл үүссэнгүй. SQL файлуудыг ажиллуулсан эсэхээ шалгана уу.');return}}
  if(!me.username&&localStorage.pending){const u=localStorage.pending;localStorage.removeItem('pending');const{data}=await sb.rpc('claim_username',{u});if(data&&data!='ok')toast(ERR[data]||String(data));me=(await q()).data}
  if(me&&me.username&&localStorage.ref&&!me.banned){const{data,error}=await sb.rpc('use_ref',{p_ref:localStorage.ref});if(!error&&!['later','rate'].includes(data))localStorage.removeItem('ref');if(data=='ok'){toast('Урилгаар нэгдсэн тул "Найз" тэмдэг авлаа!');me=(await q()).data||me}}
 }
@@ -81,7 +81,7 @@ function login(mode,name){
  const ways=lbl=>`<button type="button" class="dc lgdc">${plat('discord',24)}Discord-оор ${lbl}</button><div class="or">эсвэл имэйлээр</div><input class="dli" id="lem" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="name@mail.com" value="${e(email)}"><button type="button" id="lsend">${ic('arrow',16)}Имэйл рүү код авах</button>`;
  const step1=()=>{
   const sign=M=='signup';
-  d.innerHTML=`<div class="dlg lgbox" role="dialog" aria-modal="true"><button class="g mnx lgx" type="button" aria-label="Хаах">${ic('x',18)}</button>${tabs()}${sign?`${steps(0)}<h3>biof хуудсаа үүсгэе</h3><p class="mu">Эхлээд хаягаа сонго. Дараа нь Discord эсвэл имэйлээ баталгаажуулна. Нууц үг хэрэггүй.</p><div class="lgu"><span>biof.site/</span><input id="lun" maxlength="20" placeholder="таны нэр" autocomplete="off" autocapitalize="none" spellcheck="false" value="${e(un)}"></div><small class="lgst mu" id="lst">Зөвхөн a-z, 0-9, _ (3-20 тэмдэгт)</small><div id="lw" class="lgw">${ways('үргэлжлүүлэх')}</div>`:`<div class="dlgi">${ic('user',26)}</div><h3>Тавтай морил!</h3><p class="mu">Бүртгэлтэй Discord эсвэл имэйлээрээ нэвтэрнэ үү.</p>${ways('нэвтрэх')}<p class="mu lgm2">Бүртгэлгүй юу? <a href="#" data-m="signup">Бүртгүүлэх</a></p>`}</div>`;
+  d.innerHTML=`<div class="dlg lgbox" role="dialog" aria-modal="true"><button class="g mnx lgx" type="button" aria-label="Хаах">${ic('x',18)}</button>${tabs()}${sign?`${steps(0)}<h3>biof хуудсаа үүсгэе</h3><p class="mu">Эхлээд хаягаа сонго. Дараа нь Discord эсвэл имэйлээ баталгаажуулна. Нууц үг хэрэггүй.</p><div class="lgu"><span>biof.site/</span><input id="lun" maxlength="20" placeholder="таны нэр" autocomplete="off" autocapitalize="none" spellcheck="false" value="${e(un)}"></div><small class="lgst mu" id="lst">Зөвхөн a-z, 0-9, _ (3-20 тэмдэгт)</small><div id="lw" class="lgw">${ways('үргэлжлүүлэх')}</div>`:`<div class="dlgi">${ic('user',26)}</div><h3>Тавтай морил!</h3><p class="mu">Discord эсвэл имэйлээрээ нэвтэрнэ үү. Шинэ имэйл бол автоматаар бүртгэнэ.</p>${ways('нэвтрэх')}<p class="mu lgm2">Бүртгэлгүй юу? <a href="#" data-m="signup">Бүртгүүлэх</a></p>`}</div>`;
   d.querySelector('.lgdc').onclick=()=>{if(sign&&!pend())return;d.querySelector('.lgdc').disabled=true;discordLogin()};
   const i=d.querySelector('#lem');i.onkeydown=ev=>{if(ev.key=='Enter')send()};d.querySelector('#lsend').onclick=send;
   const u=d.querySelector('#lun');
@@ -99,9 +99,8 @@ function login(mode,name){
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){toast('Имэйл хаягаа зөв бичнэ үү');i&&i.focus();return}
   if(!cool('otp',3000))return;
   const b=d.querySelector('#lsend,#lres');const bt=b&&b.innerHTML;if(b){b.disabled=true;b.innerHTML='<span class="spin sm"></span>Илгээж байна…'}
-  const{error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:M=='signup',emailRedirectTo:location.origin+'/'}});
+  const{error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:true,emailRedirectTo:location.origin+'/'}});
   if(error){console.warn('OTP алдаа:',error.status,error.code,error.message);
-   if(M=='login'&&/signups not allowed|not found|user_not_found|otp_disabled/i.test(error.message+' '+(error.code||''))){toast('Энэ имэйлээр бүртгэл алга. "Бүртгүүлэх" таб руу орно уу.');M='signup';step1();return}
    toast(authErr(error.message,error.status));if(b){b.disabled=false;b.innerHTML=bt}return}
   step2()};
  const step2=()=>{

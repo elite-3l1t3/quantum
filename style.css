@@ -651,3 +651,27 @@ button.lk{width:100%;font:inherit;font-weight:700;cursor:pointer;color:inherit}
 @media(display-mode:standalone){[data-install]{display:none!important}}
 button,a,.lk,.tile,.pb{touch-action:manipulation}
 .doc a{color:var(--a);text-decoration:underline;text-underline-offset:2px}.doc ul{padding-left:20px}.doc li{margin:4px 0}
+/* ===== v14: статус, тоолуур, онцлох холбоос, хулганы мөр, конфетти, мэдэгдэл ===== */
+.stt2{font-size:13.5px;opacity:.85;margin:2px 0 4px;font-style:italic}
+.lk.hl{position:relative;border-color:var(--a)!important;box-shadow:0 0 0 1px var(--a),0 0 22px -4px var(--a);animation:hlp 2.4s ease-in-out infinite}
+@keyframes hlp{50%{box-shadow:0 0 0 1px var(--a),0 0 30px 0 var(--a)}}
+.hlt{display:inline-block;margin-left:8px;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:99px;background:var(--a);color:var(--ao,#111);vertical-align:2px}
+.cdn{margin:10px 0 12px;padding:10px;border-radius:16px;background:var(--i);border:1px solid var(--l)}
+.cdt{font-size:13px;opacity:.8;margin-bottom:6px}
+.cdv{display:flex;justify-content:center;gap:10px}.cdv span{display:flex;flex-direction:column;align-items:center;min-width:48px}
+.cdv b{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}.cdv small{font-size:11px;opacity:.65}
+.fxp.trl{z-index:61}
+.fxp.trl i{position:fixed;width:auto;height:auto;margin:-6px 0 0 -6px;background:none;border-radius:0;opacity:1;animation:trf .7s ease-out forwards;font-style:normal;font-size:14px;line-height:1;pointer-events:none}
+.fxp.trl i.tr-sparkle,.fxp.trl i.tr-bubbles{width:8px;height:8px;border-radius:50%}
+.fxp.trl i.tr-sparkle{background:currentColor;box-shadow:0 0 8px currentColor}
+.fxp.trl i.tr-bubbles{border:1.5px solid currentColor;width:12px;height:12px}
+@keyframes trf{to{opacity:0;transform:translate3d(0,14px,0) scale(.3)}}
+.cft{position:fixed;z-index:70;pointer-events:none}
+.cft i{position:absolute;width:7px;height:10px;border-radius:2px;animation:cft .85s cubic-bezier(.2,.7,.3,1) forwards;transform:rotate(var(--r))}
+@keyframes cft{to{transform:translate3d(var(--x),calc(var(--y) + 40px),0) rotate(calc(var(--r) + 300deg));opacity:0}}
+.ntc{display:flex;align-items:center;gap:10px;padding:10px 12px 10px 14px;margin:0 0 14px;border-radius:16px;background:rgba(226,184,88,.12);border:1px solid rgba(226,184,88,.4);color:#f4efe6;text-align:left}
+.ntc span{flex:1}.ntc button{width:30px;height:30px;padding:0;border-radius:50%;flex:none}
+.la button.on{color:var(--a)!important;border-color:var(--a)!important}
+.lr.hlr{border-color:rgba(226,184,88,.5)}
+.lbt{grid-template-columns:repeat(4,1fr)}
+@media(max-width:420px){.lbt button .ic{display:none}.lbt button{font-size:13px;padding:9px 4px}}

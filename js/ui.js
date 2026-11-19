@@ -163,3 +163,14 @@ async function qrDlg(url,name,fg){
  const r=await dlg({icon:'qr',title:'QR код',ok:'PNG татах',cancel:'Хаах',html:`<div class="qrw"><img src="${u}" alt="QR" width="240" height="240"></div><p class="mu sel" style="margin-top:8px">${e(url.replace(/^https?:\/\//,''))}</p><p class="mu" style="font-size:12px">Утасны камераар уншуулахад таны хуудас нээгдэнэ. Story, нэрийн хуудсандаа ашиглаарай.</p>`});
  if(r){const a=document.createElement('a');a.href=u;a.download='biof-'+(name||'qr')+'-qr.png';document.body.append(a);a.click();a.remove()}
 }
+
+/* Сайтын мэдэгдэл (админ бичнэ). 5 мин кэш, хаасныг дахин харуулахгүй */
+async function showNotice(el){
+ if(!el)return;let b=null;
+ try{const c=JSON.parse(sessionStorage.ntc||'null');if(c&&Date.now()-c.t<3e5)b=c.b}catch{}
+ if(b==null){const r=await Promise.resolve(sb.from('site_content').select('body').eq('k','notice').maybeSingle()).catch(()=>({}));b=(r&&r.data&&r.data.body)||'';try{sessionStorage.ntc=JSON.stringify({t:Date.now(),b})}catch{}}
+ b=String(b||'').trim();if(!b||!el.isConnected)return;
+ let h=0;for(const ch of b)h=(h*31+ch.charCodeAt(0))|0;if(localStorage.nd==String(h))return;
+ el.insertAdjacentHTML('afterbegin',`<div class="ntc">${ic('bolt',18)}<span class="sel">${e(b)}</span><button type="button" class="g" aria-label="Хаах">${ic('x',14)}</button></div>`);
+ const n=el.querySelector('.ntc');n.querySelector('button').onclick=()=>{localStorage.nd=String(h);n.remove()};
+}

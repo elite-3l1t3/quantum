@@ -23,6 +23,7 @@ async function home(v){
  <h2 class="sec2 rv">Түгээмэл асуултууд</h2><div class="w-narrow">${Q.map((q,i)=>`<div class="fq rv"><button class="fqh" type="button" aria-expanded="false"><span>${q[0]}</span><i class="fqi">${ic('plus',18)}</i></button><div class="fqb"><div><p>${q[1]}</p></div></div></div>`).join('')}</div>
  <div class="w-narrow" style="margin-top:34px">${supportHTML()}</div>
  <div class="cta rv"><h2>Одоо нэрээ аваарай</h2><p class="mu" style="margin-bottom:18px">Таны нэрийг өөр хүн авчихаагүй байгаа үед шууд аваарай.</p><button id="cta"${closed?' disabled':''}>Нэрээ авах</button></div>`;
+ showNotice(v);
  let t;const n=v.querySelector('#n'),S=v.querySelector('#s');
  n.oninput=()=>{n.value=n.value.toLowerCase().replace(/[^a-z0-9_]/g,'');clearTimeout(t);
   const x=n.value,a=v.querySelector('#hav'),b=v.querySelector('#hnm'),c=v.querySelector('#hn');
