@@ -82,7 +82,7 @@ for (const f of ['index.html', 'leaderboard.html']) {
   if (s0.includes('<!--SEO-->')) fs.writeFileSync(fp, s0.replace(/<!--SEO-->[\s\S]*?<!--\/SEO-->/, '<div id="app"></div>'));
 }
 
-const stat = [['/', '1.0', 'daily'], ['/leaderboard', '0.8', 'daily'], ['/a', '0.6', 'monthly'], ['/tutorial', '0.5', 'monthly'], ['/status', '0.3', 'hourly'], ['/tos', '0.2', 'yearly'], ['/privacy', '0.2', 'yearly']];
+const stat = [['/', '1.0', 'daily'], ['/leaderboard', '0.8', 'daily'], ['/updates', '0.5', 'weekly'], ['/a', '0.6', 'monthly'], ['/tutorial', '0.5', 'monthly'], ['/status', '0.3', 'hourly'], ['/tos', '0.2', 'yearly'], ['/privacy', '0.2', 'yearly']];
 const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
   stat.map(([u, pr, cf]) => `  <url><loc>${SITE}${u}</loc><lastmod>2026-11-14</lastmod><changefreq>${cf}</changefreq><priority>${pr}</priority></url>`).join('\n') + '\n' +
   list.map(p => `  <url><loc>${SITE}/${p.username}/</loc><lastmod>${LM[p.username]}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>`).join('\n') + '\n</urlset>\n';

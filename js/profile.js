@@ -101,6 +101,7 @@ async function profile(v,name){
  document.title=(p.display_name&&p.display_name!=p.username?p.display_name+' (@'+p.username+')':'@'+p.username)+(demo?' · biof':'');
  if(cu(p.avatar_url))document.querySelectorAll('link[rel=icon]').forEach(l=>{l.href=p.avatar_url;l.removeAttribute('type');l.removeAttribute('sizes')});
  R.backgroundColor=k.bgc;
+ const bgg=bgGrad(t);if(bgg&&!cu(p.bg_url)&&!cu(t.video))R.backgroundImage=bgg;
  if(cu(p.bg_url)&&!cu(t.video)){const d=document.createElement('div');d.className='bgv bgi';d.style.backgroundImage=`url("${p.bg_url}")`;d.style.backgroundPosition=bgPos(t);document.body.prepend(d)}
  if(cu(t.cursor)){R.cursor=`url(${t.cursor}) 0 0,auto`;document.body.classList.add('ucur')}
  if(cu(t.video)&&!(navigator.connection&&navigator.connection.saveData)){const d=document.createElement('video');Object.assign(d,{src:t.video,muted:true,loop:true,autoplay:true,playsInline:true,className:'bgv'});d.setAttribute('controlsList','nodownload');d.setAttribute('playsinline','');d.style.objectPosition=bgPos(t);d.disablePictureInPicture=true;if(cu(p.bg_url))d.poster=p.bg_url;document.body.prepend(d)}

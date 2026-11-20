@@ -1,6 +1,6 @@
-const V='18';const T0=document.title;
-const NEED={home:['board','home'],settings:['card','upload','tour','settings'],admin:['admin'],board:['board'],tutorial:['tutorial'],status:['status'],profile:['card','profile']};
-const PROBE={card:'cardHTML',upload:'up',tour:'startTour',settings:'settings',home:'home',profile:'profile',admin:'admin',board:'board',tutorial:'tutorial',status:'statusPage'};
+const V='19';const T0=document.title;
+const NEED={home:['board','home'],settings:['card','upload','tour','settings'],admin:['admin'],board:['board'],tutorial:['tutorial'],updates:['updates'],status:['status'],profile:['card','profile']};
+const PROBE={card:'cardHTML',upload:'up',tour:'startTour',settings:'settings',home:'home',profile:'profile',admin:'admin',board:'board',tutorial:'tutorial',updates:'updates',status:'statusPage'};
 const loadJs=s=>new Promise((ok,no)=>{const x=document.createElement('script');x.src='/js/'+s+'.js?v='+V;x.onload=ok;x.onerror=()=>no(Error('Файл олдсонгүй: /js/'+s+'.js. GitHub дээр js хавтас руу оруулсан эсэхээ шалгана уу.'));document.head.append(x)});
 async function ensure(P){for(const s of NEED[P]||[]){if(typeof window[PROBE[s]]!='function')await loadJs(s);if(typeof window[PROBE[s]]!='function')throw Error('/js/'+s+'.js ачаалагдсангүй')}}
 let DOWN=false;
@@ -20,7 +20,7 @@ async function doRoute(){
  try{
   if(me&&me.banned&&['home','settings','admin','tutorial'].includes(P)){await banPage(v);return}
   await ensure(P);
-  if(P=='home')await home(v);else if(P=='settings')await settings(v);else if(P=='admin')await admin(v);else if(P=='board')await board(v);else if(P=='tutorial')await tutorial(v);else if(P=='status')await statusPage(v);else await profile(v,p);
+  if(P=='home')await home(v);else if(P=='settings')await settings(v);else if(P=='admin')await admin(v);else if(P=='board')await board(v);else if(P=='tutorial')await tutorial(v);else if(P=='status')await statusPage(v);else if(P=='updates')updates(v);else await profile(v,p);
  }catch(x){
   if(P!='status'&&!(await health())){DOWN=true;downPage('db');return}
   v.innerHTML='<div class="card">Алдаа гарлаа: '+e(x.message)+'<br><br><button type="button">Дахин ачаалах</button></div>';
@@ -30,7 +30,7 @@ async function doRoute(){
 let q=Promise.resolve();
 const route=()=>q=q.then(doRoute).catch(x=>toast('Алдаа: '+(x.message||x)));
 let ready=false;
-sb.auth.onAuthStateChange((_,s)=>{if(ready&&(s?.user?.id||null)!==(user?.id||null))setTimeout(async()=>{try{await loadMe()}catch{}route()},0)});
+sb.auth.onAuthStateChange((_,s)=>{if(ready&&(s?.user?.id||null)!==(user?.id||null))setTimeout(async()=>{try{await loadMe()}catch{}route();if(me)setTimeout(()=>termsCheck().catch(()=>{}),1200)},0)});
 if(!document.querySelector('link[rel=icon]'))document.head.insertAdjacentHTML('beforeend','<link rel="icon" href="/favicon.svg">');
 if(/error_description/.test(location.hash+location.search)){
  const m=decodeURIComponent((location.hash+location.search).match(/error_description=([^&]*)/)?.[1]||'').replace(/\+/g,' ');
@@ -44,6 +44,7 @@ if(document.body.dataset.p!='doc')app.innerHTML='<div class="w"><div class="card
  const lm=await tmo(loadMe(),15000).then(()=>null,x=>x);
  if(lm){const h=await hp;if(!h&&P0!='status')DOWN=true;else if(lm.message!='timeout')console.warn('loadMe',lm)}
  ready=true;route();
+ if(me&&!['doc','profile'].includes(P0))setTimeout(()=>termsCheck().catch(()=>{}),1200);
  if(!lm)hp.then(h=>{if(!h&&P0!='status'&&P0!='doc'&&!DOWN){DOWN=true;downPage('db')}});
 })();
 /* Апп (PWA): service worker бүртгэх, суулгах товч */

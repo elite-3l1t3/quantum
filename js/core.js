@@ -54,8 +54,24 @@ async function loadMe(){
  if(me&&me.username&&localStorage.ref&&!me.banned){const{data,error}=await sb.rpc('use_ref',{p_ref:localStorage.ref});if(!error&&!['later','rate'].includes(data))localStorage.removeItem('ref');if(data=='ok'){toast('Урилгаар нэгдсэн тул "Найз" тэмдэг авлаа!');me=(await q()).data||me}}
 }
 const LGN={mn:'MN',en:'EN',ru:'RU'};
+/* Үйлчилгээний нөхцөл / Нууцлалын бодлогын хувилбар. Баримтыг өөрчлөх бүрд нэмэгдүүлж, TERMS_CHANGES-д товч бичнэ. */
+const TERMS_VER=2,TERMS_DATE='2026-11-20';
+const TERMS_CHANGES=['Бүртгүүлэхэд зөвшөөрлөө чагтлах ба таны зөвшөөрлийг (огноо, хувилбар) хадгална','Мэдээлэл Монголоос гадуурх серверт (Supabase) хадгалагддаг тухай','16 хүрээгүй бол эцэг эх, асран хамгаалагчийн зөвшөөрөл','Мэдээлэл алдагдвал мэдэгдэх, таны эрх, хэрхэн гомдол гаргах'];
+/* Нэвтэрсэн хэрэглэгч шинэ нөхцөлийг зөвшөөрөөгүй бол асууна (хуулийн шаардлага). SQL (v14) байхгүй бол асуухгүй. */
+async function termsCheck(){
+ if(!me||me.banned||document.querySelector('.tdlg'))return;
+ const r=await Promise.resolve(sb.from('profile_private').select('consent_ver').eq('id',me.id).maybeSingle()).catch(()=>({error:1}));
+ if(!r||r.error)return;
+ const cur=(r.data&&r.data.consent_ver)||0;if(cur>=TERMS_VER)return;
+ if(+localStorage.consent>=TERMS_VER){const a=await sb.rpc('accept_terms',{p_ver:TERMS_VER});if(!a.error&&a.data=='ok')return}
+ const d=document.createElement('div');d.className='dlgb tdlg';
+ d.innerHTML=`<div class="dlg" role="dialog" aria-modal="true"><div class="dlgi">${ic('lock',26)}</div><h3>${cur?'Нөхцөл шинэчлэгдлээ':'Нөхцөлийг зөвшөөрнө үү'}</h3><p class="mu">${TERMS_DATE}-ны өөрчлөлт:</p><ul class="ins">${TERMS_CHANGES.map(x=>`<li>${e(x)}</li>`).join('')}</ul><p class="mu"><a href="/tos" target="_blank">Үйлчилгээний нөхцөл</a> · <a href="/privacy" target="_blank">Нууцлалын бодлого</a></p><label class="cns"><input type="checkbox" id="tcn"><span>Би 13-аас дээш настай бөгөөд шинэчлэгдсэн нөхцөл, нууцлалын бодлогыг уншиж зөвшөөрч байна.</span></label><div class="act dla"><button type="button" class="g" id="tno">Гарах</button><button type="button" id="tok">Зөвшөөрөх</button></div></div>`;
+ document.body.append(d);
+ d.querySelector('#tno').onclick=async()=>{await sb.auth.signOut();try{localStorage.removeItem('consent')}catch{}go('/')};
+ d.querySelector('#tok').onclick=async()=>{if(!d.querySelector('#tcn').checked)return toast('Нөхцөлийг зөвшөөрч чагтлана уу');const a=await sb.rpc('accept_terms',{p_ver:TERMS_VER});if(a.error||a.data!='ok')return toast('Алдаа гарлаа. Дахин оролдоно уу.');try{localStorage.consent=TERMS_VER}catch{}d.remove();toast('Баярлалаа!')};
+}
 const bar=()=>`<nav><b><a href="/" aria-label="biof">biof</a></b><button class="g srb" id="srb" type="button" aria-label="Хайх" title="Хайх">${ic('search',18)}</button><button class="lgs g" id="lgs" type="button" aria-label="Хэл">${ic('globe',16)}<span>${LGN[localStorage.lang||'mn']||'MN'}</span></button>${me?`<a href="/settings"><button type="button" class="pnl">${ic('home',16)}<span>Миний самбар</span></button></a>`:'<button class="lg" type="button">Нэвтрэх</button>'}<button class="mnb g" id="mnb" type="button" aria-label="Цэс" aria-expanded="false">${ic('menu',20)}</button></nav>${me&&me.banned?'<div class="bad">Таны бүртгэлийг хориглосон байна.</div>':''}`;
-const foot=()=>`<footer><div class="fnav"><a href="/tos">Үйлчилгээний нөхцөл</a><a href="/privacy">Нууцлалын бодлого</a><a href="/status">Статус</a><a href="/#support">Дэмжих</a></div><p>© biof · Bio Flex</p></footer>`;
+const foot=()=>`<footer><div class="fnav"><a href="/tos">Үйлчилгээний нөхцөл</a><a href="/privacy">Нууцлалын бодлого</a><a href="/updates">Шинэчлэлт</a><a href="/status">Статус</a><a href="/#support">Дэмжих</a></div><p>© biof · Bio Flex</p></footer>`;
 
 /* Нэвтрэх: Discord эсвэл имэйл рүү очих код */
 const discordLogin=()=>sb.auth.signInWithOAuth({provider:'discord',options:{redirectTo:location.origin+'/'}});
@@ -78,11 +94,13 @@ function login(mode,name){
  const kd=ev=>{if(ev.key=='Escape')close()};
  const tabs=()=>`<div class="lgt" role="tablist"><button type="button" class="${M=='signup'?'on':''}" data-m="signup">Бүртгүүлэх</button><button type="button" class="${M=='login'?'on':''}" data-m="login">Нэвтрэх</button></div>`;
  const steps=n=>`<ol class="lgs2">${['Нэр сонгох','Баталгаажуулах','Бэлэн'].map((x,i)=>`<li class="${i<n?'dn':i==n?'on':''}"><i>${i<n?ic('check',12,3):i+1}</i>${x}</li>`).join('')}</ol>`;
- const ways=lbl=>`<button type="button" class="dc lgdc">${plat('discord',24)}Discord-оор ${lbl}</button><div class="or">эсвэл имэйлээр</div><input class="dli" id="lem" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="name@mail.com" value="${e(email)}"><button type="button" id="lsend">${ic('arrow',16)}Имэйл рүү код авах</button>`;
+ const cns=()=>`<label class="cns"><input type="checkbox" id="lcn"${localStorage.consent>=TERMS_VER?' checked':''}><span>Би 13-аас дээш настай (16 хүрээгүй бол эцэг эх, асран хамгаалагчийн зөвшөөрөлтэй) бөгөөд <a href="/tos" target="_blank">Үйлчилгээний нөхцөл</a>, <a href="/privacy" target="_blank">Нууцлалын бодлого</a>-ыг уншиж зөвшөөрч, мэдээллээ гадаадын сервер (Supabase) дээр хадгалахыг зөвшөөрч байна.</span></label>`;
+ const okC=()=>{const c=d.querySelector('#lcn');if(c&&c.checked){try{localStorage.consent=TERMS_VER}catch{}return true}toast('Нөхцөлийг зөвшөөрч чагтлана уу');const l=d.querySelector('.cns');if(l){l.classList.remove('shk');void l.offsetWidth;l.classList.add('shk')}return false};
+ const ways=lbl=>`${cns()}<button type="button" class="dc lgdc">${plat('discord',24)}Discord-оор ${lbl}</button><div class="or">эсвэл имэйлээр</div><input class="dli" id="lem" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="name@mail.com" value="${e(email)}"><button type="button" id="lsend">${ic('arrow',16)}Имэйл рүү код авах</button>`;
  const step1=()=>{
   const sign=M=='signup';
   d.innerHTML=`<div class="dlg lgbox" role="dialog" aria-modal="true"><button class="g mnx lgx" type="button" aria-label="Хаах">${ic('x',18)}</button>${tabs()}${sign?`${steps(0)}<h3>biof хуудсаа үүсгэе</h3><p class="mu">Эхлээд хаягаа сонго. Дараа нь Discord эсвэл имэйлээ баталгаажуулна. Нууц үг хэрэггүй.</p><div class="lgu"><span>biof.site/</span><input id="lun" maxlength="20" placeholder="таны нэр" autocomplete="off" autocapitalize="none" spellcheck="false" value="${e(un)}"></div><small class="lgst mu" id="lst">Зөвхөн a-z, 0-9, _ (3-20 тэмдэгт)</small><div id="lw" class="lgw">${ways('үргэлжлүүлэх')}</div>`:`<div class="dlgi">${ic('user',26)}</div><h3>Тавтай морил!</h3><p class="mu">Discord эсвэл имэйлээрээ нэвтэрнэ үү. Шинэ имэйл бол автоматаар бүртгэнэ.</p>${ways('нэвтрэх')}<p class="mu lgm2">Бүртгэлгүй юу? <a href="#" data-m="signup">Бүртгүүлэх</a></p>`}</div>`;
-  d.querySelector('.lgdc').onclick=()=>{if(sign&&!pend())return;d.querySelector('.lgdc').disabled=true;discordLogin()};
+  d.querySelector('.lgdc').onclick=()=>{if(sign&&!pend())return;if(!okC())return;d.querySelector('.lgdc').disabled=true;discordLogin()};
   const i=d.querySelector('#lem');i.onkeydown=ev=>{if(ev.key=='Enter')send()};d.querySelector('#lsend').onclick=send;
   const u=d.querySelector('#lun');
   if(u){u.oninput=()=>{u.value=u.value.toLowerCase().replace(/[^a-z0-9_]/g,'');un=u.value;unOk=null;chkUn()};chkUn();setTimeout(()=>(un?i:u).focus(),60)}else setTimeout(()=>i.focus(),60);
@@ -95,6 +113,7 @@ function login(mode,name){
  const pend=()=>{if(unOk!==true){toast(un?'Өөр нэр сонгоно уу':'Эхлээд хаягаа сонгоно уу');const u=d.querySelector('#lun');u&&u.focus();return false}localStorage.pending=un;return true};
  const send=async()=>{
   if(M=='signup'&&!d.querySelector('#lcode')&&!pend())return;
+  if(!d.querySelector('#lcode')&&!okC())return;
   const i=d.querySelector('#lem');email=(i?i.value:email).trim().toLowerCase();
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){toast('Имэйл хаягаа зөв бичнэ үү');i&&i.focus();return}
   if(!cool('otp',3000))return;

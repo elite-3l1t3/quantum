@@ -62,7 +62,7 @@ document.addEventListener('contextmenu',ev=>{const t=ev.target;if(t.closest&&t.c
 document.addEventListener('dragstart',ev=>{if(ev.target.closest&&ev.target.closest('img,video'))ev.preventDefault()});
 /* Гурван зураасан цэс */
 function menuItems(){
- const L=[['/','home','Нүүр'],['#search','search','Хүн хайх'],['/leaderboard','trophy','Тэргүүлэгчид'],['/tutorial','spark','Заавар'],['/a','eye','Жишээ хуудас'],['/status','pulse','Статус'],['/#support','coffee','Дэмжих']];
+ const L=[['/','home','Нүүр'],['#search','search','Хүн хайх'],['/leaderboard','trophy','Тэргүүлэгчид'],['/updates','bolt','Шинэчлэлт'],['/tutorial','spark','Заавар'],['/a','eye','Жишээ хуудас'],['/status','pulse','Статус'],['/#support','coffee','Дэмжих']];
  if(typeof me!='undefined'&&me){L.unshift(['/settings','user','Миний самбар']);if(me.role=='admin')L.splice(1,0,['/admin','shield','Админ самбар']);else if(me.role=='moderator')L.splice(1,0,['/admin','shield','Модератор самбар'])}
  if(!matchMedia('(display-mode: standalone)').matches)L.push(['#install','phone','Апп суулгах']);
  L.push(['/tos','link','Үйлчилгээний нөхцөл'],['/privacy','lock','Нууцлалын бодлого']);
@@ -75,7 +75,7 @@ document.addEventListener('click',ev=>{
   if(document.querySelector('.mnu')){closeMenu();return}
   const k=document.createElement('div');k.className='mnbk';
   const m=document.createElement('div');m.className='mnu';
-  m.innerHTML=`<div class="mnh"><b>biof</b><span class="mu">Bio Flex</span><button class="g mnx" type="button" aria-label="Хаах">${ic('x',18)}</button></div>`+menuItems().map((x,i)=>`<a href="${x[0]}"${x[0]=='#search'?' data-search="1"':x[0]=='#install'?' data-install="1"':''} style="--i:${i}">${ic(x[1],20)}<span>${x[2]}</span></a>`).join('');
+  m.innerHTML=`<div class="mnh"><b>biof</b><span class="mu">Bio Flex</span><button class="g mnx" type="button" aria-label="Хаах">${ic('x',18)}</button></div>`+menuItems().map((x,i)=>`<a href="${x[0]}"${x[0]=='#search'?' data-search="1"':x[0]=='#install'?' data-install="1"':''} style="--i:${i}">${ic(x[1],20)}<span>${x[2]}</span>${x[0]=='/updates'&&typeof updNew=='function'&&updNew()?'<i class="mdot"></i>':''}</a>`).join('');
   document.body.append(k,m);b.setAttribute('aria-expanded','true');return;
  }
  if(ev.target.closest&&(ev.target.closest('.mnbk')||ev.target.closest('.mnx')||ev.target.closest('.mnu a')))closeMenu();
