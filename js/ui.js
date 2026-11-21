@@ -174,3 +174,19 @@ async function showNotice(el){
  el.insertAdjacentHTML('afterbegin',`<div class="ntc">${ic('bolt',18)}<span class="sel">${e(b)}</span><button type="button" class="g" aria-label="Хаах">${ic('x',14)}</button></div>`);
  const n=el.querySelector('.ntc');n.querySelector('button').onclick=()=>{localStorage.nd=String(h);n.remove()};
 }
+
+/* Хажуу тийш гүйлгэх табууд: хулганы дугуйгаар гүйлгэх, сонгосон табыг харагдуулах, сүүдэр */
+(function(){
+ const upd=t=>{const o=t.scrollWidth>t.clientWidth+2;t.classList.toggle('ovf',o);t.classList.toggle('end',o&&t.scrollLeft+t.clientWidth>=t.scrollWidth-4)};
+ document.addEventListener('wheel',ev=>{const t=ev.target.closest&&ev.target.closest('.tabs2,.tabs3,.lbt');if(!t||t.scrollWidth<=t.clientWidth+2||Math.abs(ev.deltaX)>Math.abs(ev.deltaY))return;ev.preventDefault();t.scrollLeft+=ev.deltaY;upd(t)},{passive:false});
+ document.addEventListener('scroll',ev=>{const t=ev.target;if(t&&t.classList&&t.classList.contains('tabs2'))upd(t)},true);
+ document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('.tabs2 button');if(b&&b.parentElement.scrollWidth>b.parentElement.clientWidth+2)b.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'})});
+ new MutationObserver(()=>document.querySelectorAll('.tabs2').forEach(upd)).observe(document.documentElement,{childList:true,subtree:true});
+ addEventListener('resize',()=>document.querySelectorAll('.tabs2').forEach(upd),{passive:true});
+})();
+/* Хурдан шилжилт: холбоос дээр хулгана очиход хуудсыг урьдчилан ачаална (нэг удаа) */
+(function(){
+ const done=new Set();
+ const pf=ev=>{const a=ev.target.closest&&ev.target.closest('a[href^="/"]');if(!a||a.target=='_blank')return;const u=a.getAttribute('href').split('#')[0];if(!u||done.has(u)||u==location.pathname||done.size>20)return;done.add(u);const l=document.createElement('link');l.rel='prefetch';l.href=u;document.head.append(l)};
+ document.addEventListener('pointerover',pf,{passive:true});document.addEventListener('touchstart',pf,{passive:true});
+})();

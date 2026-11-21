@@ -1,4 +1,4 @@
-const V='19';const T0=document.title;
+const V='20';const T0=document.title;
 const NEED={home:['board','home'],settings:['card','upload','tour','settings'],admin:['admin'],board:['board'],tutorial:['tutorial'],updates:['updates'],status:['status'],profile:['card','profile']};
 const PROBE={card:'cardHTML',upload:'up',tour:'startTour',settings:'settings',home:'home',profile:'profile',admin:'admin',board:'board',tutorial:'tutorial',updates:'updates',status:'statusPage'};
 const loadJs=s=>new Promise((ok,no)=>{const x=document.createElement('script');x.src='/js/'+s+'.js?v='+V;x.onload=ok;x.onerror=()=>no(Error('Файл олдсонгүй: /js/'+s+'.js. GitHub дээр js хавтас руу оруулсан эсэхээ шалгана уу.'));document.head.append(x)});
@@ -51,3 +51,26 @@ if(document.body.dataset.p!='doc')app.innerHTML='<div class="w"><div class="card
 if('serviceWorker' in navigator&&location.protocol=='https:')addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
 addEventListener('beforeinstallprompt',ev=>{ev.preventDefault();window.BIP=ev;document.documentElement.classList.add('can-install')});
 addEventListener('appinstalled',()=>{window.BIP=null;document.documentElement.classList.remove('can-install');toast('biof апп суулаа!')});
+
+/* Шинэ хувилбар гарвал (version.json) нээлттэй хуудсанд мэдэгдэж, хадгалаагүй өөрчлөлтийг хадгалаад дахин ачаална */
+let UPD=0,SNZ=0;
+async function checkVer(){
+ if(UPD||Date.now()<SNZ||document.hidden||!navigator.onLine)return;
+ try{const r=await fetch('/version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();if(j&&j.v&&String(j.v)!==V)showUpdate(j)}catch{}
+}
+function showUpdate(j){
+ if(UPD)return;UPD=1;
+ const X=typeof LANG!='undefined'?(LANG=='en'?1:LANG=='ru'?2:0):0,T=(m,en,ru)=>[m,en,ru][X];
+ const title=Array.isArray(j.t)?(j.t[X]||j.t[0]):'';
+ const d=document.createElement('div');d.className='updb';d.setAttribute('role','status');
+ d.innerHTML=`<div class="updi">${ic('spark',22)}</div><div class="updt"><b>${T('Шинэчлэлт гарлаа!','Update available!','Доступно обновление!')}</b><small>${title?e(title)+' · ':''}${T('Таны өөрчлөлтүүд хадгалагдаж, хэвээр үлдэнэ.','Your changes are kept.','Ваши изменения сохранятся.')}</small><div class="updp"><i></i></div></div><div class="upda"><button type="button" id="updn">${T('Одоо шинэчлэх','Update now','Обновить')}</button><button type="button" class="g" id="updl">${T('Дараа','Later','Позже')}</button></div>`;
+ document.body.append(d);requestAnimationFrame(()=>d.classList.add('in'));
+ const go2=()=>{try{if(typeof saveDraft=='function')saveDraft(true)}catch{}window.onbeforeunload=null;d.querySelector('#updn').disabled=true;d.querySelector('#updn').innerHTML='<span class="spin sm"></span>'+T('Ачаалж байна…','Reloading…','Загрузка…');setTimeout(()=>location.reload(),350)};
+ let left=10;const bar=d.querySelector('.updp i');bar.style.animationDuration=left+'s';
+ const busyUp=()=>document.querySelector('.dz .spin,.dlgb,.tour,.lgd');
+ const tm=setInterval(()=>{if(busyUp()){bar.style.animationPlayState='paused';return}bar.style.animationPlayState='running';if(--left<=0){clearInterval(tm);go2()}},1000);
+ d.querySelector('#updn').onclick=()=>{clearInterval(tm);go2()};
+ d.querySelector('#updl').onclick=()=>{clearInterval(tm);d.classList.remove('in');setTimeout(()=>d.remove(),300);UPD=0;SNZ=Date.now()+6e5};
+}
+setTimeout(checkVer,20000);setInterval(checkVer,18e4);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkVer()});

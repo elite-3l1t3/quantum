@@ -9,7 +9,12 @@ const cp=(l,k)=>`<div class="fl" data-w="${k}"><label>${l}</label><div class="cp
 const rg=(l,k,a,b,s,u,h)=>`<div class="fl"><label>${l}: <b data-o="${k}"></b>${u}</label><input type="range" data-k="${k}" min="${a}" max="${b}" step="${s}">${h?`<small>${h}</small>`:''}</div>`;
 const dzW=k=>`<div class="dzw"><label class="dzl">${DZ[k][0]}</label><div class="dz" data-dz="${k}"></div>${k=='bg'?'<div class="act dzx" id="bgpa"></div>':''}<input type="file" hidden data-f="${k}" accept="${DZ[k][2]}"></div>`;
 const normUrl=(u,k)=>{u=(u||'').trim();if(!u)return'';if(/^(https?:\/\/|mailto:)/i.test(u))return u;if(k=='email'||/^[^\s@\/]+@[^\s@\/]+\.[^\s@\/]+$/.test(u))return'mailto:'+u.replace(/^mailto:/i,'');return'https://'+u.replace(/^\/+/,'')};
-const mark=()=>{const b=document.getElementById('sbar');if(b){b.hidden=false;window.onbeforeunload=ev=>{ev.preventDefault();ev.returnValue=''}}updPrev()};
+/* Хадгалаагүй өөрчлөлтийг төхөөрөмж дээр түр хадгална (цонх хаагдах, шинэчлэлтээр дахин ачаалахад алдагдахгүй) */
+const DK=()=>me?'biofDraft_'+me.id:'';let dT=0;
+function saveDraft(now){if(!S||!me||!S.dirty)return;const w=()=>{try{const{busy:_b,...x}=S;localStorage[DK()]=JSON.stringify({t:Date.now(),S:x})}catch{}};clearTimeout(dT);now?w():dT=setTimeout(w,400)}
+const clearDraft=()=>{clearTimeout(dT);try{localStorage.removeItem(DK())}catch{}};
+function loadDraft(){try{const d=JSON.parse(localStorage[DK()]||'null');if(!d||!d.S||Date.now()-d.t>3*864e5){clearDraft();return null}return d}catch{return null}}
+const mark=()=>{const b=document.getElementById('sbar');if(S)S.dirty=true;if(b){b.hidden=false;window.onbeforeunload=ev=>{saveDraft(true);ev.preventDefault();ev.returnValue=''}}saveDraft();updPrev()};
 const dav=()=>user&&user.user_metadata&&user.user_metadata.avatar_url||'';
 function fromMe(){
  const t=me.theme||{};
@@ -179,7 +184,7 @@ async function save(v){
   const keep=new Set([...Object.values(S.as).map(pathOf),...S.links.filter(l=>l.img).map(l=>me.id+'/'+l.img.split('?')[0])]);
   const del=[...new Set(S.trash.map(pathOf))].filter(p=>p&&!keep.has(p));
   if(del.length)await sb.storage.from('media').remove(del).catch(()=>{});
-  window.onbeforeunload=null;
+  window.onbeforeunload=null;clearDraft();
   const y=scrollY;await loadMe();
   if(!me)return go('/');
   settings(v,curT);scrollTo(0,y);toast('Амжилттай хадгаллаа');
@@ -190,12 +195,13 @@ function openTab(t){const b=document.querySelector('.tabs2 button[data-t="'+t+'"
 function settings(v,tab){
  if(!me)return v.innerHTML='<div class="card"><p>Эхлээд нэвтэрнэ үү.</p><br><button class="lg">Нэвтрэх</button></div>';
  S=fromMe();busy={};window.onbeforeunload=null;curT=TABS.some(t=>t[0]==tab)?tab:'h';
+ let restored=false;if(!settings.dr){settings.dr=1;const d=loadDraft();if(d){S={...S,...d.S,trash:d.S.trash||[]};restored=true}}
  v.innerHTML=`<div class="dashw"><div class="dash"><div class="tabs2">${TABS.map(t=>`<button type="button" class="${t[0]==curT?'on':''}" data-t="${t[0]}">${ic(t[2],18)}<span>${t[1]}</span></button>`).join('')}</div>
  ${me.username?`<a class="tpl" href="/${e(me.username)}">biof.site/${e(me.username)} ${ic('arrow',16)}</a>`:''}
  ${me.hidden?`<div class="tip warn">${ic('alert',18)}<span>Таны хуудас олон мэдэгдэл авсан тул түр нуугдсан байна. Админ шалгаад шийднэ. Дүрэм зөрчсөн зүйл байвал засна уу.</span></div>`:''}
  ${localStorage.tipx?'':'<div class="tip" id="tip">'+ic('spark',18)+'<span>Шинээр орж ирсэн үү? <a href="/tutorial">Заавар үзэх</a></span><button class="g" type="button" id="tx" aria-label="Хаах">'+ic('x',14)+'</button></div>'}${TABS.map(t=>`<section data-s="${t[0]}"${t[0]==curT?'':' hidden'}>${{h:secH,c:secC,l:secL,a:secA,b:secB}[t[0]]()}</section>`).join('')}
  <div class="sbar" id="sbar" hidden><b>Хадгалаагүй өөрчлөлт байна!</b><button class="g" type="button" id="rs">Буцаах</button><button type="button" id="sv">Хадгалах</button></div></div><aside class="pvside" id="pvside"><button class="g pvx" type="button" id="pvx">${ic('x',16)}Хаах</button><div class="pvl">Урьдчилан харах</div><div class="pvw" id="pvw"></div></aside></div>`;
- bindAll(v);wireDz(v);paintLinks();updPrev();homeInit(v);showNotice(v.querySelector('.dash'));tplInit(v);loadVerify();
+ bindAll(v);wireDz(v);paintLinks();updPrev();homeInit(v);if(restored){mark();toast('Хадгалаагүй өөрчлөлтийг сэргээлээ. Хадгалахаа мартуузай!')}showNotice(v.querySelector('.dash'));tplInit(v);loadVerify();
  const tx=v.querySelector('#tx');if(tx)tx.onclick=()=>{localStorage.tipx=1;const t0=v.querySelector('#tip');if(t0)t0.remove()};
  v.querySelectorAll('[data-pre]').forEach(b=>b.onclick=()=>{const p=PRE.find(x=>x[0]==b.dataset.pre);Object.assign(S,p[2]);S.tchg=true;refresh(v);mark()});
  const tb=[...v.querySelectorAll('.tabs2 button[data-t]')];
@@ -244,7 +250,7 @@ function settings(v,tab){
  const qs=document.getElementById('qrs');if(qs)qs.onclick=()=>qrDlg(location.origin+'/'+me.username,me.username,S.ac);
  const ss=document.getElementById('shs');if(ss)ss.onclick=()=>{localStorage.shared=1;shareUrl(location.origin+'/'+me.username,(me.display_name||me.username)+' · biof');updPrev()};
  const iv=document.getElementById('invc');if(iv)iv.onclick=()=>{try{navigator.clipboard.writeText(location.origin+'/?ref='+me.username)}catch{}toast('Урилгын холбоос хуулагдлаа')};
- document.getElementById('rs').onclick=()=>{window.onbeforeunload=null;const y=scrollY;settings(v,curT);scrollTo(0,y)};
+ document.getElementById('rs').onclick=()=>{window.onbeforeunload=null;clearDraft();const y=scrollY;settings(v,curT);scrollTo(0,y)};
  document.getElementById('sv').onclick=()=>save(v);
 }
 const abObj=()=>{const o={};[['job','ab_job'],['sch','ab_sch'],['gm','ab_gm']].forEach(x=>{const v=String(S[x[1]]||'').trim().slice(0,40);if(v)o[x[0]]=v});return Object.keys(o).length?o:undefined};

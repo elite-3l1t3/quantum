@@ -3,7 +3,7 @@
    - ?v= хувилбартай JS/CSS, фонт, платформын дүрс: кэшээс (хурдан).
    - Supabase Storage-ийн ЗУРАГ: кэшээс (?v=timestamp тул өөрчлөгддөггүй) → Supabase egress квот хэмнэнэ.
    - Supabase API (rest/auth/rpc), видео/дуу (Range хүсэлт): огт кэшлэхгүй. */
-const SWV = 'biof-sw-20';
+const SWV = 'biof-sw-21';
 const STATIC = SWV + '-static', PAGES = SWV + '-pages', MEDIA = 'biof-media-v1';
 const SB = 'https://zyrpzoqdoorekspavocs.supabase.co';
 const MEDIA_MAX = 120;
@@ -49,7 +49,7 @@ self.addEventListener('fetch', ev => {
     if (url.origin === location.origin) {
       if (req.mode === 'navigate') return ev.respondWith(page(req));
       if (url.pathname === '/sw.js') return;
-      if (url.searchParams.has('v') || url.pathname.startsWith('/js/vendor/')) return ev.respondWith(cacheFirst(req, STATIC));
+      if (url.searchParams.has('v') || url.pathname.startsWith('/js/vendor/') || url.pathname.startsWith('/fonts/')) return ev.respondWith(cacheFirst(req, STATIC));
       if (/\.(png|svg|ico|webmanifest|css|js)$/.test(url.pathname)) return ev.respondWith(swr(req, STATIC));
       return;
     }
