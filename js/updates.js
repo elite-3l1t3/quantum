@@ -1,6 +1,14 @@
 /* Шинэчлэлт: шинэ боломж, засвар, аюулгүй байдал. Өгөгдлийн сан ашиглахгүй (квот 0).
    Шинэ хувилбар гаргах бүрд ЭХЭНД нь нэмнэ. [төрөл, mn, en, ru]; төрөл: new | fix | sec | legal */
 const UPDATES=[
+{d:'2026-11-22',v:'v18',t:['Story зураг, хөдөлгөөн, буцаах товч','Story images, motion, undo','Сторис, анимации, отмена'],i:[
+ ['new','Нэг товшоод Instagram/Facebook story-д зориулсан QR-тай зураг үүсгэх','One-tap Story image with your QR code for Instagram/Facebook','Картинка для сторис с QR-кодом в одно нажатие'],
+ ['new','Холбоосын гарч ирэх хөдөлгөөн (4 төрөл), хулгана аваачихад эффект (4 төрөл)','Link entrance animations (4) and hover effects (4)','Анимации появления ссылок (4) и эффекты наведения (4)'],
+ ['new','"Зурагнаасаа өнгө авах" ба "Санамсаргүй загвар" товч','"Colors from my photo" and "Random style" buttons','Кнопки «Цвета из моего фото» и «Случайный стиль»'],
+ ['new','Холбоосын хуваарь: хэзээ гарч ирэх, хэзээ алга болохыг тохируулах','Link scheduling: choose when a link appears and disappears','Расписание ссылок: когда показывать и скрывать'],
+ ['new','Миний цагийг харуулах, "Харилцагч хадгалах" (.vcf) товч','Show your local time and a "Save contact" (.vcf) button','Показ вашего времени и кнопка «Сохранить контакт» (.vcf)'],
+ ['new','Тохиргоонд буцаах/дахин хийх (Ctrl+Z, Ctrl+Y), Ctrl+S-ээр хадгалах','Undo/redo in the dashboard (Ctrl+Z, Ctrl+Y), save with Ctrl+S','Отмена/повтор в панели (Ctrl+Z, Ctrl+Y), сохранение Ctrl+S'],
+ ['legal','Нууцлал: цагийн бүс (асаасан үед) нийтэд харагдана; Story, өнгө, .vcf төхөөрөмж дээр үүснэ; хуваарьтай холбоос нууц биш','Privacy: time zone is public when enabled; Story, colors and .vcf are made on your device; scheduled links are not secret','Конфиденциальность: часовой пояс публичен при включении; сторис, цвета и .vcf создаются на устройстве; ссылки по расписанию не секретны']]},
 {d:'2026-11-21',v:'v17',t:['Табууд компьютер дээр, илүү хурдан','Tabs on desktop, faster','Вкладки на ПК, быстрее'],i:[
  ['fix','Тохиргооны табууд компьютер дээр бүгд харагдана (хулганы дугуйгаар ч гүйлгэнэ)','Dashboard tabs are all visible on desktop (mouse wheel scroll too)','Все вкладки панели видны на ПК (прокрутка колесом мыши)'],
  ['new','Шинэчлэлт гарвал мэдэгдэл гарч, хадгалаагүй өөрчлөлтийг хадгалаад дахин ачаална','Update notice that keeps your unsaved changes and reloads','Уведомление об обновлении с сохранением несохранённых изменений'],

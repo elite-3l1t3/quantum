@@ -49,7 +49,7 @@ function page(p) {
   const bio = (p.bio || '').replace(/\s+/g, ' ').trim();
   const desc = (bio ? bio + ' — ' : '') + `${name} (@${p.username}) хуудас biof дээр. Бүх холбоос нэг дор.`;
   const img = okImg(p.avatar_url) || `${SITE}/og.png`;
-  const links = (Array.isArray(p.links) ? p.links : []).filter(l => okUrl(l && l.url) && !/^mailto:/i.test(l.url)).slice(0, 12);
+  const links = (Array.isArray(p.links) ? p.links : []).filter(l => okUrl(l && l.url) && !/^mailto:/i.test(l.url) && !l.sf && !l.su).slice(0, 12); // хуваарьтай холбоосыг оруулахгүй
   const title = `${name} (@${p.username}) · biof`;
   const ld = {
     '@context': 'https://schema.org', '@type': 'ProfilePage', url, name: title,

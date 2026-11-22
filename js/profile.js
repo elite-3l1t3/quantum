@@ -88,6 +88,13 @@ function tilt(c){
   }else on();
  }
 }
+/* Харилцагч хадгалах (.vcf): зөвхөн хуудсан дээр нийтэд харагдаж буй мэдээлэл, төхөөрөмж дээрээ үүсгэнэ */
+function vcard(p){
+ const q=s=>String(s||'').replace(/[\\,;]/g,m=>'\\'+m).replace(/\r?\n/g,'\\n'),nm=p.display_name||p.username,L=['BEGIN:VCARD','VERSION:3.0','FN:'+q(nm),'N:'+q(nm)+';;;;','NICKNAME:'+q(p.username),'URL:'+location.origin+'/'+p.username];
+ (p.links||[]).filter(lkOn).slice(0,12).forEach(l=>{const u=String(l.url||'');if(/^mailto:/i.test(u))L.push('EMAIL;TYPE=INTERNET:'+q(u.slice(7).split('?')[0]));else if(/^https?:\/\//i.test(u)&&!l.emb)L.push('URL:'+q(u))});
+ if(p.bio)L.push('NOTE:'+q(String(p.bio).slice(0,200)));L.push('END:VCARD');
+ const b=new Blob([L.join('\r\n')+'\r\n'],{type:'text/vcard'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=(p.username||'contact')+'.vcf';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);toast('Харилцагчийн файл татагдлаа');
+}
 async function profile(v,name){
  const demo=name=='a';
  const p=demo?DEMO:(await sb.from('profiles').select('*').eq('username',name).maybeSingle()).data;
@@ -148,6 +155,8 @@ async function profile(v,name){
  $('#sh').onclick=()=>shareUrl(location.origin+'/'+p.username,(p.display_name||p.username)+' · biof');
  const qb=v.querySelector('#qrb');if(qb)qb.onclick=()=>qrDlg(location.origin+'/'+p.username,p.username,k.ac);
  const rp=v.querySelector('#rp');if(rp)rp.onclick=()=>reportDlg(p);
+ const vcb=v.querySelector('#vcb');if(vcb)vcb.onclick=()=>vcard(p);
+ const tzb=v.querySelector('[data-tz]');if(tzb){clearInterval(window.TZI);window.TZI=setInterval(()=>{if(!tzb.isConnected){clearInterval(window.TZI);return}tzb.textContent=tzNow(tzb.dataset.tz)},15000)}
  if(cu(t.music)){
   aud=new Audio();aud.preload='none';aud.src=t.music;aud.loop=true;aud.volume=.5;
   const setI=()=>{const b=v.querySelector('#mp');if(b)b.innerHTML=ic(aud&&!aud.paused?'pause':'play',18)};
@@ -155,7 +164,8 @@ async function profile(v,name){
   $('#mp').onclick=()=>{aud.paused?aud.play().catch(()=>{}):aud.pause()};
   const vs=v.querySelector('#vol');if(vs)vs.oninput=ev=>{aud.volume=ev.target.value}}
  if(t.enter||cu(t.music)){const d=document.createElement('div');d.id='ent';d.className='ent';d.style.background=k.bgc;d.style.color=k.tc;d.textContent=t.enter||'Орохын тулд дарна уу';
-  d.onclick=()=>{d.remove();const bv=document.querySelector('video.bgv');if(bv)bv.play().catch(()=>{});if(aud)aud.play().catch(()=>{})};document.body.append(d)}
+  const pc0=v.querySelector('#pcard.go');if(pc0)pc0.classList.remove('go');
+  d.onclick=()=>{d.remove();if(pc0)pc0.classList.add('go');const bv=document.querySelector('video.bgv');if(bv)bv.play().catch(()=>{});if(aud)aud.play().catch(()=>{})};document.body.append(d)}
  if(!demo){
   let vid=localStorage.vid;if(!vid){const r=crypto.getRandomValues(new Uint8Array(16));r[6]=r[6]&15|64;r[8]=r[8]&63|128;const h=[...r].map(x=>x.toString(16).padStart(2,'0')).join('');vid=localStorage.vid=h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20)}
   sb.rpc('add_view',{pid:p.id,v:vid}).then(r=>{

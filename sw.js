@@ -3,7 +3,7 @@
    - ?v= хувилбартай JS/CSS, фонт, платформын дүрс: кэшээс (хурдан).
    - Supabase Storage-ийн ЗУРАГ: кэшээс (?v=timestamp тул өөрчлөгддөггүй) → Supabase egress квот хэмнэнэ.
    - Supabase API (rest/auth/rpc), видео/дуу (Range хүсэлт): огт кэшлэхгүй. */
-const SWV = 'biof-sw-21';
+const SWV = 'biof-sw-22';
 const STATIC = SWV + '-static', PAGES = SWV + '-pages', MEDIA = 'biof-media-v1';
 const SB = 'https://zyrpzoqdoorekspavocs.supabase.co';
 const MEDIA_MAX = 120;
