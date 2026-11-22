@@ -66,34 +66,39 @@ function fxp(kind){
  document.body.append(d);
 }
 /* 3D хөдөлгөөн: хулгана/хуруу чиглэсэн газар руу хазайна. Дарсан газартаа түгжигдэж үлдэнэ (дахин дарвал суллагдана) */
-function tilt(c){
- let f=0,lock=null;
- const pos=ev=>{const r=c.getBoundingClientRect();return[(ev.clientX-r.left)/r.width-.5,(ev.clientY-r.top)/r.height-.5]};
- const apply=(x,y)=>{if(f)return;f=requestAnimationFrame(()=>{f=0;c.style.transform='perspective(800px) rotateY('+(x*18)+'deg) rotateX('+(-y*18)+'deg) scale(1.02)'})};
- const free=()=>{lock=null;c.classList.remove('tlock');c.style.transform=''};
- c.addEventListener('pointermove',ev=>{if(lock)return;const q=pos(ev);apply(q[0],q[1])});
- c.addEventListener('pointerdown',ev=>{
-  if(ev.target.closest('a,button,input'))return;
-  const q=pos(ev);
-  if(lock&&Math.hypot(q[0]-lock[0],q[1]-lock[1])<.12){free();return}
-  lock=q;c.classList.add('tlock');apply(q[0],q[1]);
- });
- c.addEventListener('pointerleave',()=>{if(!lock)c.style.transform=''});
- const sig=window.RC?window.RC.signal:undefined;
- document.addEventListener('pointerdown',ev=>{if(lock&&!c.contains(ev.target))free()},{capture:true,signal:sig});
- if(window.DeviceOrientationEvent&&matchMedia('(hover:none)').matches){
-  const on=()=>addEventListener('deviceorientation',ev=>{if(lock||ev.gamma==null)return;apply(Math.max(-.5,Math.min(.5,ev.gamma/50)),Math.max(-.5,Math.min(.5,(ev.beta-45)/50)))},{passive:true,signal:sig});
-  if(typeof DeviceOrientationEvent.requestPermission=='function'){
-   document.addEventListener('click',()=>{DeviceOrientationEvent.requestPermission().then(s=>{if(s=='granted')on()}).catch(()=>{})},{once:true});
-  }else on();
+/* 3D хөдөлгөөн. Компьютер: хуудасны хаана ч хулгана хөдлөхөд хайрцаг дагана.
+   Утас: mode='touch' — дарсан цэг рүү хазайна (дахин дарвал буцна); mode='gyro' — утсаа хазайлгахад дагана. */
+function tilt(c,mode){
+ const sig=window.RC?window.RC.signal:undefined,opt={passive:true,signal:sig},K=16,cl=v=>Math.max(-.5,Math.min(.5,v));
+ let f=0,nx=0,ny=0;
+ const apply=(x,y,smooth)=>{nx=x;ny=y;c.classList.toggle('tla',!!smooth);c.classList.toggle('tlm',!smooth);if(f)return;f=requestAnimationFrame(()=>{f=0;c.style.transform=(nx||ny)?'perspective(900px) rotateY('+(nx*K*2).toFixed(2)+'deg) rotateX('+(-ny*K*2).toFixed(2)+'deg) scale(1.015)':''})};
+ const reset=()=>{c.classList.remove('tlock');apply(0,0,true)};
+ if(matchMedia('(hover:hover) and (pointer:fine)').matches){
+  /* хулгана: картын төвөөс хэр хол байгаагаар (дэлгэцийн хэмжээгээр) */
+  document.addEventListener('pointermove',ev=>{if(ev.pointerType!='mouse')return;const r=c.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;apply(cl((ev.clientX-cx)/Math.max(innerWidth,1)),cl((ev.clientY-cy)/Math.max(innerHeight,1)))},opt);
+  document.documentElement.addEventListener('mouseleave',reset,{signal:sig});
+  addEventListener('blur',reset,{signal:sig});
+  return;
  }
-}
-/* Харилцагч хадгалах (.vcf): зөвхөн хуудсан дээр нийтэд харагдаж буй мэдээлэл, төхөөрөмж дээрээ үүсгэнэ */
-function vcard(p){
- const q=s=>String(s||'').replace(/[\\,;]/g,m=>'\\'+m).replace(/\r?\n/g,'\\n'),nm=p.display_name||p.username,L=['BEGIN:VCARD','VERSION:3.0','FN:'+q(nm),'N:'+q(nm)+';;;;','NICKNAME:'+q(p.username),'URL:'+location.origin+'/'+p.username];
- (p.links||[]).filter(lkOn).slice(0,12).forEach(l=>{const u=String(l.url||'');if(/^mailto:/i.test(u))L.push('EMAIL;TYPE=INTERNET:'+q(u.slice(7).split('?')[0]));else if(/^https?:\/\//i.test(u)&&!l.emb)L.push('URL:'+q(u))});
- if(p.bio)L.push('NOTE:'+q(String(p.bio).slice(0,200)));L.push('END:VCARD');
- const b=new Blob([L.join('\r\n')+'\r\n'],{type:'text/vcard'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=(p.username||'contact')+'.vcf';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);toast('Харилцагчийн файл татагдлаа');
+ if(mode=='gyro'&&window.DeviceOrientationEvent){
+  let b0=null;
+  const on=()=>addEventListener('deviceorientation',ev=>{if(ev.gamma==null||ev.beta==null)return;if(b0==null)b0=Math.max(15,Math.min(75,ev.beta));apply(cl(ev.gamma/45),cl((ev.beta-b0)/45))},opt);
+  if(typeof DeviceOrientationEvent.requestPermission=='function'){
+   /* iPhone: зөвшөөрлийг зөвхөн хэрэглэгч дарахад асууна */
+   const ask=()=>{DeviceOrientationEvent.requestPermission().then(s=>{if(s=='granted')on()}).catch(()=>{})};
+   document.addEventListener('click',ask,{once:true,signal:sig});
+  }else on();
+  return;
+ }
+ /* touch: дарсан цэг рүү хазайна, ижил газар эсвэл гадна дарвал буцна */
+ let lock=null;
+ c.addEventListener('pointerdown',ev=>{
+  if(ev.target.closest('a,button,input,[role=button]'))return;
+  const r=c.getBoundingClientRect(),q=[cl((ev.clientX-r.left)/r.width-.5),cl((ev.clientY-r.top)/r.height-.5)];
+  if(lock&&Math.hypot(q[0]-lock[0],q[1]-lock[1])<.12){lock=null;reset();return}
+  lock=q;c.classList.add('tlock');apply(q[0],q[1],true);
+ },{signal:sig});
+ document.addEventListener('pointerdown',ev=>{if(lock&&!c.contains(ev.target)){lock=null;reset()}},{capture:true,signal:sig});
 }
 async function profile(v,name){
  const demo=name=='a';
@@ -132,7 +137,7 @@ async function profile(v,name){
  if(!RM&&TRAILS.some(x=>x[0]==t.trail&&x[0]!='none')&&matchMedia('(pointer:fine)').matches)trail(t.trail,k.ac);
  const nmEl=v.querySelector('h2.nm[data-full]');if(nmEl){const s=nmEl.dataset.full;let i=0;nmEl.classList.add('typing');const iv=setInterval(()=>{if(!nmEl.isConnected){clearInterval(iv);return}nmEl.textContent=s.slice(0,++i);if(i>=s.length){clearInterval(iv);setTimeout(()=>nmEl.classList.remove('typing'),1600)}},90)}
  if(t.tw){const el=v.querySelector('#bio'),s=p.bio||'';let i=0;const iv=setInterval(()=>{if(!el||!el.isConnected){clearInterval(iv);return}el.textContent=s.slice(0,++i);if(i>=s.length)clearInterval(iv)},40)}
- if(t.tl){const c=v.querySelector('#pcard');if(c)tilt(c)}
+ if(t.tl&&!matchMedia('(prefers-reduced-motion:reduce)').matches){const c=v.querySelector('#pcard');if(c)tilt(c,t.tlm)}
  let lc=+p.likes;
  $('#lk').onclick=async()=>{
   const was0=!$('#lk').classList.contains('g');if(!was0&&(demo||user)&&!RM)confetti($('#lk'),k.ac);
@@ -155,7 +160,6 @@ async function profile(v,name){
  $('#sh').onclick=()=>shareUrl(location.origin+'/'+p.username,(p.display_name||p.username)+' · biof');
  const qb=v.querySelector('#qrb');if(qb)qb.onclick=()=>qrDlg(location.origin+'/'+p.username,p.username,k.ac);
  const rp=v.querySelector('#rp');if(rp)rp.onclick=()=>reportDlg(p);
- const vcb=v.querySelector('#vcb');if(vcb)vcb.onclick=()=>vcard(p);
  const tzb=v.querySelector('[data-tz]');if(tzb){clearInterval(window.TZI);window.TZI=setInterval(()=>{if(!tzb.isConnected){clearInterval(window.TZI);return}tzb.textContent=tzNow(tzb.dataset.tz)},15000)}
  if(cu(t.music)){
   aud=new Audio();aud.preload='none';aud.src=t.music;aud.loop=true;aud.volume=.5;
@@ -163,7 +167,7 @@ async function profile(v,name){
   aud.addEventListener('play',setI);aud.addEventListener('pause',setI);
   $('#mp').onclick=()=>{aud.paused?aud.play().catch(()=>{}):aud.pause()};
   const vs=v.querySelector('#vol');if(vs)vs.oninput=ev=>{aud.volume=ev.target.value}}
- if(t.enter||cu(t.music)){const d=document.createElement('div');d.id='ent';d.className='ent';d.style.background=k.bgc;d.style.color=k.tc;d.textContent=t.enter||'Орохын тулд дарна уу';
+ if(!t.noent&&(t.enter||cu(t.music))){const d=document.createElement('div');d.id='ent';d.className='ent';d.style.background=k.bgc;d.style.color=k.tc;d.textContent=t.enter||'Орохын тулд дарна уу';
   const pc0=v.querySelector('#pcard.go');if(pc0)pc0.classList.remove('go');
   d.onclick=()=>{d.remove();if(pc0)pc0.classList.add('go');const bv=document.querySelector('video.bgv');if(bv)bv.play().catch(()=>{});if(aud)aud.play().catch(()=>{})};document.body.append(d)}
  if(!demo){

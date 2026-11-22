@@ -1,6 +1,13 @@
 /* Шинэчлэлт: шинэ боломж, засвар, аюулгүй байдал. Өгөгдлийн сан ашиглахгүй (квот 0).
    Шинэ хувилбар гаргах бүрд ЭХЭНД нь нэмнэ. [төрөл, mn, en, ru]; төрөл: new | fix | sec | legal */
 const UPDATES=[
+{d:'2026-11-22',v:'v19',t:['Засварууд, 3D хөдөлгөөн','Fixes, 3D motion','Исправления, 3D-эффект'],i:[
+ ['fix','Хуудас солиход "Transition was aborted" алдаа гардаг байсныг зассан','Fixed the "Transition was aborted" error when switching pages','Исправлена ошибка «Transition was aborted» при переходе'],
+ ['new','3D хөдөлгөөн: компьютер дээр хулганыг хаана ч дагана; утсан дээр "дарж" эсвэл "утсаа хазайлгаж" сонгоно','3D motion: follows the mouse anywhere on desktop; on phones choose "tap" or "tilt your phone"','3D-эффект: на ПК следует за мышью везде; на телефоне — «нажатие» или «наклон»'],
+ ['new','Орох дэлгэцийг асаах/унтраах','Entry screen on/off switch','Переключатель экрана входа'],
+ ['fix','HTTPS цоож зөвхөн өөрийн холбоос дээр харагдана','HTTPS lock shows only on custom links','Замок HTTPS только у своих ссылок'],
+ ['fix','Нөхцөл зөвшөөрөх чагт дутуу бол анхааруулга цонхон дотор гарна; жишээ хуудасны холбоос хүрээнээс гардаг байсныг зассан','Missing consent tick is now shown inside the dialog; fixed links overflowing the sample page','Ошибка о флажке согласия теперь в окне; исправлен выход ссылок за рамку примера'],
+ ['fix','"Харилцагч хадгалах" товчийг хассан','Removed the "Save contact" button','Кнопка «Сохранить контакт» удалена']]},
 {d:'2026-11-22',v:'v18',t:['Story зураг, хөдөлгөөн, буцаах товч','Story images, motion, undo','Сторис, анимации, отмена'],i:[
  ['new','Нэг товшоод Instagram/Facebook story-д зориулсан QR-тай зураг үүсгэх','One-tap Story image with your QR code for Instagram/Facebook','Картинка для сторис с QR-кодом в одно нажатие'],
  ['new','Холбоосын гарч ирэх хөдөлгөөн (4 төрөл), хулгана аваачихад эффект (4 төрөл)','Link entrance animations (4) and hover effects (4)','Анимации появления ссылок (4) и эффекты наведения (4)'],

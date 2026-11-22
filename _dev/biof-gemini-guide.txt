@@ -432,3 +432,15 @@ card.js: LANS, LHS, DTRX, lkOn, tzOk, tzNow, tzCity. Хөдөлгөөн .pc.go.l
 profile.js: vcard(p) — .vcf файлыг төхөөрөмж дээр үүсгэнэ; window.TZI 15 сек тутам цаг шинэчилнэ (main.js route-д цэвэрлэнэ).
 settings.js: picColors (зургийн гол өнгө → бүх өнгө), rndTheme, storyImg (1080×1920 PNG, QR, Instagram safe zone), hPush/hGo/hFlush (Ctrl+Z/Ctrl+Y/Ctrl+S, sbar дээр ↶ ↷).
 Хувилбар: V='21', version.json 21, sw 'biof-sw-22'. Privacy/ToS 2026-11-22 (TERMS_VER 2 хэвээр — зөвхөн тодруулга, нэмэлт нь сонголттой).
+
+
+27. V19 (2026-11-22) — ЗАСВАРУУД
+--------------------------------
+- @view-transition ХАССАН: зарим хөтөч (Samsung Internet, Vivaldi) "Transition was aborted ... opt-in disabled" алдаа өгч toast гаргадаг байсан. NOISE regex-д нэмсэн. ДАХИН БҮҮ НЭМ.
+- "Харилцагч хадгалах" (.vcf, theme.vc) бүрэн хасагдсан (хэрэглэгчийн хүсэлтээр).
+- theme.noent=true → орох дэлгэц гарахгүй (Тохиргоо → Орох дэлгэц).
+- theme.tlm: 'touch' (дарсан цэг рүү хазайна) | 'gyro' (deviceorientation; iPhone-д товшилтоор зөвшөөрөл). Компьютер дээр хуудасны хаана ч хулганыг дагана (profile.js tilt()).
+- HTTPS цоож/HTTP анхааруулга зөвхөн icon='web' (өөрийн домэйн) холбоос дээр.
+- core.js cnErr(root): зөвшөөрлийн чагт дутуу бол цонхон дотор улаан анхааруулга. .toast z-index 90 (цонхнуудаас дээр).
+- Нүүрний жишээ карт өндөр нь автомат (холбоос хүрээнээс гарахгүй).
+Хувилбар: V='22', version.json 22, sw 'biof-sw-23'.

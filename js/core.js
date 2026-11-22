@@ -35,7 +35,7 @@ const PRESENCE_ON=false;
 const av=p=>cu(p.avatar_url)?`<img class="av" loading="lazy" decoding="async" alt="" src="${e(p.avatar_url)}">`:`<span class="av">${e((p.display_name||p.username||'?')[0].toUpperCase())}</span>`;
 const DEMO={id:null,bid:1,username:'a',display_name:'Bold',bio:'Сайн байна уу! Би Болд. Миний бүх холбоос энд байгаа.',accent:'#e2b858',views:12840,likes:964,role:'user',badges:['verified','staff'],links:[{label:'Facebook',url:'https://facebook.com',icon:'facebook'},{label:'Instagram',url:'https://instagram.com',icon:'instagram'},{label:'TikTok',url:'https://tiktok.com',icon:'tiktok'},{label:'YouTube',url:'https://youtube.com',icon:'youtube'},{label:'Discord',url:'https://discord.com',icon:'discord'},{label:'Telegram',url:'https://telegram.org',icon:'telegram'},{label:'Spotify',url:'https://spotify.com',icon:'spotify'}],theme:{set:true,loc:'Улаанбаатар',tw:true,op:.92,r:24,bfx:'ember',cc:'#121214',bgc:'#09090a',tc:'#f4efe6',ic:'#2a2a2e',pic:'text',grad:true,tl:true,gs:true,gb:true,fx:'sparkle'}};
 const toast=m=>{if([...document.querySelectorAll('.toast')].some(x=>x.textContent==m))return;const d=document.createElement('div');d.className='toast';d.textContent=m;document.body.append(d);setTimeout(()=>d.remove(),6000)};
-const NOISE=/ResizeObserver|Script error|AbortError|The play\(\) request|play\(\) failed|NotAllowedError|The user aborted|Load failed|NetworkError when attempting|Failed to fetch/i;
+const NOISE=/[Tt]ransition was (aborted|skipped)|ViewTransition|ResizeObserver|Script error|AbortError|The play\(\) request|play\(\) failed|NotAllowedError|The user aborted|Load failed|NetworkError when attempting|Failed to fetch/i;
 addEventListener('error',x=>{if(!x.message||NOISE.test(x.message))return;console.error(x.error||x.message);toast('Алдаа: '+x.message)});
 addEventListener('unhandledrejection',x=>{const r=x.reason,m=(r&&r.message)||String(r||'');if((r&&r.name=='AbortError')||NOISE.test(m))return;console.error(r);toast('Алдаа: '+m)});
 let me=null,user=null,aud=null;
@@ -58,6 +58,14 @@ const LGN={mn:'MN',en:'EN',ru:'RU'};
 const TERMS_VER=2,TERMS_DATE='2026-11-20';
 const TERMS_CHANGES=['Бүртгүүлэхэд зөвшөөрлөө чагтлах ба таны зөвшөөрлийг (огноо, хувилбар) хадгална','Мэдээлэл Монголоос гадуурх серверт (Supabase) хадгалагддаг тухай','16 хүрээгүй бол эцэг эх, асран хамгаалагчийн зөвшөөрөл','Мэдээлэл алдагдвал мэдэгдэх, таны эрх, хэрхэн гомдол гаргах'];
 /* Нэвтэрсэн хэрэглэгч шинэ нөхцөлийг зөвшөөрөөгүй бол асууна (хуулийн шаардлага). SQL (v14) байхгүй бол асуухгүй. */
+/* Зөвшөөрлийн чагт дутуу бол цонхон дотроо улаан анхааруулга (toast цонхны ард нуугдахгүй) */
+function cnErr(root){
+ const l=root.querySelector('.cns');if(!l)return;
+ let m=root.querySelector('.cnerr');if(!m){m=document.createElement('div');m.className='cnerr';m.setAttribute('role','alert');m.innerHTML=ic('alert',16)+'<span>Үргэлжлүүлэхийн тулд дээрх нүдийг чагтлана уу</span>';l.after(m);
+  const c=l.querySelector('input');if(c)c.addEventListener('change',()=>{if(c.checked){m.hidden=true;l.classList.remove('bad')}})}
+ m.hidden=false;l.classList.add('bad');l.classList.remove('shk');void l.offsetWidth;l.classList.add('shk');
+ const c=l.querySelector('input');if(c)c.focus({preventScroll:true});m.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
 async function termsCheck(){
  if(!me||me.banned||document.querySelector('.tdlg'))return;
  const r=await Promise.resolve(sb.from('profile_private').select('consent_ver').eq('id',me.id).maybeSingle()).catch(()=>({error:1}));
@@ -68,7 +76,7 @@ async function termsCheck(){
  d.innerHTML=`<div class="dlg" role="dialog" aria-modal="true"><div class="dlgi">${ic('lock',26)}</div><h3>${cur?'Нөхцөл шинэчлэгдлээ':'Нөхцөлийг зөвшөөрнө үү'}</h3><p class="mu">${TERMS_DATE}-ны өөрчлөлт:</p><ul class="ins">${TERMS_CHANGES.map(x=>`<li>${e(x)}</li>`).join('')}</ul><p class="mu"><a href="/tos" target="_blank">Үйлчилгээний нөхцөл</a> · <a href="/privacy" target="_blank">Нууцлалын бодлого</a></p><label class="cns"><input type="checkbox" id="tcn"><span>Би 13-аас дээш настай бөгөөд шинэчлэгдсэн нөхцөл, нууцлалын бодлогыг уншиж зөвшөөрч байна.</span></label><div class="act dla"><button type="button" class="g" id="tno">Гарах</button><button type="button" id="tok">Зөвшөөрөх</button></div></div>`;
  document.body.append(d);
  d.querySelector('#tno').onclick=async()=>{await sb.auth.signOut();try{localStorage.removeItem('consent')}catch{}go('/')};
- d.querySelector('#tok').onclick=async()=>{if(!d.querySelector('#tcn').checked)return toast('Нөхцөлийг зөвшөөрч чагтлана уу');const a=await sb.rpc('accept_terms',{p_ver:TERMS_VER});if(a.error||a.data!='ok')return toast('Алдаа гарлаа. Дахин оролдоно уу.');try{localStorage.consent=TERMS_VER}catch{}d.remove();toast('Баярлалаа!')};
+ d.querySelector('#tok').onclick=async()=>{if(!d.querySelector('#tcn').checked)return cnErr(d);const a=await sb.rpc('accept_terms',{p_ver:TERMS_VER});if(a.error||a.data!='ok')return toast('Алдаа гарлаа. Дахин оролдоно уу.');try{localStorage.consent=TERMS_VER}catch{}d.remove();toast('Баярлалаа!')};
 }
 const bar=()=>`<nav><b><a href="/" aria-label="biof">biof</a></b><button class="g srb" id="srb" type="button" aria-label="Хайх" title="Хайх">${ic('search',18)}</button><button class="lgs g" id="lgs" type="button" aria-label="Хэл">${ic('globe',16)}<span>${LGN[localStorage.lang||'mn']||'MN'}</span></button>${me?`<a href="/settings"><button type="button" class="pnl">${ic('home',16)}<span>Миний самбар</span></button></a>`:'<button class="lg" type="button">Нэвтрэх</button>'}<button class="mnb g" id="mnb" type="button" aria-label="Цэс" aria-expanded="false">${ic('menu',20)}</button></nav>${me&&me.banned?'<div class="bad">Таны бүртгэлийг хориглосон байна.</div>':''}`;
 const foot=()=>`<footer><div class="fnav"><a href="/tos">Үйлчилгээний нөхцөл</a><a href="/privacy">Нууцлалын бодлого</a><a href="/updates">Шинэчлэлт</a><a href="/status">Статус</a><a href="/#support">Дэмжих</a></div><p>© biof · Bio Flex</p></footer>`;
@@ -95,7 +103,7 @@ function login(mode,name){
  const tabs=()=>`<div class="lgt" role="tablist"><button type="button" class="${M=='signup'?'on':''}" data-m="signup">Бүртгүүлэх</button><button type="button" class="${M=='login'?'on':''}" data-m="login">Нэвтрэх</button></div>`;
  const steps=n=>`<ol class="lgs2">${['Нэр сонгох','Баталгаажуулах','Бэлэн'].map((x,i)=>`<li class="${i<n?'dn':i==n?'on':''}"><i>${i<n?ic('check',12,3):i+1}</i>${x}</li>`).join('')}</ol>`;
  const cns=()=>`<label class="cns"><input type="checkbox" id="lcn"${localStorage.consent>=TERMS_VER?' checked':''}><span>Би 13-аас дээш настай (16 хүрээгүй бол эцэг эх, асран хамгаалагчийн зөвшөөрөлтэй) бөгөөд <a href="/tos" target="_blank">Үйлчилгээний нөхцөл</a>, <a href="/privacy" target="_blank">Нууцлалын бодлого</a>-ыг уншиж зөвшөөрч, мэдээллээ гадаадын сервер (Supabase) дээр хадгалахыг зөвшөөрч байна.</span></label>`;
- const okC=()=>{const c=d.querySelector('#lcn');if(c&&c.checked){try{localStorage.consent=TERMS_VER}catch{}return true}toast('Нөхцөлийг зөвшөөрч чагтлана уу');const l=d.querySelector('.cns');if(l){l.classList.remove('shk');void l.offsetWidth;l.classList.add('shk')}return false};
+ const okC=()=>{const c=d.querySelector('#lcn');if(c&&c.checked){try{localStorage.consent=TERMS_VER}catch{}return true}cnErr(d);return false};
  const ways=lbl=>`${M=='signup'?cns():''}<button type="button" class="dc lgdc">${plat('discord',24)}Discord-оор ${lbl}</button><div class="or">эсвэл имэйлээр</div><input class="dli" id="lem" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="name@mail.com" value="${e(email)}"><button type="button" id="lsend">${ic('arrow',16)}Имэйл рүү код авах</button>`;
  const step1=()=>{
   const sign=M=='signup';

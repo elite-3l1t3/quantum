@@ -99,8 +99,6 @@ const I18N=[
 ["Санамсаргүй загвар", "Random style", "Случайный стиль"],
 ["Миний цагийг харуулах", "Show my local time", "Показывать моё время"],
 ["Зочид таны одоогийн цаг, цагийн бүсийг (жишээ: Ulaanbaatar) харна. Унтраавал харагдахгүй.", "Visitors see your current time and time zone (e.g. Ulaanbaatar). Turn off to hide it.", "Посетители видят ваше текущее время и часовой пояс (например, Ulaanbaatar). Выключите, чтобы скрыть."],
-["\"Харилцагч хадгалах\" товч", "\"Save contact\" button", "Кнопка «Сохранить контакт»"],
-["Зочид таны нэр, холбоосуудыг утасныхаа харилцагчид нэг товшоод хадгална (.vcf).", "Visitors can save your name and links to their phone contacts in one tap (.vcf).", "Посетители сохранят ваше имя и ссылки в контакты одним нажатием (.vcf)."],
 ["Story зураг", "Story image", "Картинка для сторис"],
 ["QR код эсвэл бэлэн Story зургаа татаад Instagram, Facebook story-доо тавиарай.", "Download your QR code or a ready-made Story image for Instagram and Facebook stories.", "Скачайте QR-код или готовую картинку для сторис в Instagram и Facebook."],
 ["Хуваарь", "Schedule", "Расписание"],
@@ -117,8 +115,6 @@ const I18N=[
 ["Дахин хийх", "Redo", "Повторить"],
 ["Буцаах алхам алга", "Nothing to undo", "Нечего отменять"],
 ["Дахин хийх алхам алга", "Nothing to redo", "Нечего повторять"],
-["Харилцагч хадгалах", "Save contact", "Сохранить контакт"],
-["Харилцагчийн файл татагдлаа", "Contact file downloaded", "Файл контакта скачан"],
 ["Эхлээд профайл зураг эсвэл дэвсгэр зураг оруулна уу", "Upload a profile picture or background image first", "Сначала загрузите аватар или фоновое изображение"],
 ["Зургийг уншиж чадсангүй. Өөр зураг оруулаад үзээрэй.", "Could not read the image. Try another one.", "Не удалось прочитать изображение. Попробуйте другое."],
 ["Зурагнаасаа өнгө авлаа!", "Colors taken from your photo!", "Цвета взяты из вашего фото!"],
@@ -129,6 +125,13 @@ const I18N=[
 ["Story зураг бэлэн", "Story image ready", "Картинка для сторис готова"],
 ["Instagram, Facebook story-доо тавиарай. QR кодыг уншуулахад таны хуудас нээгдэнэ.", "Post it to your Instagram or Facebook story. Scanning the QR code opens your page.", "Опубликуйте в сторис Instagram или Facebook. QR-код открывает вашу страницу."],
 ["Камераар уншуулаад хуудсыг минь үзээрэй", "Scan to visit my page", "Отсканируй, чтобы открыть мою страницу"],
+["Орох дэлгэц", "Entry screen", "Экран входа"],
+["Хуудас нээгдэхэд эхлээд \"дарж орох\" дэлгэц гарна. Дуу автоматаар тоглоход хэрэгтэй.", "Shows a \"tap to enter\" screen first. Needed for music to autoplay.", "Сначала показывается экран «нажмите, чтобы войти». Нужен для автозапуска музыки."],
+["Компьютер дээр хулганы хөдөлгөөнийг дагана. Утсан дээр доорх сонголтоор ажиллана.", "Follows the mouse on desktop. On phones it works as chosen below.", "На ПК следует за мышью. На телефоне — как выбрано ниже."],
+["3D хөдөлгөөн утсан дээр", "3D motion on phones", "3D-эффект на телефоне"],
+["Дарж хөдөлгөх (дарсан цэг рүү хазайна)", "Tap to tilt (tilts toward where you tap)", "Нажатие (наклон к точке нажатия)"],
+["Утсаа хазайлгаж хөдөлгөх (gyroscope)", "Tilt your phone (gyroscope)", "Наклон телефона (гироскоп)"],
+["Үргэлжлүүлэхийн тулд дээрх нүдийг чагтлана уу", "Please tick the box above to continue", "Отметьте флажок выше, чтобы продолжить"],
 ];
 if(LANG!='mn'){
  const IX=LANG=='ru'?2:1,M=new Map();I18N.forEach(r=>M.set(r[0],r[IX]));
