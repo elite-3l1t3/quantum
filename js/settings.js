@@ -195,7 +195,7 @@ async function save(v){
   const y=scrollY;await loadMe();
   if(!me)return go('/');
   settings(v,curT);scrollTo(0,y);toast('Амжилттай хадгаллаа');
- }catch(x){toast(/c_len|check constraint/i.test(x.message||'')?'Хэт урт мэдээлэл байна. Bio 200, нэр 40 тэмдэгтээс ихгүй, холбоос 12-оос ихгүй байна.':/c_media/.test(x.message||'')?'Зургийн хаяг зөвшөөрөгдөөгүй байна.':(x.message||String(x)))}
+ }catch(x){const xm=x.message||'';if(/^rate$|\brate\b/.test(xm)){toast('Хэт олон удаа хадгаллаа. Хэдэн минут хүлээгээд дахин хадгална уу. Өөрчлөлт тань хадгалагдаагүй ч устахгүй.');return}if(/banned/.test(xm)){toast('Таны бүртгэл түр хориглогдсон тул өөрчлөх боломжгүй.');return}if(/denied/.test(xm)){toast('Энэ өөрчлөлтийг хийх эрхгүй байна.');return}toast(/c_len|check constraint/i.test(x.message||'')?'Хэт урт мэдээлэл байна. Bio 200, нэр 40 тэмдэгтээс ихгүй, холбоос 12-оос ихгүй байна.':/c_media/.test(x.message||'')?'Зургийн хаяг зөвшөөрөгдөөгүй байна.':(x.message||String(x)))}
  finally{const b=document.getElementById('sv');if(b){b.disabled=false;b.textContent='Хадгалах'}}
 }
 function openTab(t){const b=document.querySelector('.tabs2 button[data-t="'+t+'"]');if(b)b.click()}

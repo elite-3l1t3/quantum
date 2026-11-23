@@ -444,3 +444,18 @@ settings.js: picColors (зургийн гол өнгө → бүх өнгө), rnd
 - core.js cnErr(root): зөвшөөрлийн чагт дутуу бол цонхон дотор улаан анхааруулга. .toast z-index 90 (цонхнуудаас дээр).
 - Нүүрний жишээ карт өндөр нь автомат (холбоос хүрээнээс гарахгүй).
 Хувилбар: V='22', version.json 22, sw 'biof-sw-23'.
+
+
+28. V20 (2026-11-23) — АЮУЛГҮЙ БАЙДАЛ, ИМЭЙЛ ХААХ (SQL: _dev/v15.sql)
+--------------------------------------------------------------------
+v15.sql (локал Postgres дээр v8→v15, 2 удаа ажиллуулж тестэлсэн):
+  - site.email_open + auth_opts() (anon уншина) + admin_set_email(bool) (зөвхөн админ, mod_log-д бичнэ).
+  - handle_new_user: имэйл хаалттай бол ШИНЭ имэйл хэрэглэгч үүсэхгүй (raise 'email_closed' → Supabase код илгээхгүй). ensure_profile → 'email_closed'.
+  - zz_profile_guard (SECURITY INVOKER, links_guard-ийн дараа): клиент зөвхөн display_name,bio,avatar_url,bg_url,accent,links,theme өөрчилнө.
+    Эрх/тэмдэг/үзэлт/like/хориг → 'denied'. Хориглогдсон → 'banned'. theme/links ≤16KB, ≤12 холбоос, accent hex. 10 минутад 40 хадгалалт ('rate').
+    Definer RPC-үүд (current_user = postgres) саадгүй.
+  - Бусад хүснэгтэд anon/authenticated-аас insert/update/delete эрх хассан (клиент зөвхөн profiles update хийдэг — шалгасан).
+Клиент: нэвтрэх цонх auth_opts()-оор имэйлийг нууна (?email=1 → бүртгэлтэй имэйл хэрэглэгч яаралтай нэвтэрнэ). Админ → Тохиргоо → "Имэйл хаах/нээх".
+Тэмдгийн tooltip: дахин/өөр газар дарах, гүйлгэх, Esc → хаагдана (ui.js hideTip).
+ХУУЛЬ: Бүртгүүлэх цонхны зөвшөөрлийн чагт ҮРГЭЛЖ хоосон (өмнө нь тухайн төхөөрөмжид өмнө зөвшөөрсөн бол урьдчилан чагтлагддаг байсан).
+Хувилбар: V='23', version.json 23, sw 'biof-sw-24'. Supabase-д цаашид: Auth → Rate Limits (имэйл/цаг) бага байлгах, хүсвэл Captcha.

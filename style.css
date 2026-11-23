@@ -778,3 +778,9 @@ html[lang="en"] main.doc[lang="en"],html[lang="ru"] main.doc[lang="ru"]{display:
 .cns.bad input{outline:2px solid #ef4444;outline-offset:2px}
 .pc.tla{transition:transform .5s cubic-bezier(.2,.8,.2,1),box-shadow .3s}
 .pc.tlm{transition:transform .12s linear}
+/* v20: имэйл хаалттай үеийн мэдэгдэл, админ төлөв */
+.emoff{display:flex;align-items:flex-start;gap:8px;margin:12px 0 2px;padding:10px 12px;border-radius:12px;background:rgba(226,184,88,.1);border:1px solid rgba(226,184,88,.35);color:#e9d8a6;font-size:13px;text-align:left;line-height:1.45}
+.emoff .ic{flex:none;margin-top:1px}
+.emst{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;font-size:13px;margin-bottom:8px}
+.emst.on{background:rgba(34,197,94,.12);color:#86efac;border:1px solid rgba(34,197,94,.35)}
+.emst.off{background:rgba(239,68,68,.12);color:#fca5a5;border:1px solid rgba(239,68,68,.4)}

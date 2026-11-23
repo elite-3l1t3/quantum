@@ -49,7 +49,7 @@ async function loadMe(){
  if(!user)return;
  const q=()=>sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
  const r0=await q();if(r0.error&&r0.status>=500)throw Error('db');me=r0.data;
- if(!me){const r=await sb.rpc('ensure_profile');me=(await q()).data;if(!me){const m=(r.error&&r.error.message)||'';toast(/registration_closed/.test(m)?'Бүртгэл одоогоор түр хаалттай байна.':/daily_limit/.test(m)?ERR.full:r.data=='rate'?ERR.rate:r.data=='unconfirmed'?'Имэйлээ баталгаажуулна уу (кодоо оруулна уу).':m?'Профайл үүссэнгүй: '+m:'Профайл үүссэнгүй. SQL файлуудыг ажиллуулсан эсэхээ шалгана уу.');return}}
+ if(!me){const r=await sb.rpc('ensure_profile');me=(await q()).data;if(!me){const m=(r.error&&r.error.message)||'';toast(/registration_closed/.test(m)?'Бүртгэл одоогоор түр хаалттай байна.':/daily_limit/.test(m)?ERR.full:r.data=='rate'?ERR.rate:r.data=='unconfirmed'?'Имэйлээ баталгаажуулна уу (кодоо оруулна уу).':r.data=='email_closed'?'Имэйлээр бүртгүүлэх түр хаалттай байна. Discord-оор нэвтэрнэ үү.':m?'Профайл үүссэнгүй: '+m:'Профайл үүссэнгүй. SQL файлуудыг ажиллуулсан эсэхээ шалгана уу.');return}}
  if(!me.username&&localStorage.pending){const u=localStorage.pending;localStorage.removeItem('pending');const{data}=await sb.rpc('claim_username',{u});if(data&&data!='ok')toast(ERR[data]||String(data));me=(await q()).data}
  if(me&&me.username&&localStorage.ref&&!me.banned){const{data,error}=await sb.rpc('use_ref',{p_ref:localStorage.ref});if(!error&&!['later','rate'].includes(data))localStorage.removeItem('ref');if(data=='ok'){toast('Урилгаар нэгдсэн тул "Найз" тэмдэг авлаа!');me=(await q()).data||me}}
 }
@@ -83,7 +83,12 @@ const foot=()=>`<footer><div class="fnav"><a href="/tos">Үйлчилгээни�
 
 /* Нэвтрэх: Discord эсвэл имэйл рүү очих код */
 const discordLogin=()=>sb.auth.signInWithOAuth({provider:'discord',options:{redirectTo:location.origin+'/'}});
+/* Нэвтрэх сонголт (админ имэйлийг хааж болно, v15.sql). 1 мин кэш. ?email=1 бол хаалттай үед ч бүртгэлтэй имэйлээр нэвтэрч болно */
+let AOPT=null,AOPT_T=0;
+async function authOpts(){if(AOPT&&Date.now()-AOPT_T<6e4)return AOPT;try{const r=await Promise.race([sb.rpc('auth_opts'),new Promise(ok=>setTimeout(()=>ok({}),2500))]);if(r&&r.data&&typeof r.data=='object'){AOPT=r.data;AOPT_T=Date.now()}}catch{}return AOPT||{email:true}}
+const emailOn=()=>!(AOPT&&AOPT.email===false)||/[?&]email=1\b/.test(location.search);
 const authErr=(m,st)=>{m=String(m||'');
+ if(AOPT&&AOPT.email===false&&/Database error|email_closed/i.test(m))return'Имэйлээр бүртгүүлэх түр хаалттай байна. Discord-оор нэвтэрнэ үү.';
  if(/Error sending (magic link|confirmation|recovery|email)/i.test(m)||/smtp/i.test(m))return'Имэйл илгээж чадсангүй. Сайтын имэйл (SMTP) тохиргоо буруу байна — админд хэлнэ үү.';
  if(/after \d+ seconds|rate limit|too many/i.test(m)||st==429)return'Хэт олон удаа оролдлоо. Түр хүлээгээд дахин оролдоно уу.';
  if(/registration_closed|daily_limit/i.test(m))return'Одоогоор шинэ бүртгэл авах боломжгүй байна (өдрийн хязгаар эсвэл түр хаалттай).';
@@ -102,16 +107,16 @@ function login(mode,name){
  const kd=ev=>{if(ev.key=='Escape')close()};
  const tabs=()=>`<div class="lgt" role="tablist"><button type="button" class="${M=='signup'?'on':''}" data-m="signup">Бүртгүүлэх</button><button type="button" class="${M=='login'?'on':''}" data-m="login">Нэвтрэх</button></div>`;
  const steps=n=>`<ol class="lgs2">${['Нэр сонгох','Баталгаажуулах','Бэлэн'].map((x,i)=>`<li class="${i<n?'dn':i==n?'on':''}"><i>${i<n?ic('check',12,3):i+1}</i>${x}</li>`).join('')}</ol>`;
- const cns=()=>`<label class="cns"><input type="checkbox" id="lcn"${localStorage.consent>=TERMS_VER?' checked':''}><span>Би 13-аас дээш настай (16 хүрээгүй бол эцэг эх, асран хамгаалагчийн зөвшөөрөлтэй) бөгөөд <a href="/tos" target="_blank">Үйлчилгээний нөхцөл</a>, <a href="/privacy" target="_blank">Нууцлалын бодлого</a>-ыг уншиж зөвшөөрч, мэдээллээ гадаадын сервер (Supabase) дээр хадгалахыг зөвшөөрч байна.</span></label>`;
+ const cns=()=>`<label class="cns"><input type="checkbox" id="lcn"><span>Би 13-аас дээш настай (16 хүрээгүй бол эцэг эх, асран хамгаалагчийн зөвшөөрөлтэй) бөгөөд <a href="/tos" target="_blank">Үйлчилгээний нөхцөл</a>, <a href="/privacy" target="_blank">Нууцлалын бодлого</a>-ыг уншиж зөвшөөрч, мэдээллээ гадаадын сервер (Supabase) дээр хадгалахыг зөвшөөрч байна.</span></label>`;
  const okC=()=>{const c=d.querySelector('#lcn');if(c&&c.checked){try{localStorage.consent=TERMS_VER}catch{}return true}cnErr(d);return false};
- const ways=lbl=>`${M=='signup'?cns():''}<button type="button" class="dc lgdc">${plat('discord',24)}Discord-оор ${lbl}</button><div class="or">эсвэл имэйлээр</div><input class="dli" id="lem" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="name@mail.com" value="${e(email)}"><button type="button" id="lsend">${ic('arrow',16)}Имэйл рүү код авах</button>`;
+ const ways=lbl=>`${M=='signup'?cns():''}<button type="button" class="dc lgdc">${plat('discord',24)}Discord-оор ${lbl}</button>${emailOn()?'':`<div class="emoff">${ic('shield',16)}<span>Имэйлээр нэвтрэх, бүртгүүлэх түр хаалттай байна. Discord-оор нэвтэрнэ үү.</span></div>`}`+(emailOn()?`<div class="or">эсвэл имэйлээр</div><input class="dli" id="lem" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="name@mail.com" value="${e(email)}"><button type="button" id="lsend">${ic('arrow',16)}Имэйл рүү код авах</button>`:'');
  const step1=()=>{
   const sign=M=='signup';
   d.innerHTML=`<div class="dlg lgbox" role="dialog" aria-modal="true"><button class="g mnx lgx" type="button" aria-label="Хаах">${ic('x',18)}</button>${tabs()}${sign?`${steps(0)}<h3>biof хуудсаа үүсгэе</h3><p class="mu">Эхлээд хаягаа сонго. Дараа нь Discord эсвэл имэйлээ баталгаажуулна. Нууц үг хэрэггүй.</p><div class="lgu"><span>biof.site/</span><input id="lun" maxlength="20" placeholder="таны нэр" autocomplete="off" autocapitalize="none" spellcheck="false" value="${e(un)}"></div><small class="lgst mu" id="lst">Зөвхөн a-z, 0-9, _ (3-20 тэмдэгт)</small><div id="lw" class="lgw">${ways('үргэлжлүүлэх')}</div>`:`<div class="dlgi">${ic('user',26)}</div><h3>Тавтай морил!</h3><p class="mu">Discord эсвэл имэйлээрээ нэвтэрнэ үү. Шинэ имэйл бол автоматаар бүртгэнэ.</p>${ways('нэвтрэх')}<p class="mu lgm2">Бүртгэлгүй юу? <a href="#" data-m="signup">Бүртгүүлэх</a></p><p class="mu lgm2 lgl">Нэвтэрснээр та <a href="/tos" target="_blank">Үйлчилгээний нөхцөл</a>-ийг хүлээн зөвшөөрнө. Зөвшөөрөл өгөөгүй бол нэвтэрсний дараа асууна.</p>`}</div>`;
   d.querySelector('.lgdc').onclick=()=>{if(sign&&!pend())return;if(sign&&!okC())return;d.querySelector('.lgdc').disabled=true;discordLogin()};
-  const i=d.querySelector('#lem');i.onkeydown=ev=>{if(ev.key=='Enter')send()};d.querySelector('#lsend').onclick=send;
+  const i=d.querySelector('#lem');if(i){i.onkeydown=ev=>{if(ev.key=='Enter')send()};d.querySelector('#lsend').onclick=send}
   const u=d.querySelector('#lun');
-  if(u){u.oninput=()=>{u.value=u.value.toLowerCase().replace(/[^a-z0-9_]/g,'');un=u.value;unOk=null;chkUn()};chkUn();setTimeout(()=>(un?i:u).focus(),60)}else setTimeout(()=>i.focus(),60);
+  if(u){u.oninput=()=>{u.value=u.value.toLowerCase().replace(/[^a-z0-9_]/g,'');un=u.value;unOk=null;chkUn()};chkUn();setTimeout(()=>(un&&i?i:u).focus(),60)}else if(i)setTimeout(()=>i.focus(),60);
  };
  const setSt=(c,t)=>{const s=d.querySelector('#lst');if(s){s.className='lgst '+c;s.innerHTML=t}const w=d.querySelector('#lw');if(w)w.classList.toggle('off',unOk!==true)};
  const chkUn=()=>{clearTimeout(ut);
@@ -120,6 +125,7 @@ function login(mode,name){
   ut=setTimeout(async()=>{const q=un,{data}=await sb.rpc('username_status',{u:q});if(q!=un)return;unOk=data=='available';setSt(unOk?'okk':'bad2',unOk?ic('check',14)+' biof.site/'+e(q)+' сул байна':e(ERR[data]||'Энэ нэрийг авах боломжгүй'))},350)};
  const pend=()=>{if(unOk!==true){toast(un?'Өөр нэр сонгоно уу':'Эхлээд хаягаа сонгоно уу');const u=d.querySelector('#lun');u&&u.focus();return false}localStorage.pending=un;return true};
  const send=async()=>{
+  if(!emailOn()){toast('Имэйлээр нэвтрэх түр хаалттай байна. Discord-оор нэвтэрнэ үү.');return}
   if(M=='signup'&&!d.querySelector('#lcode')&&!pend())return;
   if(M=='signup'&&!d.querySelector('#lcode')&&!okC())return;
   const i=d.querySelector('#lem');email=(i?i.value:email).trim().toLowerCase();
@@ -147,6 +153,7 @@ function login(mode,name){
   if(M=='signup')setTimeout(()=>{if(location.pathname!='/settings')go('/settings')},900)};
  d.onclick=ev=>{if(ev.target==d||ev.target.closest('.lgx'))return close();const m=ev.target.closest('[data-m]');if(m){ev.preventDefault();if(m.dataset.m!=M){M=m.dataset.m;step1()}}};
  document.addEventListener('keydown',kd);document.body.append(d);step1();
+ const em0=emailOn();authOpts().then(()=>{if(d.isConnected&&emailOn()!=em0&&!d.querySelector('#lcode'))step1()});
 }
 document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('.lg');if(b)login(b.dataset.mode,b.dataset.name)});
 

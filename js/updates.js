@@ -1,6 +1,11 @@
 /* Шинэчлэлт: шинэ боломж, засвар, аюулгүй байдал. Өгөгдлийн сан ашиглахгүй (квот 0).
    Шинэ хувилбар гаргах бүрд ЭХЭНД нь нэмнэ. [төрөл, mn, en, ru]; төрөл: new | fix | sec | legal */
 const UPDATES=[
+{d:'2026-11-23',v:'v20',t:['Аюулгүй байдал, имэйл хаах товч','Security, email switch','Безопасность, переключатель email'],i:[
+ ['fix','Тэмдгийн тайлбар: дахин эсвэл өөр газар дарахад хаагдана','Badge details close when you tap the badge again or anywhere else','Подсказка значка закрывается повторным нажатием или нажатием в другом месте'],
+ ['sec','Профайлын эрх, тэмдэг, үзэлт, like-ийг зөвхөн сервер өөрчилнө; хэт том мэдээлэл, хэт олон хадгалалтыг хязгаарлана','Roles, badges, views and likes can only be changed by the server; oversized data and save spam are limited','Роли, значки, просмотры и лайки меняет только сервер; ограничены слишком большие данные и частые сохранения'],
+ ['sec','Админ бот довтолгооны үед имэйлээр бүртгүүлэх, нэвтрэхийг түр хааж болно','Admins can temporarily close email sign-up and login during bot attacks','Админ может временно закрыть регистрацию и вход по email при атаке ботов'],
+ ['legal','Нөхцөл, Нууцлалд имэйл нэвтрэлтийг түр хаах, аюулгүй байдлын хязгаарын тухай нэмэгдлээ','Terms and Privacy mention temporary email closure and security limits','В Условиях и Политике описаны временное закрытие email и ограничения безопасности']]},
 {d:'2026-11-22',v:'v19',t:['Засварууд, 3D хөдөлгөөн','Fixes, 3D motion','Исправления, 3D-эффект'],i:[
  ['fix','Хуудас солиход "Transition was aborted" алдаа гардаг байсныг зассан','Fixed the "Transition was aborted" error when switching pages','Исправлена ошибка «Transition was aborted» при переходе'],
  ['new','3D хөдөлгөөн: компьютер дээр хулганыг хаана ч дагана; утсан дээр "дарж" эсвэл "утсаа хазайлгаж" сонгоно','3D motion: follows the mouse anywhere on desktop; on phones choose "tap" or "tilt your phone"','3D-эффект: на ПК следует за мышью везде; на телефоне — «нажатие» или «наклон»'],

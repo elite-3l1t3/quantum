@@ -28,18 +28,25 @@ async function linkGo(url){
   html:`<div class="lkc ${https||mail?'safe':'risk'}"><b>${e(host)}</b><span>${mail?ic('link',16)+' Имэйл илгээх холбоос':https?ic('lock',16)+' HTTPS — шифрлэгдсэн, аюулгүй холболт':ic('alert',16)+' HTTP — шифрлэгдээгүй, аюултай байж болно'}</span></div><p class="mu">Энэ холбоосыг хуудасны эзэн оруулсан. Итгэлтэй байна уу?</p>`,ok:'Үргэлжлүүлэх',cancel:'Болих'});
  if(ok)window.open(url,'_blank','noopener,noreferrer');
 }
-/* Тэмдгийн тайлбар: дарахад болон удаан дарахад */
-let tipT=0,lpT=0;
+/* Тэмдгийн тайлбар: дарахад гарна; тэр тэмдгийг дахин эсвэл өөр газар дарахад, гүйлгэхэд, Esc-д хаагдана */
+let tipT=0,lpT=0,tipEl=null,lpAt=0;
+function hideTip(){clearTimeout(tipT);const t=document.querySelector('.tip2');if(t)t.remove();if(tipEl)tipEl.removeAttribute('aria-describedby');tipEl=null}
 function showTip(el){
- const old=document.querySelector('.tip2');if(old)old.remove();
- const d=document.createElement('div');d.className='tip2';d.textContent=el.dataset.d||'';document.body.append(d);
+ hideTip();
+ const d=document.createElement('div');d.className='tip2';d.id='tip2';d.setAttribute('role','tooltip');d.textContent=el.dataset.d||'';document.body.append(d);
  const r=el.getBoundingClientRect(),w=d.offsetWidth,h=d.offsetHeight;
  d.style.left=Math.max(8,Math.min(innerWidth-w-8,r.left+r.width/2-w/2))+'px';
  d.style.top=(r.top-h-10<8?r.bottom+10:r.top-h-10)+'px';
- clearTimeout(tipT);tipT=setTimeout(()=>d.remove(),2800);
+ tipEl=el;el.setAttribute('aria-describedby','tip2');tipT=setTimeout(hideTip,8000);
 }
-document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('.bd[data-d]');if(b)showTip(b)});
-document.addEventListener('pointerdown',ev=>{const b=ev.target.closest&&ev.target.closest('.bd[data-d]');if(b){clearTimeout(lpT);lpT=setTimeout(()=>showTip(b),450)}},{passive:true});
+document.addEventListener('click',ev=>{
+ const b=ev.target.closest&&ev.target.closest('.bd[data-d]');
+ if(b){if(Date.now()-lpAt<700)return;if(tipEl===b&&document.querySelector('.tip2'))hideTip();else showTip(b);return}
+ if(tipEl)hideTip();
+});
+document.addEventListener('pointerdown',ev=>{const b=ev.target.closest&&ev.target.closest('.bd[data-d]');if(b&&ev.pointerType!='mouse'){clearTimeout(lpT);lpT=setTimeout(()=>{if(tipEl!==b){showTip(b);lpAt=Date.now()}},450)}},{passive:true});
+document.addEventListener('keydown',ev=>{if(ev.key=='Escape'&&tipEl)hideTip();else if((ev.key=='Enter'||ev.key==' ')&&ev.target.matches&&ev.target.matches('.bd[data-d]')){ev.preventDefault();tipEl===ev.target?hideTip():showTip(ev.target)}});
+addEventListener('scroll',()=>{if(tipEl)hideTip()},{passive:true});
 ['pointerup','pointercancel','pointermove'].forEach(t=>document.addEventListener(t,()=>clearTimeout(lpT),{passive:true}));
 /* Click хийсэн газар эффект (тусдаа хайрцагт тул утсан дээр хуудас хөдлөхгүй) + курсор */
 (function(){
