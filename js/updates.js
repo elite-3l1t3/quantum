@@ -1,6 +1,9 @@
 /* Шинэчлэлт: шинэ боломж, засвар, аюулгүй байдал. Өгөгдлийн сан ашиглахгүй (квот 0).
    Шинэ хувилбар гаргах бүрд ЭХЭНД нь нэмнэ. [төрөл, mn, en, ru]; төрөл: new | fix | sec | legal */
 const UPDATES=[
+{d:'2026-11-23',v:'v23',t:['Банкуудын албан ёсны лого','Official bank logos','Официальные логотипы банков'],i:[
+ ['new','Голомт, SocialPay, ХХБ, Төрийн, Хас, Monpay, Мост мони, Богд, Ариг банкны албан ёсны логог тэдний сайтаас авч тавилаа','Official logos for Golomt, SocialPay, TDB, State Bank, XacBank, Monpay, Most Money, Bogd and Arig, taken from their websites','Официальные логотипы Голомт, SocialPay, TDB, Госбанка, ХасБанка, Monpay, Most Money, Богд и Ариг с их сайтов'],
+ ['legal','Нөхцөлд: банкуудын лого нь тэдний барааны тэмдэг, зөвхөн таниулах зорилгоор','Terms: bank logos are trademarks of their owners, shown only for identification','Условия: логотипы банков — товарные знаки владельцев, только для узнаваемости']]},
 {d:'2026-11-23',v:'v22',t:['Банкны тэмдэг, "Шинэ" таб буцлаа','Bank marks, "New" tab is back','Значки банков, вкладка «Новые»'],i:[
  ['new','Банк бүр өөрийн өнгөт тэмдэгтэй боллоо (данс, банкны апп сонгох цонх, тохиргоо)','Each bank now has its own colored mark (accounts, bank app picker, settings)','У каждого банка свой цветной значок (счета, выбор приложения, настройки)'],
  ['new','Тэргүүлэгчид: "Шинэ" (саяхан нээгдсэн) ба "Идэвхтэй" (саяхан хуудсаа янзалсан) тусдаа таб','Leaderboard: separate "New" (recently created) and "Active" (recently updated) tabs','Лидеры: отдельные вкладки «Новые» и «Активные»'],

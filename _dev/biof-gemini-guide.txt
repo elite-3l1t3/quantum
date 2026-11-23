@@ -484,3 +484,12 @@ v15.sql (локал Postgres дээр v8→v15, 2 удаа ажиллуулж т
   Ашиглагдах газар: профайлын данс холбоос, bankDlg апп сонгох, тохиргооны данс мөр (банк солиход шууд солигдоно).
 - BANKS-д most, ckbank нэмэгдсэн.
 Хувилбар: V='25', version.json 25, sw 'biof-sw-26'.
+
+
+31. V23 (2026-11-23) — БАНКНЫ АЛБАН ЁСНЫ ЛОГО
+--------------------------------------------
+- /img/banks/: golomt.svg, bogd.svg, monpay.svg, arig.svg (банкуудын сайтаас авсан SVG-г тэмдгийн хэсгээр viewBox таслан, script/гадаад холбоос цэвэрлэсэн),
+  tdb.png, state.png, xac.png, most.png, socialpay.png (сайтын PNG-ээс тасалсан; tdb/state эх файл жижиг тул бага зэрэг бүдэг).
+- icons.js BANKLOGO: албан ёсны лого байвал цагаан дөрвөлжин дээр <img>, үгүй бол BANKMARK өнгөт тэмдэг (khan — сайт нь bot captcha, capitron/mbank/ckbank — эх файл олдоогүй).
+- Шинэ лого нэмэх: файлыг /img/banks-д тавиад BANKLOGO-д нэр нэмнэ. ToS 4-т барааны тэмдгийн тайлбар бий.
+Хувилбар: V='26', version.json 26, sw 'biof-sw-27'.
