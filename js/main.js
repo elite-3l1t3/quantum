@@ -1,4 +1,4 @@
-const V='24';const T0=document.title;
+const V='25';const T0=document.title;
 const NEED={home:['board','home'],settings:['card','upload','tour','settings'],admin:['admin'],board:['board'],tutorial:['tutorial'],updates:['updates'],status:['status'],profile:['card','profile']};
 const PROBE={card:'cardHTML',upload:'up',tour:'startTour',settings:'settings',home:'home',profile:'profile',admin:'admin',board:'board',tutorial:'tutorial',updates:'updates',status:'statusPage'};
 const loadJs=s=>new Promise((ok,no)=>{const x=document.createElement('script');x.src='/js/'+s+'.js?v='+V;x.onload=ok;x.onerror=()=>no(Error('Файл олдсонгүй: /js/'+s+'.js. GitHub дээр js хавтас руу оруулсан эсэхээ шалгана уу.'));document.head.append(x)});

@@ -832,3 +832,13 @@ button,.tile,.lbr,.f2,.stp{transition:transform .18s cubic-bezier(.2,.8,.2,1),ba
 .bka:hover{border-color:var(--bk)!important}
 .wide2{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:10px}
 @media(max-width:360px){.bkg{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* v22: тэргүүлэгчид 5 таб — утсан дээр текст тасрахгүй, багтахгүй бол хажуу тийш гүйлгэнэ */
+.lbt{display:flex;overflow-x:auto;scrollbar-width:none;gap:2px}.lbt::-webkit-scrollbar{display:none}
+.lbt button{flex:1 0 auto;width:auto;padding:10px 12px}.lbt button span{overflow:visible;text-overflow:clip}
+@media(max-width:560px){.lbt button{padding:9px 10px;font-size:13px}}@media(max-width:420px){.lbt{gap:0}.lbt button{padding:9px 8px}}
+/* v22: банкны SVG тэмдэг */
+.pt.bkm{background:none!important;border-radius:27.5%;overflow:hidden;box-shadow:0 6px 16px -8px rgba(0,0,0,.55)}
+.pt.bkm svg{display:block;width:100%;height:100%}
+.bka .pt.bkm{box-shadow:0 8px 18px -8px var(--bk)}
+.bka:hover .pt.bkm,.bka:focus-visible .pt.bkm{transform:translate3d(0,-2px,0)}
+.bka .pt.bkm{transition:transform .2s cubic-bezier(.2,.8,.2,1)}
