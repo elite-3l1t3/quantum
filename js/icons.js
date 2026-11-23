@@ -163,10 +163,10 @@ const bankName=k=>(BANKS.find(b=>b[0]==k)||BANKS[BANKS.length-1])[1];
    Албан ёсны лого биш — банкийг ялгаж таниулах энгийн тэмдэг. */
 const BANKMARK={khan:['#16a55a','#05612c','KHAN',10.5],golomt:['#2f68cf','#123478','G',21],socialpay:['#3b82f6','#1747c2','SP',15],tdb:['#1858c0','#0a2a66','TDB',12.5],state:['#de3348','#8d0f22','SB',15],xac:['#f7a21b','#1d8a4a','XAC',12.5],capitron:['#3550a6','#172453','C',21],bogd:['#d1aa2c','#76590e','B',21],mbank:['#8f63f7','#5520b8','M',21],arig:['#f04848','#94181b','A',21],monpay:['#ff9530','#e35400','mp',17],most:['#f5486a','#b8103a','MM',14],ckbank:['#18917f','#0a4842','CK',15]};
 /* Албан ёсны тэмдэг (банкуудын өөрсдийн сайтаас авсан лого, зөвхөн банкийг таниулах зорилгоор). Байхгүй бол дээрх өнгөт тэмдэг. */
-const BANKLOGO={golomt:'golomt.svg',bogd:'bogd.svg',monpay:'monpay.svg',arig:'arig.svg',tdb:'tdb.png',state:'state.png',xac:'xac.png',most:'most.png',socialpay:'socialpay.png'};
+const BANKLOGO={khan:'khan.png',golomt:'golomt.svg',bogd:'bogd.svg',monpay:'monpay.svg',arig:'arig.svg',tdb:'tdb.png',state:'state.png',xac:'xac.png',most:'most.png',socialpay:'socialpay.png',capitron:'capitron.png',mbank:'mbank.png',ckbank:'ckbank.png'},BANKFULL={capitron:1};
 let BKN=0;
 function bankSvg(k,s=36){
- if(BANKLOGO[k])return`<span class="pt bkm bko" style="width:${s}px;height:${s}px"><img src="/img/banks/${BANKLOGO[k]}" alt="" width="${s}" height="${s}" loading="lazy" decoding="async" draggable="false"></span>`;
+ if(BANKLOGO[k])return`<span class="pt bkm bko${BANKFULL[k]?' bkf':''}" style="width:${s}px;height:${s}px"><img src="/img/banks/${BANKLOGO[k]}" alt="" width="${s}" height="${s}" loading="lazy" decoding="async" draggable="false"></span>`;
  const m=BANKMARK[k];if(!m)return plat('bank',s);
  const id='bkg'+(++BKN),y=(20+m[3]*.355).toFixed(1);
  return`<span class="pt bkm" style="width:${s}px;height:${s}px"><svg width="${s}" height="${s}" viewBox="0 0 40 40" aria-hidden="true" focusable="false"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${m[0]}"/><stop offset="1" stop-color="${m[1]}"/></linearGradient></defs><rect width="40" height="40" rx="11" fill="url(#${id})"/><path d="M0 11A11 11 0 0 1 11 0h18a11 11 0 0 1 11 11v3.5C27 20 13 20 0 14.5z" fill="#fff" opacity=".14"/><text x="20" y="${y}" text-anchor="middle" font-family="'Bricolage Grotesque',Arial,sans-serif" font-weight="800" font-size="${m[3]}"${m[2].length>2?' letter-spacing="-.3"':''} fill="#fff">${m[2]}</text></svg></span>`;

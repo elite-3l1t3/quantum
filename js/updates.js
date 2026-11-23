@@ -2,7 +2,7 @@
    Шинэ хувилбар гаргах бүрд ЭХЭНД нь нэмнэ. [төрөл, mn, en, ru]; төрөл: new | fix | sec | legal */
 const UPDATES=[
 {d:'2026-11-23',v:'v23',t:['Банкуудын албан ёсны лого','Official bank logos','Официальные логотипы банков'],i:[
- ['new','Голомт, SocialPay, ХХБ, Төрийн, Хас, Monpay, Мост мони, Богд, Ариг банкны албан ёсны логог тэдний сайтаас авч тавилаа','Official logos for Golomt, SocialPay, TDB, State Bank, XacBank, Monpay, Most Money, Bogd and Arig, taken from their websites','Официальные логотипы Голомт, SocialPay, TDB, Госбанка, ХасБанка, Monpay, Most Money, Богд и Ариг с их сайтов'],
+ ['new','Бүх банк албан ёсны логотой боллоо: Хаан, Голомт, SocialPay, ХХБ, Төрийн, Хас, Капитрон, Богд, М банк, Ариг, Чингис хаан, Monpay, Мост мони','All banks now show their official logos: Khan, Golomt, SocialPay, TDB, State, Xac, Capitron, Bogd, M Bank, Arig, Chinggis Khaan, Monpay, Most Money','У всех банков официальные логотипы: Хаан, Голомт, SocialPay, TDB, Госбанк, Хас, Капитрон, Богд, M Bank, Ариг, Чингисхан, Monpay, Most Money'],
  ['legal','Нөхцөлд: банкуудын лого нь тэдний барааны тэмдэг, зөвхөн таниулах зорилгоор','Terms: bank logos are trademarks of their owners, shown only for identification','Условия: логотипы банков — товарные знаки владельцев, только для узнаваемости']]},
 {d:'2026-11-23',v:'v22',t:['Банкны тэмдэг, "Шинэ" таб буцлаа','Bank marks, "New" tab is back','Значки банков, вкладка «Новые»'],i:[
  ['new','Банк бүр өөрийн өнгөт тэмдэгтэй боллоо (данс, банкны апп сонгох цонх, тохиргоо)','Each bank now has its own colored mark (accounts, bank app picker, settings)','У каждого банка свой цветной значок (счета, выбор приложения, настройки)'],

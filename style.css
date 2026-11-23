@@ -846,3 +846,4 @@ button,.tile,.lbr,.f2,.stp{transition:transform .18s cubic-bezier(.2,.8,.2,1),ba
 .pt.bkm.bko{background:#fff!important;box-shadow:0 6px 16px -8px rgba(0,0,0,.55),inset 0 0 0 1px rgba(0,0,0,.06)}
 .pt.bkm.bko img{width:74%!important;height:74%!important;object-fit:contain;display:block;margin:auto}
 .bka .pt.bkm.bko{box-shadow:0 8px 18px -8px rgba(0,0,0,.6),inset 0 0 0 1px rgba(0,0,0,.06)}
+.pt.bkm.bko.bkf img{width:100%!important;height:100%!important;object-fit:cover}
