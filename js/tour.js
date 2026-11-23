@@ -40,7 +40,9 @@ function startTour(steps){
  const show=()=>{
   const s=steps[i];
   if(s.tab){const tb=q('.tabs2 button[data-t="'+s.tab+'"]');if(tb&&!tb.classList.contains('on'))tb.click()}
-  if(s.open){const b=q(s.open);if(b&&vis(b))b.click()}
+  /* Утсан дээр урьдчилан харах самбарыг нээж харуулна; өөр алхам руу шилжихэд хаана */
+  const pv=q('#pvside.show');if(pv&&!s.open)pv.classList.remove('show');
+  if(s.open){const b=q(s.open);if(b&&vis(b)&&getComputedStyle(b).display!='none')b.click()}
   bb.querySelector('.tnum').textContent=(i+1)+' / '+steps.length;
   bb.querySelector('h3').textContent=s.t;bb.querySelector('p').textContent=s.x;
   bb.querySelector('.tdots').innerHTML=steps.map((_,j)=>'<i class="'+(j==i?'on':j<i?'dn':'')+'"></i>').join('');

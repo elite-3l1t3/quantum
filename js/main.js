@@ -1,4 +1,4 @@
-const V='23';const T0=document.title;
+const V='24';const T0=document.title;
 const NEED={home:['board','home'],settings:['card','upload','tour','settings'],admin:['admin'],board:['board'],tutorial:['tutorial'],updates:['updates'],status:['status'],profile:['card','profile']};
 const PROBE={card:'cardHTML',upload:'up',tour:'startTour',settings:'settings',home:'home',profile:'profile',admin:'admin',board:'board',tutorial:'tutorial',updates:'updates',status:'statusPage'};
 const loadJs=s=>new Promise((ok,no)=>{const x=document.createElement('script');x.src='/js/'+s+'.js?v='+V;x.onload=ok;x.onerror=()=>no(Error('Файл олдсонгүй: /js/'+s+'.js. GitHub дээр js хавтас руу оруулсан эсэхээ шалгана уу.'));document.head.append(x)});
@@ -6,8 +6,8 @@ async function ensure(P){for(const s of NEED[P]||[]){if(typeof window[PROBE[s]]!
 let DOWN=false;
 async function doRoute(){
  if(window.RC)window.RC.abort();window.RC=new AbortController();
- document.body.style.cssText='';clearInterval(window.TT);clearInterval(window.CDI);clearInterval(window.PI);clearInterval(window.PJ);clearInterval(window.TZI);
- document.querySelectorAll('.cft,.fxp,.bgv,#ent,.wm,.tour,.tip2,.lgm,.mnu,.mnbk,.dlgb,.hbn').forEach(x=>x.remove());
+ document.body.style.cssText='';clearInterval(window.TT);clearInterval(window.CDI);clearInterval(window.PI);clearInterval(window.PJ);clearInterval(window.TZI);clearInterval(window.SYI);
+ document.querySelectorAll('.cft,.fxp,.bgv,#ent,.wm,.tour,.tip2,.bad3,.lgm,.mnu,.mnbk,.dlgb,.hbn').forEach(x=>x.remove());
  if(aud){aud.pause();aud=null}
  document.documentElement.style.setProperty('--a','#e2b858');document.documentElement.style.removeProperty('--ic');document.title=T0;
  document.body.classList.toggle('prof',document.body.dataset.p=='profile');document.body.classList.remove('ucur');
@@ -30,7 +30,7 @@ async function doRoute(){
 let q=Promise.resolve();
 const route=()=>q=q.then(doRoute).catch(x=>toast('Алдаа: '+(x.message||x)));
 let ready=false;
-sb.auth.onAuthStateChange((_,s)=>{if(ready&&(s?.user?.id||null)!==(user?.id||null))setTimeout(async()=>{try{await loadMe()}catch{}route();if(me)setTimeout(()=>termsCheck().catch(()=>{}),1200)},0)});
+sb.auth.onAuthStateChange((_,s)=>{if(ready&&(s?.user?.id||null)!==(user?.id||null))setTimeout(async()=>{try{await loadMe()}catch{}route();if(me)setTimeout(()=>termsCheck().catch(()=>{}).then(()=>nameCheck()),1200)},0)});
 if(!document.querySelector('link[rel=icon]'))document.head.insertAdjacentHTML('beforeend','<link rel="icon" href="/favicon.svg">');
 if(/error_description/.test(location.hash+location.search)){
  const m=decodeURIComponent((location.hash+location.search).match(/error_description=([^&]*)/)?.[1]||'').replace(/\+/g,' ');
@@ -44,7 +44,7 @@ if(document.body.dataset.p!='doc')app.innerHTML='<div class="w"><div class="card
  const lm=await tmo(loadMe(),15000).then(()=>null,x=>x);
  if(lm){const h=await hp;if(!h&&P0!='status')DOWN=true;else if(lm.message!='timeout')console.warn('loadMe',lm)}
  ready=true;route();
- if(me&&!['doc','profile'].includes(P0))setTimeout(()=>termsCheck().catch(()=>{}),1200);
+ if(me&&!['doc','profile'].includes(P0))setTimeout(()=>termsCheck().catch(()=>{}).then(()=>nameCheck()),1200);
  if(!lm)hp.then(h=>{if(!h&&P0!='status'&&P0!='doc'&&!DOWN){DOWN=true;downPage('db')}});
 })();
 /* Апп (PWA): service worker бүртгэх, суулгах товч */

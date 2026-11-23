@@ -125,12 +125,19 @@ async function profile(v,name){
  if(p.hidden)v.insertAdjacentHTML('afterbegin',`<div class="tip warn hbx">${ic('alert',18)}<span>${own?'Таны хуудас олон мэдэгдэл авсан тул нийтэд түр нуугдсан байна. Админ шалгаад шийднэ.':'Энэ хуудас нийтэд нуугдсан (олон мэдэгдэл). Админ самбараас шийднэ үү.'}</span></div>`);
  const hk=u=>{let h=5381;for(const c of String(u))h=((h<<5)+h+c.charCodeAt(0))>>>0;return h.toString(36)};
  v.querySelectorAll('a.lk').forEach(a=>a.onclick=ev=>{ev.preventDefault();const u=a.getAttribute('href');if(!demo&&p.id){const k=hk(u),key='ck_'+p.id+'_'+k;let t=0;try{t=+localStorage[key]||0}catch{}if(Date.now()-t>18e5){try{localStorage[key]=Date.now()}catch{}sb.rpc('add_click',{p_pid:p.id,p_k:k}).then(()=>{},()=>{})}}linkGo(u)});
- v.querySelectorAll('.lk.bnk').forEach(b=>b.onclick=async()=>{const acc=b.dataset.acc;try{await navigator.clipboard.writeText(acc.replace(/\s/g,''))}catch{}dlg({icon:'bank',title:'Дансны дугаар хуулагдлаа',ok:'Ойлголоо',cancel:'Хаах',html:`<div class="bnkd"><small class="mu">${e(b.dataset.bank)}</small><b class="sel">${e(acc)}</b>${b.dataset.hold?`<span class="sel">${e(b.dataset.hold)}</span>`:''}</div><p class="mu" style="font-size:12px">Шилжүүлэхийн өмнө хүлээн авагчийн нэрийг заавал шалгаарай.</p>`})});
+ v.querySelectorAll('.lk.bnk').forEach(b=>b.onclick=()=>bankDlg({acc:b.dataset.acc,bank:b.dataset.bank,holder:b.dataset.hold}));
  v.querySelectorAll('[data-emb]').forEach(d=>{const go=()=>{const f=document.createElement('iframe');f.src=d.dataset.emb;f.title=d.getAttribute('aria-label')||'';f.allow='autoplay; encrypted-media; picture-in-picture; fullscreen';f.allowFullscreen=true;f.loading='lazy';f.referrerPolicy='strict-origin-when-cross-origin';if(+d.dataset.h)f.style.height=d.dataset.h+'px';d.replaceChildren(f);d.classList.add('on');d.removeAttribute('role');d.onclick=d.onkeydown=null;if(aud&&!aud.paused)aud.pause()};d.onclick=go;d.onkeydown=ev=>{if(ev.key=='Enter'||ev.key==' '){ev.preventDefault();go()}}});
  if(demo){
   v.insertAdjacentHTML('beforeend',`<div class="demo-tools"><h3>${ic('sliders',20)}Загвар сонгоод үз</h3><p class="mu">Доорх өнгөнүүдээс сонгоход энэ хуудас шууд өөрчлөгдөнө. Өөрийн хуудсанд ч ингэж сонгоно.</p><div class="pre">${PRE.map(x=>`<button type="button" class="ps" data-dp="${x[0]}" aria-label="${x[1]}"><i style="--s1:${x[2].bgc};--s2:${x[2].ac};--s3:${x[2].cc}"></i><span>${x[1]}</span></button>`).join('')}</div></div>`);
-  v.querySelectorAll('[data-dp]').forEach(b=>b.onclick=()=>{const x=PRE.find(y=>y[0]==b.dataset.dp);DEMO.accent=x[2].ac;Object.assign(DEMO.theme,{tc:x[2].tc,bgc:x[2].bgc,cc:x[2].cc,ic:x[2].ic});route()});
+  v.querySelectorAll('[data-dp]').forEach(b=>b.onclick=()=>{const x=PRE.find(y=>y[0]==b.dataset.dp);DEMO.accent=x[2].ac;Object.assign(DEMO.theme,{tc:x[2].tc,bgc:x[2].bgc,cc:x[2].cc,ic:x[2].ic,bgg:{a:x[2].ic,b:x[2].bgc,d:160}});route()});
  }
+ /* Анх удаа орж ирсэн, нэвтрээгүй зочинд "өөрийнхөөрөө үүсгэх үү" гэсэн жижиг санал (нэг удаа, хаагдана). Эзэн нь унтрааж болно (theme.noad). */
+ if(!demo&&!own&&!user&&!t.noad){let seen=1;try{seen=localStorage.adSeen}catch{}if(!seen){const shw=()=>{if(document.querySelector('#ent,.dlgb,.bad3')||!v.isConnected)return setTimeout(shw,1500);
+   try{localStorage.adSeen=1}catch{}const a=document.createElement('div');a.className='bad3';a.setAttribute('role','complementary');
+   a.innerHTML=`<span class="bai">b</span><span class="bat"><b>Танд ч ийм хуудас хэрэгтэй юу?</b><small>biof дээр үнэгүй, 1 минутад үүсгэнэ.</small></span><a href="/?ref=${e(p.username)}" class="bago">Үүсгэх</a><button type="button" class="g bax" aria-label="Хаах">${ic('x',14)}</button>`;
+   document.body.append(a);requestAnimationFrame(()=>a.classList.add('in'));
+   const bye=()=>{a.classList.remove('in');setTimeout(()=>a.remove(),400)};a.querySelector('.bax').onclick=bye;setTimeout(()=>{if(a.isConnected)bye()},14000)};
+  setTimeout(shw,7000)}}
  if(!demo){const w=document.createElement('a');w.className='wm';w.href='/';w.textContent='biof';w.style.color=k.tc;document.body.append(w)}
  if(PRESENCE_ON&&p.presence_id)presence(v.querySelector('#pres'),p.presence_id);
  const cdEl=v.querySelector('.cdn[data-at]');if(cdEl){const at=cdEl.dataset.at,cv=cdEl.querySelector('.cdv');clearInterval(window.CDI);window.CDI=setInterval(()=>{if(!cv.isConnected){clearInterval(window.CDI);return}cv.innerHTML=cdInner(at);if(!cdParts(at))clearInterval(window.CDI)},1000)}
@@ -161,15 +168,33 @@ async function profile(v,name){
  const qb=v.querySelector('#qrb');if(qb)qb.onclick=()=>qrDlg(location.origin+'/'+p.username,p.username,k.ac);
  const rp=v.querySelector('#rp');if(rp)rp.onclick=()=>reportDlg(p);
  const tzb=v.querySelector('[data-tz]');if(tzb){clearInterval(window.TZI);window.TZI=setInterval(()=>{if(!tzb.isConnected){clearInterval(window.TZI);return}tzb.textContent=tzNow(tzb.dataset.tz)},15000)}
+ /* Дуу: хуудас нээгдмэгц урьдчилан ачаална; орох дэлгэц дарахад видео ба дууг 0-ээс зэрэг эхлүүлнэ.
+    Дуу нь видеоноос гаргасан (урт нь ойролцоо) бол тоглож байх хугацаанд видеотой тааруулна. */
+ const hasEnt=!t.noent&&(t.enter||cu(t.music));
  if(cu(t.music)){
-  aud=new Audio();aud.preload='none';aud.src=t.music;aud.loop=true;aud.volume=.5;
+  aud=new Audio();aud.preload=hasEnt?'auto':'metadata';aud.src=t.music;aud.loop=true;aud.volume=.5;if(hasEnt)try{aud.load()}catch{}
   const setI=()=>{const b=v.querySelector('#mp');if(b)b.innerHTML=ic(aud&&!aud.paused?'pause':'play',18)};
   aud.addEventListener('play',setI);aud.addEventListener('pause',setI);
-  $('#mp').onclick=()=>{aud.paused?aud.play().catch(()=>{}):aud.pause()};
+  $('#mp').onclick=()=>{aud.paused?aud.play().then(sync).catch(()=>{}):aud.pause()};
   const vs=v.querySelector('#vol');if(vs)vs.oninput=ev=>{aud.volume=ev.target.value}}
- if(!t.noent&&(t.enter||cu(t.music))){const d=document.createElement('div');d.id='ent';d.className='ent';d.style.background=k.bgc;d.style.color=k.tc;d.textContent=t.enter||'Орохын тулд дарна уу';
+ const bvid=()=>document.querySelector('video.bgv');
+ const same=()=>{const bv=bvid();return!!(aud&&bv&&isFinite(aud.duration)&&isFinite(bv.duration)&&Math.abs(aud.duration-bv.duration)<1.5)};
+ function sync(){const bv=bvid();if(!same()||aud.paused||bv.paused)return;const dt=aud.currentTime-bv.currentTime;if(Math.abs(dt)>.12&&Math.abs(dt)<aud.duration-1)aud.currentTime=Math.min(bv.currentTime,aud.duration-.05)}
+ {const bv=bvid();if(bv&&aud){let last=0;bv.addEventListener('timeupdate',()=>{if(bv.currentTime+.5<last)sync();last=bv.currentTime});clearInterval(window.SYI);window.SYI=setInterval(()=>{if(!aud||!bv.isConnected){clearInterval(window.SYI);return}sync()},2000)}}
+ const ready=(m,ms)=>m&&m.readyState<3&&!m.error?new Promise(ok=>{const f=()=>ok();m.addEventListener('canplaythrough',f,{once:true});m.addEventListener('canplay',f,{once:true});m.addEventListener('error',f,{once:true});setTimeout(f,ms)}):Promise.resolve();
+ const startAll=el=>{
+  const bv=bvid();if(el)el.classList.add('ld');
+  /* iPhone: дууг дарсан агшинд (gesture дотор) дуугүй эхлүүлж "нээнэ", бэлэн болмогц хоёуланг 0-д аваачиж дууг нээнэ */
+  if(aud){aud.muted=true;aud.play().catch(()=>{})}if(bv)bv.play().catch(()=>{});
+  return Promise.all([ready(aud,3000),ready(bv,3000)]).then(()=>{
+   if(bv){try{bv.currentTime=0;bv.addEventListener('seeked',sync,{once:true})}catch{}}
+   if(aud){try{aud.currentTime=0}catch{}aud.muted=false;if(aud.paused)aud.play().catch(()=>{})}
+   setTimeout(sync,600)})};
+ if(hasEnt){const d=document.createElement('div');d.id='ent';d.className='ent';d.style.background=k.bgc;d.style.color=k.tc;d.innerHTML='<span>'+e(t.enter||'Орохын тулд дарна уу')+'</span>';
   const pc0=v.querySelector('#pcard.go');if(pc0)pc0.classList.remove('go');
-  d.onclick=()=>{d.remove();if(pc0)pc0.classList.add('go');const bv=document.querySelector('video.bgv');if(bv)bv.play().catch(()=>{});if(aud)aud.play().catch(()=>{})};document.body.append(d)}
+  d.onclick=async()=>{if(d.dataset.on)return;d.dataset.on=1;await startAll(d);d.classList.add('out');setTimeout(()=>d.remove(),350);if(pc0)pc0.classList.add('go')};document.body.append(d)}
+ else if(aud){/* орох дэлгэцгүй: хөтөч зөвшөөрвөл шууд, үгүй бол эхний товшилтоор */
+  aud.play().then(sync).catch(()=>{const go1=()=>{if(aud&&aud.paused)aud.play().then(sync).catch(()=>{})};document.addEventListener('pointerdown',go1,{once:true,signal:window.RC?window.RC.signal:undefined})})}
  if(!demo){
   let vid=localStorage.vid;if(!vid){const r=crypto.getRandomValues(new Uint8Array(16));r[6]=r[6]&15|64;r[8]=r[8]&63|128;const h=[...r].map(x=>x.toString(16).padStart(2,'0')).join('');vid=localStorage.vid=h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20)}
   sb.rpc('add_view',{pid:p.id,v:vid}).then(r=>{

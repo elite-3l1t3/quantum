@@ -784,3 +784,51 @@ html[lang="en"] main.doc[lang="en"],html[lang="ru"] main.doc[lang="ru"]{display:
 .emst{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;font-size:13px;margin-bottom:8px}
 .emst.on{background:rgba(34,197,94,.12);color:#86efac;border:1px solid rgba(34,197,94,.35)}
 .emst.off{background:rgba(239,68,68,.12);color:#fca5a5;border:1px solid rgba(239,68,68,.4)}
+/* v21: орох дэлгэц — ачаалж байх үед жижиг спиннер, гарахдаа зөөлөн алга болно */
+.ent span{transition:opacity .2s}
+.ent.ld span{opacity:.55}
+.ent.ld:after{content:"";position:absolute;left:50%;top:calc(50% + 34px);width:22px;height:22px;margin-left:-11px;border:2.5px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;opacity:.7}
+.ent.out{opacity:0;transform:scale(1.03);transition:opacity .35s ease,transform .35s ease;pointer-events:none}
+/* v21: гарчгийг сонгож (select) болохгүй, дэд текст сонгогдоно */
+h1,h2,h3,h4,.sec2,.sh,.dlg h3,.cd h3{-webkit-user-select:none;user-select:none}
+/* Хүний хуудасны "biof" тамга: хуудасны дээд буланд үлдэнэ (гүйлгэхэд дагахгүй) */
+.wm{position:absolute!important}
+/* Дэмжих хэсэг рүү ирэхэд богино гэрэлтэлт */
+.sup.flash{animation:supf 1.6s ease-out}
+@keyframes supf{0%{box-shadow:0 0 0 0 rgba(226,184,88,.7)}40%{box-shadow:0 0 0 10px rgba(226,184,88,.18)}100%{box-shadow:0 0 0 0 rgba(226,184,88,0)}}
+/* Зөөлөн хөдөлгөөнүүд (зөвхөн transform/opacity — гацахгүй) */
+section[data-s]:not([hidden]){animation:tabin .28s cubic-bezier(.2,.8,.2,1)}
+@keyframes tabin{from{opacity:0;transform:translate3d(0,8px,0)}}
+.lbr{animation:rowin .4s cubic-bezier(.2,.8,.2,1) backwards}
+.lbr:nth-child(2){animation-delay:.03s}.lbr:nth-child(3){animation-delay:.06s}.lbr:nth-child(4){animation-delay:.09s}.lbr:nth-child(5){animation-delay:.12s}.lbr:nth-child(n+6){animation-delay:.15s}
+@keyframes rowin{from{opacity:0;transform:translate3d(0,10px,0)}}
+.dlg{animation:dlgin .26s cubic-bezier(.2,.9,.25,1.15) both}
+@keyframes dlgin{from{opacity:0;transform:translate3d(0,12px,0) scale(.96)}}
+.dlgb.out .dlg{transform:scale(.97);transition:transform .18s}
+button:not(:disabled):active,.tile:active,.lbr:active{transform:scale(.97)}
+button,.tile,.lbr,.f2,.stp{transition:transform .18s cubic-bezier(.2,.8,.2,1),background-color .2s,border-color .2s,box-shadow .2s,opacity .2s,filter .2s}
+@media(hover:hover){.tile:hover,.f2:hover{transform:translate3d(0,-3px,0)}}
+.toast{animation:toastin .32s cubic-bezier(.2,.9,.25,1.2) both}
+@keyframes toastin{from{opacity:0;transform:translate3d(-50%,14px,0) scale(.96)}to{transform:translate3d(-50%,0,0)}}
+.tip2{animation:tipin .18s ease-out both}
+@keyframes tipin{from{opacity:0;transform:translate3d(0,4px,0)}}
+.fqb{transition:grid-template-rows .3s ease,opacity .3s ease}
+@media(prefers-reduced-motion:reduce){section[data-s]:not([hidden]),.lbr,.dlg,.toast,.tip2,.sup.flash{animation:none!important}button:active,.tile:active,.lbr:active{transform:none}}
+/* v21: зочинд үзүүлэх жижиг санал (ядаргаагүй: нэг удаа, хаагддаг, 14 сек-д алга болно) */
+.bad3{position:fixed;left:50%;bottom:max(14px,env(safe-area-inset-bottom));z-index:8;display:flex;align-items:center;gap:10px;width:max-content;max-width:calc(100vw - 20px);padding:8px 8px 8px 10px;border-radius:18px;background:rgba(18,18,20,.88);border:1px solid rgba(255,255,255,.12);box-shadow:0 14px 40px -14px rgba(0,0,0,.8);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#f5f5f5;opacity:0;transform:translate3d(-50%,20px,0);transition:opacity .4s ease,transform .45s cubic-bezier(.2,.9,.25,1.1);font-family:'Bricolage Grotesque',system-ui,sans-serif}
+.bad3.in{opacity:1;transform:translate3d(-50%,0,0)}
+.bai{flex:none;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,#f3d27a,#c9962f);color:#1a1205;font:700 18px 'Playfair Display',Georgia,serif}
+.bat{display:flex;flex-direction:column;min-width:0;line-height:1.25}.bat b{font-size:13px}.bat small{font-size:11.5px;opacity:.7}
+.bago{flex:none;padding:8px 12px;border-radius:12px;background:linear-gradient(135deg,#f3d27a,#c9962f);color:#1a1205!important;font-weight:800;font-size:13px;text-decoration:none}
+.bax{flex:none;width:30px;height:30px;padding:0!important;display:grid;place-items:center;border-radius:10px}
+@media(prefers-reduced-motion:reduce){.bad3{transition:none}}
+/* v21: банкны апп сонгох */
+.bkh{font-size:13px;margin:6px 0 10px;text-align:left}
+.bkg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;max-height:42vh;overflow:auto;padding:2px;overscroll-behavior:contain}
+.bka{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px!important;border-radius:14px;background:rgba(255,255,255,.05)!important;border:1px solid rgba(255,255,255,.1)!important;color:inherit!important;font-weight:600;min-width:0;animation:rowin .35s cubic-bezier(.2,.8,.2,1) backwards}
+.bka:nth-child(n+4){animation-delay:.05s}.bka:nth-child(n+7){animation-delay:.1s}.bka:nth-child(n+10){animation-delay:.15s}
+.bka i{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--bk);color:#fff;font-style:normal;font-weight:800;font-size:12px;letter-spacing:-.3px;box-shadow:0 6px 16px -8px var(--bk)}
+.bka span{font-size:11px;line-height:1.2;text-align:center;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.bka:hover{border-color:var(--bk)!important}
+.wide2{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:10px}
+@media(max-width:360px){.bkg{grid-template-columns:repeat(2,minmax(0,1fr))}}

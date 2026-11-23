@@ -103,7 +103,7 @@ document.addEventListener('click',ev=>{
 });
 /* Дэмжлэг: данс хуулах */
 const ACC='MN620050099106666308';
-const supportHTML=()=>`<div class="sup rv" id="support"><span class="cup">${ic('coffee',34)}</span><div class="supb"><h3>Надад кофе авч өгөөрэй</h3><p class="mu">biof-ийг үнэгүй байлгахад туслаарай. Дэмжлэг нь сайн дурын, баярлалаа!</p><div class="acc"><div><small class="mu">Monpay данс</small><code>${ACC}</code></div><button class="g" type="button" data-cpy="1">${ic('copy',16)}Хуулах</button></div></div></div>`;
+const supportHTML=()=>`<div class="sup rv" id="support"><span class="cup">${ic('coffee',34)}</span><div class="supb"><h3>Надад кофе авч өгөөрэй</h3><p class="mu">biof-ийг үнэгүй байлгахад туслаарай. Дэмжлэг нь сайн дурын, баярлалаа!</p><div class="acc"><div><small class="mu">Monpay данс</small><code>${ACC}</code></div><button class="g" type="button" data-cpy="1">${ic('copy',16)}Хуулах</button></div><button type="button" class="wide2" data-bkd="1">${ic('bank',18)}Банкны аппаар шилжүүлэх</button></div></div>`;
 document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-cpy]');if(!b)return;try{navigator.clipboard.writeText(ACC)}catch{}b.innerHTML=ic('check',16)+'Хуулагдлаа';toast('Данс хуулагдлаа. Баярлалаа!');setTimeout(()=>{b.innerHTML=ic('copy',16)+'Хуулах'},2200)});
 /* Load/error: жинхэнэ платформын логог CDN-ээс авна, олдохгүй бол тэмдэглэгээ үлдэнэ */
 document.addEventListener('load',ev=>{const t=ev.target;if(t&&t.classList&&t.classList.contains('si')&&t.parentNode)t.parentNode.classList.add('ok')},true);
@@ -197,3 +197,30 @@ async function showNotice(el){
  const pf=ev=>{const a=ev.target.closest&&ev.target.closest('a[href^="/"]');if(!a||a.target=='_blank')return;const u=a.getAttribute('href').split('#')[0];if(!u||done.has(u)||u==location.pathname||done.size>20)return;done.add(u);const l=document.createElement('link');l.rel='prefetch';l.href=u;document.head.append(l)};
  document.addEventListener('pointerover',pf,{passive:true});document.addEventListener('touchstart',pf,{passive:true});
 })();
+/* Нүүр хуудсан дээр байхдаа "/#support" г.м. холбоос дарвал (hash өөрчлөгдөөгүй ч) тэр хэсэг рүү гүйлгэнэ */
+document.addEventListener('click',ev=>{
+ const a=ev.target.closest&&ev.target.closest('a[href^="/#"]');if(!a||ev.ctrlKey||ev.metaKey||ev.shiftKey)return;
+ if(location.pathname!='/'||document.body.dataset.p!='home')return;
+ ev.preventDefault();if(typeof closeMenu=='function')closeMenu();
+ const h=a.getAttribute('href').slice(1);if(location.hash!=h)history.replaceState(null,'',h);dispatchEvent(new HashChangeEvent('hashchange'));
+});
+
+/* Банкны апп сонгох: дансыг хуулж, сонгосон банкны аппыг нээнэ (QPay-д хэрэглэгддэг схем).
+   Апп нээгдээгүй бол (суулгаагүй г.м.) хуулсан дансаа аппдаа буулгахыг зааж өгнө. */
+const BAPPS=[['khan','Хаан банк','khanbank','#0a8f3c','ХБ'],['golomt','SocialPay (Голомт)','socialpay-payment','#1f4fb5','SP'],['tdb','ХХБ (TDB)','tdbbank','#0b3a8c','TDB'],['state','Төрийн банк','statebank','#c8102e','ТБ'],['xac','Хас банк','xacbank','#f08a00','ХАС'],['monpay','Monpay','monpay','#ff6a00','MP'],['most','Мост мони','most','#e4002b','ММ'],['capitron','Капитрон банк','capitronbank','#23336e','КБ'],['bogd','Богд банк','bogdbank','#a8841c','ББ'],['mbank','М банк','mbank','#6d28d9','М'],['arig','Ариг банк','arigbank','#d71920','АБ'],['ckbank','Чингис хаан банк','ckbank','#0f5c55','ЧХБ']];
+const isPhone=()=>matchMedia('(pointer:coarse)').matches&&/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+async function cpyTxt(t){try{await navigator.clipboard.writeText(t);return true}catch{try{const x=document.createElement('textarea');x.value=t;x.style.cssText='position:fixed;opacity:0';document.body.append(x);x.select();const ok=document.execCommand('copy');x.remove();return ok}catch{return false}}}
+function bankDlg(o){
+ const acc=String(o.acc||''),raw=acc.replace(/\s/g,''),ph=isPhone();
+ dlg({icon:'bank',title:o.title||'Мөнгө шилжүүлэх',ok:'Хаах',cancel:'Хуулах',wide:false,
+  html:`<div class="bnkd"><small class="mu">${e(o.bank||'')}</small><b class="sel">${e(acc)}</b>${o.holder?`<span class="sel">${e(o.holder)}</span>`:''}</div>${ph?`<p class="mu bkh">Банкны аппаа сонговол данс автоматаар хуулагдаж, апп нээгдэнэ. Аппдаа "Хүлээн авагчийн данс" хэсэгт буулгана (paste).</p><div class="bkg">${BAPPS.map(b=>`<button type="button" class="bka" data-bk="${b[0]}" style="--bk:${b[3]}"><i>${e(b[4])}</i><span>${e(b[1])}</span></button>`).join('')}</div>`:`<p class="mu bkh">Утаснаасаа орвол банкны аппаа сонгоод шууд нээж болно.</p>`}<p class="mu" style="font-size:12px;margin-top:8px">Шилжүүлэхийн өмнө хүлээн авагчийн нэрийг заавал шалгаарай.</p>`,
+  wire:d=>{
+   const cancel=d.querySelector('[data-r="0"]');if(cancel){cancel.innerHTML=ic('copy',16)+'Хуулах';cancel.onclick=async ev=>{ev.stopPropagation();const ok=await cpyTxt(raw);cancel.innerHTML=ic('check',16)+(ok?'Хуулагдлаа':'Хуулж чадсангүй');toast(ok?'Дансны дугаар хуулагдлаа':'Хуулж чадсангүй. Дугаарыг гараар хуулна уу.')}}
+   d.querySelectorAll('[data-bk]').forEach(b=>b.onclick=async ev=>{ev.stopPropagation();const B=BAPPS.find(x=>x[0]==b.dataset.bk);if(!B)return;
+    const ok=await cpyTxt(raw);toast((ok?'Данс хуулагдлаа. ':'')+B[1]+' апп нээгдэж байна…');
+    let hid=false;const vh=()=>{if(document.hidden)hid=true};document.addEventListener('visibilitychange',vh);
+    setTimeout(()=>{location.href=B[2]+'://q'},120);
+    setTimeout(()=>{document.removeEventListener('visibilitychange',vh);if(!hid&&!document.hidden)toast(B[1]+' апп нээгдсэнгүй бол аппаа өөрөө нээгээд хуулсан дансаа буулгана уу.')},2200)});
+  }});
+}
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-bkd]');if(!b)return;bankDlg({acc:ACC,bank:'Monpay данс (IBAN)',holder:'biof',title:'biof-ийг дэмжих'})});

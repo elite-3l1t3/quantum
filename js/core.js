@@ -33,7 +33,9 @@ const canIco=p=>!!p&&(p.role=='admin'||(p.badges||[]).some(x=>String(x).toLowerC
 /* Discord төлөв (Lanyard) түр засвартай. Засвар дуусвал true болго. */
 const PRESENCE_ON=false;
 const av=p=>cu(p.avatar_url)?`<img class="av" loading="lazy" decoding="async" alt="" src="${e(p.avatar_url)}">`:`<span class="av">${e((p.display_name||p.username||'?')[0].toUpperCase())}</span>`;
-const DEMO={id:null,bid:1,username:'a',display_name:'Bold',bio:'Сайн байна уу! Би Болд. Миний бүх холбоос энд байгаа.',accent:'#e2b858',views:12840,likes:964,role:'user',badges:['verified','staff'],links:[{label:'Facebook',url:'https://facebook.com',icon:'facebook'},{label:'Instagram',url:'https://instagram.com',icon:'instagram'},{label:'TikTok',url:'https://tiktok.com',icon:'tiktok'},{label:'YouTube',url:'https://youtube.com',icon:'youtube'},{label:'Discord',url:'https://discord.com',icon:'discord'},{label:'Telegram',url:'https://telegram.org',icon:'telegram'},{label:'Spotify',url:'https://spotify.com',icon:'spotify'}],theme:{set:true,loc:'Улаанбаатар',tw:true,op:.92,r:24,bfx:'ember',cc:'#121214',bgc:'#09090a',tc:'#f4efe6',ic:'#2a2a2e',pic:'text',grad:true,tl:true,gs:true,gb:true,fx:'sparkle'}};
+const DEMO={id:null,bid:1,username:'a',display_name:'Bold',bio:'Сайн байна уу! Би Болд — дизайнер, хөгжимд дуртай. Миний бүх холбоос энд байна 👇',accent:'#e2b858',views:12840,likes:964,role:'user',badges:['verified','staff'],
+ links:[{label:'Instagram',url:'https://instagram.com',icon:'instagram',hl:1,ds:'Өдөр бүр шинэ зураг'},{label:'TikTok',url:'https://tiktok.com',icon:'tiktok',ds:'Богино бичлэгүүд'},{label:'YouTube',url:'https://youtube.com',icon:'youtube',ds:'Дуу, клип'},{label:'Spotify',url:'https://spotify.com',icon:'spotify'},{label:'Discord',url:'https://discord.com',icon:'discord'},{label:'Portfolio',url:'https://biof.site',icon:'web',ds:'Дизайны ажлууд'}],
+ theme:{set:true,loc:'Улаанбаатар',st:'Шинэ дуугаа бичиж байна 🎧',tz:'Asia/Ulaanbaatar',ab:{job:'Дизайнер',sch:'МУИС',gm:'Minecraft'},cd:{t:'Шинэ дуу гарахад',at:new Date(Date.now()+864e5*12).toISOString().slice(0,11)+'20:00'},tw:true,op:.9,r:26,bfx:'ember',cc:'#141416',bgc:'#0a0908',bgg:{a:'#3a2a0c',b:'#0b0b12',d:160},tc:'#f6f0e4',ic:'#2c2a24',pic:'brand',grad:true,tl:true,gs:true,gb:true,fx:'sparkle',frame:'gold',lan:'up',lh:'lift',noad:true}};
 const toast=m=>{if([...document.querySelectorAll('.toast')].some(x=>x.textContent==m))return;const d=document.createElement('div');d.className='toast';d.textContent=m;document.body.append(d);setTimeout(()=>d.remove(),6000)};
 const NOISE=/[Tt]ransition was (aborted|skipped)|ViewTransition|ResizeObserver|Script error|AbortError|The play\(\) request|play\(\) failed|NotAllowedError|The user aborted|Load failed|NetworkError when attempting|Failed to fetch/i;
 addEventListener('error',x=>{if(!x.message||NOISE.test(x.message))return;console.error(x.error||x.message);toast('Алдаа: '+x.message)});
@@ -66,6 +68,30 @@ function cnErr(root){
  m.hidden=false;l.classList.add('bad');l.classList.remove('shk');void l.offsetWidth;l.classList.add('shk');
  const c=l.querySelector('input');if(c)c.focus({preventScroll:true});m.scrollIntoView({block:'nearest',behavior:'smooth'});
 }
+/* Хэрэглэгчийн нэргүй (шинэ) хүнд хуудасны хаяг сонгуулна. Нөхцөлийн цонх нээлттэй бол хаагдахыг хүлээнэ. */
+async function nameCheck(){
+ if(!me||me.username||me.banned||document.querySelector('.ndlg')||document.body.dataset.p=='doc')return;
+ if(document.querySelector('.tdlg,.lgd,.tour')){setTimeout(()=>nameCheck(),900);return}
+ try{if(sessionStorage.nameLater)return}catch{}
+ const d=document.createElement('div');d.className='dlgb ndlg';let ok=false,t=0;
+ const sug=String((user&&user.user_metadata&&(user.user_metadata.user_name||user.user_metadata.name||user.user_metadata.full_name))||(user&&user.email||'').split('@')[0]||'').toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,20);
+ d.innerHTML=`<div class="dlg lgbox" role="dialog" aria-modal="true" aria-labelledby="ndt"><div class="dlgi">${ic('user',26)}</div><h3 id="ndt">Хуудасныхаа хаягийг сонгоорой</h3><p class="mu">Таны хуудасны хаяг: <b>biof.site/таны-нэр</b>. Энэ хаягаар найзууд чинь хуудсыг тань олно.</p><div class="lgu"><span>biof.site/</span><input id="nun" maxlength="20" placeholder="таны нэр" autocomplete="off" autocapitalize="none" spellcheck="false" value="${e(sug.length>=3?sug:'')}"></div><small class="lgst mu" id="nst">Зөвхөн англи жижиг үсэг, тоо, _ (3-20 тэмдэгт)</small><div class="act dla"><button type="button" class="g" id="nlt">Дараа</button><button type="button" id="nok" disabled>Энэ нэрийг авах</button></div><small class="mu" style="display:block;margin-top:10px">Нэрээ 7 хоногт нэг удаа сольж болно.</small></div>`;
+ document.body.append(d);
+ const i=d.querySelector('#nun'),st=d.querySelector('#nst'),b=d.querySelector('#nok');
+ const set=(c,h)=>{st.className='lgst '+c;st.innerHTML=h;b.disabled=!ok};
+ const chk=()=>{clearTimeout(t);ok=false;const u=i.value;
+  if(!/^[a-z0-9_]{3,20}$/.test(u)){set('mu',u?'3-20 тэмдэгт, зөвхөн a-z, 0-9, _':'Зөвхөн англи жижиг үсэг, тоо, _ (3-20 тэмдэгт)');return}
+  set('mu','Шалгаж байна…');
+  t=setTimeout(async()=>{const{data}=await sb.rpc('username_status',{u});if(u!=i.value)return;ok=data=='available';set(ok?'okk':'bad2',ok?ic('check',14)+' biof.site/'+e(u)+' сул байна':e(ERR[data]||'Энэ нэрийг авах боломжгүй'))},350)};
+ i.oninput=()=>{i.value=i.value.toLowerCase().replace(/[^a-z0-9_]/g,'');chk()};
+ i.onkeydown=ev=>{if(ev.key=='Enter'&&!b.disabled)b.click()};
+ d.querySelector('#nlt').onclick=()=>{try{sessionStorage.nameLater=1}catch{}d.classList.add('out');setTimeout(()=>d.remove(),180);toast('Хаягаа дараа нь "Миний самбар → Миний мэдээлэл" хэсгээс сонгож болно.')};
+ b.onclick=async()=>{if(!ok||!cool('claim',1500))return;b.disabled=true;b.innerHTML='<span class="spin sm"></span>Хадгалж байна…';
+  const{data,error}=await sb.rpc('claim_username',{u:i.value});
+  if(error||data!='ok'){ok=false;set('bad2',e(error?error.message:(ERR[data]||String(data))));b.textContent='Энэ нэрийг авах';return}
+  d.remove();await loadMe();toast('Баяр хүргэе! Таны хаяг: biof.site/'+me.username);if(typeof route=='function')route()};
+ chk();setTimeout(()=>i.focus(),80);
+}
 async function termsCheck(){
  if(!me||me.banned||document.querySelector('.tdlg'))return;
  const r=await Promise.resolve(sb.from('profile_private').select('consent_ver').eq('id',me.id).maybeSingle()).catch(()=>({error:1}));
@@ -79,7 +105,7 @@ async function termsCheck(){
  d.querySelector('#tok').onclick=async()=>{if(!d.querySelector('#tcn').checked)return cnErr(d);const a=await sb.rpc('accept_terms',{p_ver:TERMS_VER});if(a.error||a.data!='ok')return toast('Алдаа гарлаа. Дахин оролдоно уу.');try{localStorage.consent=TERMS_VER}catch{}d.remove();toast('Баярлалаа!')};
 }
 const bar=()=>`<nav><b><a href="/" aria-label="biof">biof</a></b><button class="g srb" id="srb" type="button" aria-label="Хайх" title="Хайх">${ic('search',18)}</button><button class="lgs g" id="lgs" type="button" aria-label="Хэл">${ic('globe',16)}<span>${LGN[localStorage.lang||'mn']||'MN'}</span></button>${me?`<a href="/settings"><button type="button" class="pnl">${ic('home',16)}<span>Миний самбар</span></button></a>`:'<button class="lg" type="button">Нэвтрэх</button>'}<button class="mnb g" id="mnb" type="button" aria-label="Цэс" aria-expanded="false">${ic('menu',20)}</button></nav>${me&&me.banned?'<div class="bad">Таны бүртгэлийг хориглосон байна.</div>':''}`;
-const foot=()=>`<footer><div class="fnav"><a href="/tos">Үйлчилгээний нөхцөл</a><a href="/privacy">Нууцлалын бодлого</a><a href="/updates">Шинэчлэлт</a><a href="/status">Статус</a><a href="/#support">Дэмжих</a></div><p>© biof · Bio Flex</p></footer>`;
+const foot=()=>`<footer><div class="fnav"><a href="/tos">Үйлчилгээний нөхцөл</a><a href="/privacy">Нууцлалын бодлого</a><a href="/updates">Шинэчлэлт</a></div><p>© biof · Bio Flex</p></footer>`;
 
 /* Нэвтрэх: Discord эсвэл имэйл рүү очих код */
 const discordLogin=()=>sb.auth.signInWithOAuth({provider:'discord',options:{redirectTo:location.origin+'/'}});
